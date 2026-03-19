@@ -52,11 +52,11 @@ router.post('/', async (req, res) => {
 router.get('/', authMiddleware(['FACILITATOR', 'ADMIN']), async (req: AuthenticatedRequest, res) => {
   const rawStatus = (req.query.status as string)?.toUpperCase();
   const allowedStatuses: ApplicationStatus[] = ['PENDING', 'APPROVED', 'REJECTED'];
-  const status = allowedStatuses.includes(rawStatus as ApplicationStatus)
+  const status: ApplicationStatus = allowedStatuses.includes(rawStatus as ApplicationStatus)
     ? (rawStatus as ApplicationStatus)
     : 'PENDING';
 
-  const communityId = Array.isArray(req.query.communityId)
+  const communityId: string | undefined = Array.isArray(req.query.communityId)
     ? req.query.communityId[0]
     : (req.query.communityId as string | undefined);
 
