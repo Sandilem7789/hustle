@@ -86,9 +86,10 @@ router.patch('/:id/decision', authMiddleware(['FACILITATOR', 'ADMIN']), async (r
     return res.status(400).json({ errors: parse.error.flatten() });
   }
 
-  const status = Object.values(ApplicationStatus).includes(req.body.status as ApplicationStatus)
-    ? (req.body.status as ApplicationStatus)
-    : undefined;
+  let status: ApplicationStatus | undefined;
+  if (Object.values(ApplicationStatus).includes(req.body.status as ApplicationStatus)) {
+    status = req.body.status as ApplicationStatus;
+  }
 
   if (!status) {
     return res.status(400).json({ message: 'Invalid status value' });
