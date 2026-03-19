@@ -60,15 +60,20 @@ router.get('/', authMiddleware(['FACILITATOR', 'ADMIN']), async (req: Authentica
 
   let communityId: string | undefined;
   if (Array.isArray(req.query.communityId)) {
-    communityId = req.query.communityId[0];
+    const [first] = req.query.communityId;
+    if (typeof first === 'string') {
+      communityId = first;
+    }
   } else if (typeof req.query.communityId === 'string') {
     communityId = req.query.communityId;
   }
 
+  const status = statusFilter ?? ApplicationStatus.PENDING;
+
   const applications = await prisma.hustlerApplication.findMany({
     where: {
-      status: statusFilter ?? ('PENDING' as ApplicationStatus),
-      communityId: communityId ?? undefined
+      status,
+      communityId
     },
     orderBy: { submittedAt: 'desc' },
     include: { community: true }
