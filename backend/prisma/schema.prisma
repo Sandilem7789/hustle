@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+ datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  HUSTLER
+  FACILITATOR
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         Role     @default(HUSTLER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications HustlerApplication[]
+  businesses   BusinessProfile[]
+  facilitatorAssignments CommunityFacilitator[] @relation("FacilitatorCommunities")
+}
+
+model Community {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  region      String?
+  description String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hustlers     BusinessProfile[]
+  applications HustlerApplication[]
+  facilitators CommunityFacilitator[] @relation("CommunityFacilitators")
+}
+
+model CommunityFacilitator {
+  id            String     @id @default(uuid())
+  community     Community  @relation("CommunityFacilitators", fields: [communityId], references: [id])
+  communityId   String
+  facilitator   User       @relation("FacilitatorCommunities", fields: [facilitatorId], references: [id])
+  facilitatorId String
+  assignedAt    DateTime   @default(now())
+
+  @@unique([communityId, facilitatorId])
+}
+
+model HustlerApplication {
+  id               String             @id @default(uuid())
+  firstName        String
+  lastName         String
+  email            String?
+  phone            String?
+  community        Community?         @relation(fields: [communityId], references: [id])
+  communityId      String?
+  businessName     String
+  businessType     String
+  description      String
+  vision           String
+  mission          String
+  targetCustomers  String
+  operatingArea    String
+  latitude         Float?
+  longitude        Float?
+  status           ApplicationStatus  @default(PENDING)
+  facilitatorNotes String?
+  submittedAt      DateTime           @default(now())
+  decidedAt        DateTime?
+  facilitator      User?              @relation(fields: [facilitatorId], references: [id])
+  facilitatorId    String?
+  linkedBusiness   BusinessProfile?
+}
+
+model BusinessProfile {
+  id              String            @id @default(uuid())
+  owner           User?             @relation(fields: [ownerId], references: [id])
+  ownerId         String?
+  application     HustlerApplication? @relation(fields: [applicationId], references: [id])
+  applicationId   String?           @unique
+  community       Community         @relation(fields: [communityId], references: [id])
+  communityId     String
+  businessName    String
+  businessType    String
+  description     String
+  vision          String
+  mission         String
+  targetCustomers String
+  operatingArea   String
+  latitude        Float?
+  longitude       Float?
+  status          ApplicationStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  products        Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  business    BusinessProfile @relation(fields: [businessId], references: [id])
+  businessId  String
+  name        String
+  description String
+  price       Decimal  @db.Decimal(10, 2)
+  mediaUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

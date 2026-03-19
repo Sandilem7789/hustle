@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.*
+backend/.env
+frontend/.env
+backend/dist
+frontend/node_modules
+frontend/dist
+pnpm-lock.yaml
+yarn.lock
+.DS_Store
+.idea
+.vscode
