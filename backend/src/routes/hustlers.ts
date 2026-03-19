@@ -57,12 +57,9 @@ router.get('/', authMiddleware(['FACILITATOR', 'ADMIN']), async (req: Authentica
       : 'PENDING';
   const status = normalizedStatus as ApplicationStatus;
 
-  const communityParam = req.query.communityId;
-  const communityId = Array.isArray(communityParam)
-    ? communityParam.find((value): value is string => typeof value === 'string')
-    : typeof communityParam === 'string'
-      ? communityParam
-      : undefined;
+  const communityId = (Array.isArray(req.query.communityId)
+    ? req.query.communityId[0]
+    : req.query.communityId ?? undefined) as string | undefined;
 
   const applications = await prisma.hustlerApplication.findMany({
     where: {
@@ -86,12 +83,18 @@ router.patch('/:id/decision', authMiddleware(['FACILITATOR', 'ADMIN']), async (r
     return res.status(400).json({ errors: parse.error.flatten() });
   }
 
-  const nextStatus = parse.data.status as ApplicationStatus;
+  const statusFromBody = Object.values(ApplicationStatus).includes(req.body.status as ApplicationStatus)
+    ? (req.body.status as ApplicationStatus)
+    : undefined;
+
+  if (!statusFromBody) {
+    return res.status(400).json({ message: 'Invalid status value' });
+  }
 
   const application = await prisma.hustlerApplication.update({
     where: { id: req.params.id },
     data: {
-      status: nextStatus,
+      status: statusFromBody,
       facilitatorNotes: parse.data.facilitatorNotes,
       facilitatorId: req.user?.id,
       decidedAt: new Date()
@@ -99,7 +102,7 @@ router.patch('/:id/decision', authMiddleware(['FACILITATOR', 'ADMIN']), async (r
     include: { community: true }
   });
 
-  if (nextStatus === 'APPROVED' && application.communityId) {
+  if (statusFromBody === 'APPROVED' && application.communityId) {
     await prisma.businessProfile.upsert({
       where: { applicationId: application.id },
       update: {
