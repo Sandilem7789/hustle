@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
+import { ApplicationStatus } from '@prisma/client';
 
 const router = Router();
 
@@ -49,9 +50,21 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/', authMiddleware(['FACILITATOR', 'ADMIN']), async (req: AuthenticatedRequest, res) => {
-  const status = (req.query.status as string)?.toUpperCase() ?? 'PENDING';
+  const rawStatus = (req.query.status as string)?.toUpperCase();
+  const allowedStatuses: ApplicationStatus[] = ['PENDING', 'APPROVED', 'REJECTED'];
+  const status = allowedStatuses.includes(rawStatus as ApplicationStatus)
+    ? (rawStatus as ApplicationStatus)
+    : 'PENDING';
+
+  const communityId = Array.isArray(req.query.communityId)
+    ? req.query.communityId[0]
+    : (req.query.communityId as string | undefined);
+
   const applications = await prisma.hustlerApplication.findMany({
-    where: { status },
+    where: {
+      status,
+      communityId: communityId ?? undefined
+    },
     orderBy: { submittedAt: 'desc' },
     include: { community: true }
   });
@@ -69,10 +82,12 @@ router.patch('/:id/decision', authMiddleware(['FACILITATOR', 'ADMIN']), async (r
     return res.status(400).json({ errors: parse.error.flatten() });
   }
 
+  const nextStatus = parse.data.status as ApplicationStatus;
+
   const application = await prisma.hustlerApplication.update({
     where: { id: req.params.id },
     data: {
-      status: parse.data.status,
+      status: nextStatus,
       facilitatorNotes: parse.data.facilitatorNotes,
       facilitatorId: req.user?.id,
       decidedAt: new Date()
@@ -80,7 +95,7 @@ router.patch('/:id/decision', authMiddleware(['FACILITATOR', 'ADMIN']), async (r
     include: { community: true }
   });
 
-  if (parse.data.status === 'APPROVED' && application.communityId) {
+  if (nextStatus === 'APPROVED' && application.communityId) {
     await prisma.businessProfile.upsert({
       where: { applicationId: application.id },
       update: {
