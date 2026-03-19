@@ -51,14 +51,18 @@ router.post('/', async (req, res) => {
 
 router.get('/', authMiddleware(['FACILITATOR', 'ADMIN']), async (req: AuthenticatedRequest, res) => {
   const rawStatus = (req.query.status as string)?.toUpperCase();
-  const allowedStatuses: ApplicationStatus[] = ['PENDING', 'APPROVED', 'REJECTED'];
-  const status: ApplicationStatus = allowedStatuses.includes(rawStatus as ApplicationStatus)
-    ? (rawStatus as ApplicationStatus)
-    : 'PENDING';
+  const normalizedStatus =
+    rawStatus === 'APPROVED' || rawStatus === 'REJECTED' || rawStatus === 'PENDING'
+      ? rawStatus
+      : 'PENDING';
+  const status = normalizedStatus as ApplicationStatus;
 
-  const communityId: string | undefined = Array.isArray(req.query.communityId)
-    ? req.query.communityId[0]
-    : (req.query.communityId as string | undefined);
+  const communityParam = req.query.communityId;
+  const communityId = Array.isArray(communityParam)
+    ? communityParam.find((value): value is string => typeof value === 'string')
+    : typeof communityParam === 'string'
+      ? communityParam
+      : undefined;
 
   const applications = await prisma.hustlerApplication.findMany({
     where: {
