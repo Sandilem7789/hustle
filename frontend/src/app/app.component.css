@@ -1,0 +1,16 @@
+.layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.hero {
+  background: #0f172a;
+  color: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+}

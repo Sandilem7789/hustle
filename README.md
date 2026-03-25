@@ -1,103 +1,83 @@
-# Hustle Economy
+# Hustle Economy (Spring Boot + Angular)
 
-Full-stack MVP for onboarding hustlers across KwaZulu-Natal, routing them through facilitator verification, and exposing approved businesses through community hubs + marketplace listings.
+Full-stack MVP for onboarding hustlers across KwaZulu-Natal, routing applications through facilitator verification, and showcasing approved hustlers inside community hubs.
 
 ## Stack Overview
 
-| Layer      | Tech                                                          |
-|------------|---------------------------------------------------------------|
-| Backend    | Node.js + Express + Prisma (PostgreSQL)                       |
-| Frontend   | React + Vite (TypeScript)                                     |
-| Auth       | Simple JWT-based login for hustlers & facilitators            |
-| Database   | PostgreSQL (Docker compose included)                          |
-| Tooling    | Prisma migrations + seed script, Dockerfile for API container |
+| Layer    | Tech                                                   |
+|----------|--------------------------------------------------------|
+| Backend  | Java 21 · Spring Boot 3 · Spring Data JPA · PostgreSQL |
+| Frontend | Angular 18 · Tailwind CSS                              |
+| Infra    | Docker Compose (Postgres + API + Angular static site)  |
 
-## Getting Started
+## Local Development
 
-### 1. Clone & install
+### Prerequisites
+- Docker + Docker Compose
+- Node 20+ (only if you want to run Angular outside Docker)
+- Java 21 (only if you want to run Spring Boot outside Docker)
+
+### 1. Environment configuration
+`backend/src/main/resources/application.properties` already reads the DB connection details from environment variables. When running locally without Docker, export:
+
 ```bash
-# backend
-cd backend
-cp .env.example .env
-npm install
-npm run prisma:generate
-
-# frontend
-cd ../frontend
-cp .env.example .env
-npm install
+export DATABASE_URL=jdbc:postgresql://localhost:5432/hustle
+export POSTGRES_USER=postgres
+export POSTGRES_PASSWORD=postgres
+export PORT=8080
 ```
 
-### 2. Launch Postgres + API
+### 2. Run everything with Docker Compose
 ```bash
 # from repo root
-cp backend/.env.example backend/.env  # update secrets as needed
 docker compose up --build
 ```
-This exposes:
-- Postgres on `localhost:5432`
-- API on `http://localhost:4000`
-- Health check: `GET /health`
+Services exposed:
+- API → http://localhost:8080
+- Angular UI → http://localhost:4173
+- Postgres → localhost:5432 (user/password `postgres`)
 
-### 3. Prisma migrate & seed
-With Docker (or local Postgres) running:
+### 3. Running services manually (optional)
+**Backend**
 ```bash
 cd backend
-npm run prisma:migrate
-npm run seed
+./mvnw spring-boot:run  # or `mvn spring-boot:run` if Maven is installed
 ```
-The seed inserts starter communities (KwaNgwenya, Mhlekazi, Mkuze) pulled from the Hustle Economy datasets.
 
-### 4. Frontend dev server
+**Frontend**
 ```bash
-cd ../frontend
-npm run dev
+cd frontend
+npm install
+npm start  # Angular dev server on http://localhost:4200
 ```
-The Vite dev server proxies requests directly to the API base URL specified in `.env` (defaults to `http://localhost:4000`).
 
-## Core Flows Implemented
-
-### Hustler registration
-- `/api/hustlers` accepts the full application payload (identity, business story, target customers, operating area, optional coordinates).
-- Community can be picked from an existing `communityId` or created on the fly via `communityName`.
-- Applications start with `PENDING` status until a facilitator reviews them.
-
-### Facilitator verification
-- `/api/hustlers?status=PENDING` lists queued applications (protected by JWT, roles `FACILITATOR` or `ADMIN`).
-- `/api/hustlers/:id/decision` toggles `APPROVED/REJECTED`, stores facilitator notes, and promotes approved hustlers into `BusinessProfile` rows for marketplace visibility.
-
-### Marketplace / community hubs
-- `/api/communities` lists hubs plus counts.
-- `/api/communities/:id/hustlers` returns approved hustlers, including their product catalogues.
-- `/api/products` allows hustlers to add products/services against their business profile (role-based guard ensures owners can only edit their own listings).
-
-### Authentication
-- `/api/auth/register` handles hustler/facilitator onboarding (name, contact info, password) and returns a JWT.
-- `/api/auth/login` issues JWTs for subsequent facilitator approvals or secure product management.
+## API Highlights
+- `POST /api/hustlers` – submit a hustler application (personal + business details + optional coordinates).
+- `GET /api/hustlers?status=PENDING` – list applications by status; accepts optional `communityId` filter.
+- `PATCH /api/hustlers/{id}/decision` – facilitator approves or rejects and promotes approved hustlers to business profiles.
+- `GET /api/communities` – list available communities.
+- `GET /api/communities/{id}/hustlers` – list approved hustlers in a community.
+- `POST /api/products` / `GET /api/products` – manage marketplace listings (scaffolded for Phase 2 payments/logistics).
 
 ## Frontend Screens
-1. **Hero** – programme context / CTA.
-2. **Registration Form** – full multi-field form covering story, mission, target customers, and coordinates.
-3. **Facilitator Queue** – paste JWT to fetch/approve pending applications.
-4. **Community Hubs** – select a community to browse approved hustlers + sample product lists.
+1. **Hero** – Context, CTA, and summary of the Hustle Economy programme.
+2. **Registration Form** – Large reactive form covering business story, mission, target customers, and operating area.
+3. **Facilitator Queue** – Inline status filter + approve/reject actions hitting the Spring API.
+4. **Community Hubs** – Horizontal selector of communities showing the approved hustlers per hub.
 
-All forms call the corresponding API endpoints and surface clear success/error states.
+## Docker Images
+- `backend/Dockerfile` – multi-stage build (Maven builder → Temurin JRE runtime).
+- `frontend/Dockerfile` – Node builder → Nginx static container.
 
-## Roadmap Hooks
-- Payment hooks: `Product` model + future `PaymentIntent` table placeholder ready for mobile money/eWallet integration.
-- Training / storytelling: extend `BusinessProfile` with media fields or link to a new `Story` table.
-- Logistics: add `DeliveryOption` table referencing communities.
+## Testing / Next Steps
+- Finish UI polish + validation states across Angular components.
+- Add authentication (JWT) once facilitator accounts are required.
+- Hook up products/services catalogues to actual media uploads + payments (Phase 2).
+- Extend analytics dashboards for facilitators/programme managers.
 
-## Environment & Secrets
-- `backend/.env` → `DATABASE_URL`, `JWT_SECRET`, `PORT`.
-- `frontend/.env` → `VITE_API_BASE_URL` for cross-env deployments.
-- GitHub token provided by Mesh Audio is required for pushing changes (do **not** commit it).
+## Deployment Notes
+1. `git pull` on the VPS.
+2. `docker compose build --no-cache && docker compose up -d`.
+3. API available on port 8080, Angular site proxied on 4173 (adjust DNS/reverse proxy as needed).
 
-## Data Sensitivity
-The attached facilitator sheets, monthly reports, and individual applications contain personal identifiers. They were used only to shape the schema (vision/mission/target customer fields, community names) and are not stored in the repository. Treat any future imports from those files as confidential PII.
-
-## Next Steps
-- Wire facilitator login to UI so tokens are stored securely (e.g., localStorage + logout flow).
-- Add media uploads for product photos (S3 or Supabase storage).
-- Layer in analytics dashboards for programme managers (insights per community, approval rates, etc.).
-- Implement payments + delivery flow (Phase 2) and training/storytelling modules (Phase 4).
+Treat the facilitator spreadsheets and application PDFs as sensitive data—none of the PII was checked into the repo, but keep future imports confidential.

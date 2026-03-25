@@ -1,13 +1,14 @@
-FROM node:20-alpine AS base
+# Build stage
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --production
-COPY . ./
-RUN npm run build
+COPY pom.xml .
+COPY src ./src
+RUN mvn -q -DskipTests package
 
-FROM node:20-alpine AS runner
+# Runtime stage
+FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=base /app .
-ENV NODE_ENV=production
-EXPOSE 4000
-CMD ["node", "dist/server.js"]
+COPY --from=builder /app/target/hustle-backend-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENV JAVA_OPTS=""
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

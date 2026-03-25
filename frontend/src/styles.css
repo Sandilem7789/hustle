@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: linear-gradient(120deg, #fef3c7, #ecfccb, #cffafe);
+  min-height: 100vh;
+}
+
+p {
+  margin: 0;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  color: #bfdbfe;
+}
+
+.muted {
+  color: #475569;
+}
