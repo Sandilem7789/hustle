@@ -3,7 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-const fallbackBaseUrl = (() => {
+const resolvedBaseUrl = (() => {
+  if (environment.apiBaseUrl && environment.apiBaseUrl.length) {
+    return environment.apiBaseUrl;
+  }
   if (typeof window === 'undefined') {
     return 'http://localhost:8080';
   }
@@ -14,7 +17,7 @@ const fallbackBaseUrl = (() => {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = environment.apiBaseUrl?.length ? environment.apiBaseUrl : fallbackBaseUrl;
+  private readonly baseUrl = resolvedBaseUrl;
 
   constructor(private http: HttpClient) {}
 
