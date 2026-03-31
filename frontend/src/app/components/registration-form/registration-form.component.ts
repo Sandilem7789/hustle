@@ -39,12 +39,12 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
           <input type="tel" formControlName="phone" placeholder="e.g. 0821234567" />
         </label>
         <label>
-          <span>Community ID (optional)</span>
-          <input formControlName="communityId" />
+          <span>ID no. *</span>
+          <input formControlName="idNumber" placeholder="SA Identity Document number" />
         </label>
         <label>
-          <span>Community Name</span>
-          <input formControlName="communityName" />
+          <span>Community Name (optional)</span>
+          <input formControlName="communityName" placeholder="e.g. Umlazi" />
         </label>
         <label class="span-2">
           <span>Business name *</span>
@@ -52,7 +52,12 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
         </label>
         <label>
           <span>Business type *</span>
-          <input formControlName="businessType" />
+          <select formControlName="businessType">
+            <option value="" disabled>Select type…</option>
+            <option value="Service">Service</option>
+            <option value="Product">Product</option>
+            <option value="Service & Products">Service &amp; Products</option>
+          </select>
         </label>
         <label class="span-2">
           <span>Short description *</span>
@@ -136,7 +141,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     }
     label.span-2 { grid-column: span 2; }
     @media (max-width: 600px) { label.span-2 { grid-column: span 1; } }
-    input, textarea {
+    input, textarea, select {
       border-radius: 0.8rem;
       border: 1px solid #cbd5e1;
       padding: 0.65rem 0.9rem;
@@ -144,8 +149,9 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       font-family: inherit;
       width: 100%;
       box-sizing: border-box;
+      background: white;
     }
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: #0ea5e9;
       box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
@@ -197,7 +203,7 @@ export class RegistrationFormComponent {
     lastName: ['', Validators.required],
     email: [''],
     phone: ['', Validators.required],
-    communityId: [''],
+    idNumber: ['', Validators.required],
     communityName: [''],
     businessName: ['', Validators.required],
     businessType: ['', Validators.required],

@@ -30,6 +30,7 @@ public class HustlerApplication {
 
     private String email;
     private String phone;
+    private String idNumber;
     private String passwordHash;
 
     @ManyToOne(fetch = FetchType.LAZY)

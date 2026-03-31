@@ -20,6 +20,7 @@ public class HustlerApplicationMapper {
                 .lastName(application.getLastName())
                 .email(application.getEmail())
                 .phone(application.getPhone())
+                .idNumber(application.getIdNumber())
                 .community(toCommunityResponse(application.getCommunity()))
                 .businessName(application.getBusinessName())
                 .businessType(application.getBusinessType())

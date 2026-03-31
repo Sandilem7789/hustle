@@ -38,6 +38,7 @@ public class HustlerApplicationService {
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
+                .idNumber(request.getIdNumber())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .community(community)
                 .businessName(request.getBusinessName())

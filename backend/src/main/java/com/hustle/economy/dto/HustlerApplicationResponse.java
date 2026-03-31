@@ -15,6 +15,7 @@ public class HustlerApplicationResponse {
     String lastName;
     String email;
     String phone;
+    String idNumber;
     CommunityResponse community;
     String businessName;
     String businessType;
