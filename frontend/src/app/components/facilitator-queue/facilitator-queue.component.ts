@@ -40,7 +40,13 @@ import { ApiService, HustlerApplication } from '../../services/api.service';
             <button class="approve" (click)="decide(app, 'APPROVED')">Approve</button>
             <button class="reject" (click)="decide(app, 'REJECTED')">Reject</button>
           </div>
-          <p *ngIf="app.status !== 'PENDING'" class="muted">Already {{ app.status.toLowerCase() }}.</p>
+          <div class="actions" *ngIf="app.status === 'REJECTED'">
+            <span class="badge rejected">Rejected</span>
+            <button class="approve" (click)="decide(app, 'APPROVED')">Reconsider &amp; Approve</button>
+          </div>
+          <div *ngIf="app.status === 'APPROVED'" class="badge-wrap">
+            <span class="badge approved">Approved</span>
+          </div>
         </article>
       </div>
       <ng-template #empty>
@@ -88,6 +94,16 @@ import { ApiService, HustlerApplication } from '../../services/api.service';
       color: white;
       cursor: pointer;
     }
+    .badge-wrap { margin-top: 1rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .badge.approved { background: #dcfce7; color: #16a34a; }
+    .badge.rejected { background: #fee2e2; color: #dc2626; }
     .reject {
       border: none;
       padding: 0.5rem 1rem;
