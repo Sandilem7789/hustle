@@ -67,7 +67,7 @@ public class HustlerApplicationService {
 
     @Transactional
     public HustlerApplication decide(UUID applicationId, HustlerDecisionRequest request) {
-        HustlerApplication application = applicationRepository.findById(applicationId)
+        HustlerApplication application = applicationRepository.findByIdFetched(applicationId)
                 .orElseThrow(() -> new EntityNotFoundException("Application not found"));
 
         ApplicationStatus nextStatus = parseStatus(request.getStatus());

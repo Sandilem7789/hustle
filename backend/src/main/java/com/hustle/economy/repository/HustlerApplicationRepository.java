@@ -18,4 +18,7 @@ public interface HustlerApplicationRepository extends JpaRepository<HustlerAppli
     List<HustlerApplication> findByStatusAndCommunity_IdOrderBySubmittedAtDesc(@Param("status") ApplicationStatus status, @Param("communityId") UUID communityId);
 
     Optional<HustlerApplication> findByPhone(String phone);
+
+    @Query("SELECT a FROM HustlerApplication a LEFT JOIN FETCH a.community WHERE a.id = :id")
+    Optional<HustlerApplication> findByIdFetched(@Param("id") UUID id);
 }
