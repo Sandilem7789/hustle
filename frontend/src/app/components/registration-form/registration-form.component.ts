@@ -1,7 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
+
+function passwordMatch(control: AbstractControl): ValidationErrors | null {
+  const pw = control.get('password')?.value;
+  const confirm = control.get('confirmPassword')?.value;
+  return pw && confirm && pw !== confirm ? { passwordMismatch: true } : null;
+}
 
 @Component({
   selector: 'app-registration-form',
@@ -17,20 +23,20 @@ import { ApiService } from '../../services/api.service';
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="grid">
         <label>
-          <span>First name</span>
-          <input formControlName="firstName" required />
+          <span>First name *</span>
+          <input formControlName="firstName" />
         </label>
         <label>
-          <span>Last name</span>
-          <input formControlName="lastName" required />
+          <span>Last name *</span>
+          <input formControlName="lastName" />
         </label>
         <label>
           <span>Email</span>
           <input type="email" formControlName="email" />
         </label>
         <label>
-          <span>Phone</span>
-          <input formControlName="phone" />
+          <span>Phone number *</span>
+          <input type="tel" formControlName="phone" placeholder="e.g. 0821234567" />
         </label>
         <label>
           <span>Community ID (optional)</span>
@@ -41,31 +47,31 @@ import { ApiService } from '../../services/api.service';
           <input formControlName="communityName" />
         </label>
         <label class="span-2">
-          <span>Business name</span>
-          <input formControlName="businessName" required />
+          <span>Business name *</span>
+          <input formControlName="businessName" />
         </label>
         <label>
-          <span>Business type</span>
-          <input formControlName="businessType" required />
+          <span>Business type *</span>
+          <input formControlName="businessType" />
         </label>
         <label class="span-2">
-          <span>Short description</span>
+          <span>Short description *</span>
           <textarea rows="3" formControlName="description"></textarea>
         </label>
         <label class="span-2">
           <span>Vision</span>
-          <textarea rows="3" formControlName="vision"></textarea>
+          <textarea rows="2" formControlName="vision"></textarea>
         </label>
         <label class="span-2">
           <span>Mission / support needed</span>
-          <textarea rows="3" formControlName="mission"></textarea>
+          <textarea rows="2" formControlName="mission"></textarea>
         </label>
         <label class="span-2">
-          <span>Target customers</span>
-          <textarea rows="3" formControlName="targetCustomers"></textarea>
+          <span>Target customers *</span>
+          <textarea rows="2" formControlName="targetCustomers"></textarea>
         </label>
         <label>
-          <span>Operating area</span>
+          <span>Operating area *</span>
           <input formControlName="operatingArea" />
         </label>
         <label>
@@ -77,10 +83,28 @@ import { ApiService } from '../../services/api.service';
           <input type="number" step="0.0001" formControlName="longitude" />
         </label>
 
-        <button class="primary" type="submit" [disabled]="loading() || form.invalid">{{ loading() ? 'Submitting…' : 'Submit application' }}</button>
+        <div class="divider span-2">
+          <span>Account access</span>
+        </div>
+
+        <label>
+          <span>Password * <small>(min 6 characters)</small></span>
+          <input type="password" formControlName="password" />
+        </label>
+        <label>
+          <span>Confirm password *</span>
+          <input type="password" formControlName="confirmPassword" />
+          <small class="err" *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched">
+            Passwords do not match
+          </small>
+        </label>
+
+        <button class="primary span-2" type="submit" [disabled]="loading() || form.invalid">
+          {{ loading() ? 'Submitting…' : 'Submit application' }}
+        </button>
       </form>
 
-      <p *ngIf="statusMessage()" [class.success]="statusKind() === 'success'" [class.error]="statusKind() === 'error'">
+      <p *ngIf="statusMessage()" [class.success]="statusKind() === 'success'" [class.error]="statusKind() === 'error'" class="status-msg">
         {{ statusMessage() }}
       </p>
     </section>
@@ -94,9 +118,14 @@ import { ApiService } from '../../services/api.service';
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: 1rem;
       margin-top: 1.5rem;
+    }
+    @media (max-width: 600px) {
+      .card { padding: 1.25rem; border-radius: 1rem; }
+      .grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: span 1; }
     }
     label {
       display: flex;
@@ -105,35 +134,58 @@ import { ApiService } from '../../services/api.service';
       font-size: 0.9rem;
       color: #475569;
     }
-    label.span-2 {
-      grid-column: span 2;
-    }
-    input,
-    textarea {
+    label.span-2 { grid-column: span 2; }
+    @media (max-width: 600px) { label.span-2 { grid-column: span 1; } }
+    input, textarea {
       border-radius: 0.8rem;
-      border: 1px solid #cbd5f5;
+      border: 1px solid #cbd5e1;
       padding: 0.65rem 0.9rem;
       font-size: 1rem;
       font-family: inherit;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      margin-top: 0.5rem;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
     }
     .primary {
-      grid-column: span 2;
       border: none;
       border-radius: 999px;
-      padding: 0.85rem 1.5rem;
+      padding: 0.9rem 1.5rem;
       font-size: 1rem;
+      font-weight: 700;
       background: linear-gradient(120deg, #0ea5e9, #22c55e);
       color: white;
       cursor: pointer;
+      transition: opacity 0.2s;
     }
-    .success {
-      color: #16a34a;
-      margin-top: 1rem;
-    }
-    .error {
-      color: #dc2626;
-      margin-top: 1rem;
-    }
+    .primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .primary.span-2 { grid-column: span 2; }
+    @media (max-width: 600px) { .primary.span-2 { grid-column: span 1; } }
+    .err { color: #dc2626; font-size: 0.8rem; }
+    .status-msg { margin-top: 1rem; font-weight: 600; }
+    .success { color: #16a34a; }
+    .error { color: #dc2626; }
+    small { color: #94a3b8; }
   `
 })
 export class RegistrationFormComponent {
@@ -144,19 +196,21 @@ export class RegistrationFormComponent {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     email: [''],
-    phone: [''],
+    phone: ['', Validators.required],
     communityId: [''],
     communityName: [''],
     businessName: ['', Validators.required],
     businessType: ['', Validators.required],
-    description: ['', Validators.required],
+    description: ['', [Validators.required, Validators.minLength(10)]],
     vision: ['', Validators.required],
     mission: ['', Validators.required],
     targetCustomers: ['', Validators.required],
     operatingArea: ['', Validators.required],
-    latitude: [''],
-    longitude: ['']
-  });
+    latitude: [null as number | null],
+    longitude: [null as number | null],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    confirmPassword: ['', Validators.required],
+  }, { validators: passwordMatch });
 
   loading = signal(false);
   statusMessage = signal('');
@@ -167,20 +221,20 @@ export class RegistrationFormComponent {
       this.form.markAllAsTouched();
       return;
     }
-
     this.loading.set(true);
     this.statusMessage.set('');
-    this.api.createHustlerApplication(this.form.value).subscribe({
+    const { confirmPassword, ...payload } = this.form.value;
+    this.api.createHustlerApplication(payload as Record<string, unknown>).subscribe({
       next: () => {
         this.loading.set(false);
         this.statusKind.set('success');
-        this.statusMessage.set('Application submitted! A facilitator will review it.');
+        this.statusMessage.set('Application submitted! A facilitator will review it soon.');
         this.form.reset();
       },
       error: (err) => {
         this.loading.set(false);
         this.statusKind.set('error');
-        this.statusMessage.set(err?.error?.message || 'Something went wrong while submitting.');
+        this.statusMessage.set(err?.error?.message || 'Something went wrong. Please try again.');
       }
     });
   }

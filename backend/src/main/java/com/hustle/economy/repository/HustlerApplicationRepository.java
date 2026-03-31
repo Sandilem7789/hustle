@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface HustlerApplicationRepository extends JpaRepository<HustlerApplication, UUID> {
@@ -15,4 +16,6 @@ public interface HustlerApplicationRepository extends JpaRepository<HustlerAppli
 
     @Query("SELECT a FROM HustlerApplication a LEFT JOIN FETCH a.community WHERE a.status = :status AND a.community.id = :communityId ORDER BY a.submittedAt DESC")
     List<HustlerApplication> findByStatusAndCommunity_IdOrderBySubmittedAtDesc(@Param("status") ApplicationStatus status, @Param("communityId") UUID communityId);
+
+    Optional<HustlerApplication> findByPhone(String phone);
 }

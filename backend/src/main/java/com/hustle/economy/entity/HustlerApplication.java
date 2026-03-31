@@ -30,6 +30,7 @@ public class HustlerApplication {
 
     private String email;
     private String phone;
+    private String passwordHash;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id")

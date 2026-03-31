@@ -23,6 +23,8 @@ services:
       PORT: 8080
     ports:
       - '8080:8080'
+    volumes:
+      - uploads_data:/app/uploads
 
   frontend:
     build: ./frontend
@@ -33,3 +35,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:

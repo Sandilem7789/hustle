@@ -26,6 +26,8 @@ public class HustlerApplicationService {
     private final HustlerApplicationRepository applicationRepository;
     private final CommunityRepository communityRepository;
     private final BusinessProfileRepository businessProfileRepository;
+    private final org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder =
+            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
 
     @Transactional
     public HustlerApplication createApplication(HustlerApplicationRequest request) {
@@ -36,6 +38,7 @@ public class HustlerApplicationService {
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .community(community)
                 .businessName(request.getBusinessName())
                 .businessType(request.getBusinessType())

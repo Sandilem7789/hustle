@@ -7,7 +7,14 @@
     </div>
   </div>
   <nav>
-    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Register</a>
+    <ng-container *ngIf="!auth.isLoggedIn()">
+      <a routerLink="/register" routerLinkActive="active">Register</a>
+    </ng-container>
+    <ng-container *ngIf="auth.isLoggedIn()">
+      <a routerLink="/dashboard" routerLinkActive="active">My Dashboard</a>
+      <span class="user-name">{{ auth.state()?.firstName }}</span>
+      <button class="logout-btn" (click)="auth.logout()">Logout</button>
+    </ng-container>
     <a routerLink="/facilitator" routerLinkActive="active">Facilitator</a>
     <a routerLink="/marketplace" routerLinkActive="active">Marketplace</a>
   </nav>

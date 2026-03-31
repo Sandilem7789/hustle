@@ -12,8 +12,6 @@ import java.math.BigDecimal;
 @Setter
 public class ProductRequest {
     @NotBlank
-    private String businessId;
-    @NotBlank
     private String name;
     @NotBlank
     private String description;
