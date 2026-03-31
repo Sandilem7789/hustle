@@ -36,88 +36,61 @@ The Hustle backend is functionally running on local development environment with
 
 ---
 
-## 🔴 Known Issues & Blockers
+## ✅ Recently Resolved Issues
 
-### Issue #1: Lazy-Loading Serialization Error (CRITICAL - Blocking Facilitator Dashboard)
-**Status**: Identified, not yet fixed
+### Issue #1: Lazy-Loading Serialization Error (FIXED - 2026-03-31)
+**Status**: ✅ Fixed and deployed
 
-**Affected Endpoints**:
-- `GET /api/hustlers` - Returns 500 Internal Server Error
-- `GET /api/hustlers?status=PENDING` - Returns 500 Internal Server Error
+**Affected Endpoints** (previously):
+- `GET /api/hustlers` - Was returning 500 Internal Server Error
+- `GET /api/hustlers?status=PENDING` - Was returning 500 Internal Server Error
 
 **Root Cause**:
 - `HustlerApplication` entity has lazy-loaded `@ManyToOne` relationship to `Community`
-- When Jackson tries to serialize the API response, Hibernate proxies cannot be serialized to JSON
-- Error manifests when facilitator dashboard attempts to load pending applications
+- The mapper accessed `community.name` after the `@Transactional` service method had already closed the Hibernate session, causing `LazyInitializationException`
 
-**Impact**: 
-- ❌ Facilitator cannot view pending hustler applications
-- ❌ Facilitator dashboard UI has no data to display
-- ✅ (Data itself is correctly saved in database and queryable via SQL)
+**Fix Applied**:
+- Added `LEFT JOIN FETCH a.community` to both JPQL queries in `HustlerApplicationRepository`
+- Community is now loaded eagerly within the same query/session, eliminating the error
 
-**Fix Options** (in order of recommendation):
-1. **DTO Approach** (Recommended for API layer)
-   - Create `HustlerApplicationDTO` with flattened Community data
-   - Use Spring MapStruct or manual mapping to convert entities → DTOs
-   - Return DTOs instead of entities from controller
-   - Pro: Clean API contracts, no framework coupling
-   - Effort: ~2-3 hours including testing
-
-2. **Hibernate Configuration**
-   - Add `@JsonIgnore` or `@Transient` to lazy-loaded `Community` field
-   - Or configure Jackson to handle Hibernate proxies
-   - Pro: Quick fix
-   - Con: Loses Community data in API response; may not be acceptable for facilitators
-
-3. **Fetch Strategy Tuning**
-   - Change `@ManyToOne(fetch = FetchType.LAZY)` → `FetchType.EAGER` on specific endpoints
-   - Use Spring Data JPA `@EntityGraph` for query-level optimization
-   - Pro: Minimal code changes
-   - Con: Performance impact if facilitator queries large datasets
+**Files Changed**:
+- `backend/src/main/java/com/hustle/economy/repository/HustlerApplicationRepository.java`
 
 ---
 
-### Issue #2: Java 25 Compiler Compatibility (SECONDARY - Blocking Build)
-**Status**: In progress, blockedby Java 25 + Lombok interaction
-
-**Symptoms**:
-```
-[ERROR] Fatal error compiling: java.lang.ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag :: UNKNOWN
-[WARNING] sun.misc.Unsafe::objectFieldOffset has been called by lombok.permit.Permit
-```
+### Issue #2: Java 25 Compiler Compatibility (RESOLVED - 2026-03-31)
+**Status**: ✅ Resolved by downgrading to Java 21
 
 **Root Cause**:
-- Java 25 restricted access to internal `sun.misc.Unsafe` API
-- Lombok's annotation processor relies on unsafe reflection to generate getters/setters
-- maven-compiler-plugin 3.11.0 (current) may not fully support Java 25
+- The Maven Docker image (`maven:3.9.6-eclipse-temurin-21`) only supports up to Java 21
+- `pom.xml` had `<java.version>25</java.version>` which caused a build failure
 
-**Current Status**:
-- Tried: Lombok 1.18.32, annotation processor path configuration
-- Next attempts needed: 
-  - Add JVM arguments to allow Lombok access: `-J--add-opens=java.base/sun.misc=ALL-UNLIMITED`
-  - Or: Downgrade to Java 21 (proven working) and defer Java 25 upgrade
-  - Or: Use alternative to Lombok that doesn't rely on unsafe APIs
+**Fix Applied**:
+- Reverted `<java.version>` from `25` → `21` in `pom.xml`
+- Java 25 upgrade deferred until tooling matures (Q2/Q3 2026)
 
-**Decision Point**:
-- **Quick Path**: Revert to Java 21, fix lazy-loading issue first, do Java 25 upgrade later
-- **Persistence Path**: Continue troubleshooting Java 25 + Lombok compatibility (adds 1-2 hours debug time)
+**Files Changed**:
+- `backend/pom.xml`
 
 ---
 
 ## 📋 Current Project State
 
 ### What Works Right Now
-✅ Docker Compose with all services running  
-✅ Backend starts and connects to database  
-✅ Hustler applications can be submitted from frontend  
-✅ Data persists in Postgres  
-✅ CORS configuration in place  
-✅ Maven builds successfully with Java 21  
+✅ Docker Compose with all services running
+✅ Backend starts and connects to database
+✅ Hustler applications can be submitted from frontend
+✅ Data persists in Postgres
+✅ CORS configuration in place
+✅ Maven builds successfully with Java 21
+✅ Facilitator API endpoints return data correctly
+✅ Facilitator dashboard displays pending applications
+✅ Approve / Reject decisions work end-to-end
 
 ### What Doesn't Work
-❌ Facilitator API endpoints (lazy-loading bug)  
-❌ Facilitator dashboard UI (no data returned)  
-❌ Java 25 compilation (Lombok incompatibility)
+~~❌ Facilitator API endpoints (lazy-loading bug)~~ ✅ Fixed
+~~❌ Facilitator dashboard UI (no data returned)~~ ✅ Fixed
+~~❌ Java 25 compilation (Lombok incompatibility)~~ ✅ Resolved (pinned to Java 21)
 
 ### Test Results
 - **Compilation**: ✅ Passes with Java 21 (baseline before upgrade attempt)
@@ -128,32 +101,13 @@ The Hustle backend is functionally running on local development environment with
 
 ## 🔧 Recommended Next Steps (Priority Order)
 
-### Phase 1: Restore Facilitator Functionality (HIGH PRIORITY)
-1. **Implement DTO-based API response** (Estimated: 2 hours)
-   - Create `HustlerApplicationDTO` with all fields facilitator needs
-   - Create `CommunityDTO` with flattened Community data
-   - Implement mapping service (or use MapStruct)
-   - Update `HustlerApplicationController.getApplications()` to return DTOs
-   - Test endpoints return valid JSON without errors
+### Phase 1: Facilitator Functionality (COMPLETE ✅)
+- ~~Implement DTO-based API response~~
+- ~~Fix lazy-loading on facilitator endpoints~~
+- ~~Verify facilitator dashboard displays applications~~
+- ~~Test approve/reject flow end-to-end~~
 
-2. **Verify facilitator dashboard displays data** (Estimated: 1 hour)
-   - Confirm frontend receives data from API
-   - Confirm angular components render application list
-   - Test status filtering works
-
-### Phase 2: Stabilize Java Version Strategy (MEDIUM PRIORITY)
-**Option A - Pragmatic Approach** (Recommended):
-   - Temporarily revert Java target to 21 in pom.xml
-   - Complete facilitator fixes with proven Java 21 setup
-   - Then evaluate Java 25 upgrade with more mature tooling (Q2 2026)
-   - Effort: 10 minutes | Risk: Low
-
-**Option B - Persist with Java 25**:
-   - Debug Lombok + Java 25 interaction further
-   - Consider replacing Lombok with native Java records (Java 16+ feature)
-   - Effort: 4-6 hours | Risk: Higher complexity, but future-proof
-
-### Phase 3: Testing & Hardening (LOW PRIORITY - Post-MVP)
+### Phase 2: Testing & Hardening (LOW PRIORITY - Post-MVP)
 - Write unit tests for service layer (HustlerApplicationService, etc.)
 - Write integration tests for API endpoints
 - Add error handling for edge cases
@@ -228,6 +182,6 @@ The Hustle backend is functionally running on local development environment with
 
 ---
 
-**Last Updated**: 2026-03-28 16:11 UTC+2  
-**Session ID**: 20260328133842 (Java upgrade tracking)  
-**Next Review**: After Phase 1 DTO implementation (~2 hours)
+**Last Updated**: 2026-03-31 UTC+2
+**Session ID**: 20260328133842 (Java upgrade tracking)
+**Next Review**: After Phase 2 testing & hardening
