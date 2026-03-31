@@ -1,8 +1,9 @@
 package com.hustle.economy.controller;
 
 import com.hustle.economy.dto.HustlerApplicationRequest;
+import com.hustle.economy.dto.HustlerApplicationResponse;
 import com.hustle.economy.dto.HustlerDecisionRequest;
-import com.hustle.economy.entity.HustlerApplication;
+import com.hustle.economy.mapper.HustlerApplicationMapper;
 import com.hustle.economy.service.HustlerApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,21 +19,24 @@ import java.util.UUID;
 public class HustlerApplicationController {
 
     private final HustlerApplicationService hustlerApplicationService;
+    private final HustlerApplicationMapper hustlerApplicationMapper;
 
     @PostMapping
-    public ResponseEntity<HustlerApplication> createApplication(@RequestBody @Valid HustlerApplicationRequest request) {
-        return ResponseEntity.ok(hustlerApplicationService.createApplication(request));
+    public ResponseEntity<HustlerApplicationResponse> createApplication(@RequestBody @Valid HustlerApplicationRequest request) {
+        return ResponseEntity.ok(hustlerApplicationMapper.toResponse(hustlerApplicationService.createApplication(request)));
     }
 
     @GetMapping
-    public ResponseEntity<List<HustlerApplication>> listApplications(@RequestParam(required = false) String status,
-                                                                    @RequestParam(required = false) String communityId) {
-        return ResponseEntity.ok(hustlerApplicationService.listApplications(status, communityId));
+    public ResponseEntity<List<HustlerApplicationResponse>> listApplications(@RequestParam(required = false) String status,
+                                                                            @RequestParam(required = false) String communityId) {
+        return ResponseEntity.ok(hustlerApplicationService.listApplications(status, communityId).stream()
+                .map(hustlerApplicationMapper::toResponse)
+                .toList());
     }
 
     @PatchMapping("/{id}/decision")
-    public ResponseEntity<HustlerApplication> decide(@PathVariable UUID id,
-                                                     @RequestBody @Valid HustlerDecisionRequest request) {
-        return ResponseEntity.ok(hustlerApplicationService.decide(id, request));
+    public ResponseEntity<HustlerApplicationResponse> decide(@PathVariable UUID id,
+                                                             @RequestBody @Valid HustlerDecisionRequest request) {
+        return ResponseEntity.ok(hustlerApplicationMapper.toResponse(hustlerApplicationService.decide(id, request)));
     }
 }

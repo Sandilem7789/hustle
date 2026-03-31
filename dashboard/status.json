@@ -1,0 +1,46 @@
+{
+  "bot": {
+    "name": "Mesh Audio Bot",
+    "status": "ACTIVE",
+    "location": "S.A. Data Center",
+    "uptimeHours": 126,
+    "powerLevel": 0.82,
+    "focusLevel": 0.64
+  },
+  "taskOverview": [
+    { "label": "Audio Sample Analysis", "state": "complete", "progress": 1.0 },
+    { "label": "Vocal Sample Analysis (Eleven Labs)", "state": "active", "progress": 0.73 },
+    { "label": "Vocal Synthesis (Eleven Labs)", "state": "queued", "progress": 0.0 }
+  ],
+  "activityLog": [
+    { "timestamp": "2026-03-30T17:10:12Z", "entry": "Finished facilitator DTO mapping." },
+    { "timestamp": "2026-03-30T16:45:03Z", "entry": "Queued marketplace route split." },
+    { "timestamp": "2026-03-30T15:21:55Z", "entry": "Reviewed Git pull request #24." }
+  ],
+  "communications": {
+    "channel": "Telegram",
+    "thread": "Mesh Audio ↔ Bot",
+    "messages": [
+      {
+        "sender": "Mesh Audio",
+        "avatar": "mesh",
+        "timestamp": "2026-03-30T19:35:00Z",
+        "text": "What are we focusing on today?"
+      },
+      {
+        "sender": "Mesh Audio Bot",
+        "avatar": "bot",
+        "timestamp": "2026-03-30T19:36:00Z",
+        "text": "Finishing the facilitator queue DTO fix."
+      }
+    ]
+  },
+  "voiceMode": {
+    "state": "LISTENING",
+    "prompt": "Press SPEAK to send a voice command.",
+    "levels": {
+      "inputLevel": 0.42,
+      "outputLevel": 0.63
+    }
+  }
+}

@@ -1,16 +1,41 @@
-.layout {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+.site-header {
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: rgba(15, 23, 42, 0.85);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
 }
 
-.hero {
-  background: #0f172a;
-  color: white;
-  border-radius: 1.5rem;
-  padding: 2rem;
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  font-size: 1.8rem;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+}
+
+nav a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+nav a.active {
+  color: #fbbf24;
+}
+
+.page-shell {
+  min-height: calc(100vh - 70px);
 }

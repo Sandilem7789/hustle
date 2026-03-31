@@ -1,12 +1,10 @@
 import { Component } from '@angular/core';
-import { RegistrationFormComponent } from './components/registration-form/registration-form.component';
-import { FacilitatorQueueComponent } from './components/facilitator-queue/facilitator-queue.component';
-import { CommunityHubComponent } from './components/community-hub/community-hub.component';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RegistrationFormComponent, FacilitatorQueueComponent, CommunityHubComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
