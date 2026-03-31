@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { ApiService } from '../../services/api.service';
+import { ApiService, Community } from '../../services/api.service';
 
 function passwordMatch(control: AbstractControl): ValidationErrors | null {
   const pw = control.get('password')?.value;
@@ -43,8 +43,11 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
           <input formControlName="idNumber" placeholder="SA Identity Document number" />
         </label>
         <label>
-          <span>Community Name (optional)</span>
-          <input formControlName="communityName" placeholder="e.g. Umlazi" />
+          <span>Community *</span>
+          <select formControlName="communityName">
+            <option value="" disabled>Select your community…</option>
+            <option *ngFor="let c of communities()" [value]="c.name">{{ c.name }}</option>
+          </select>
         </label>
         <label class="span-2">
           <span>Business name *</span>
@@ -194,9 +197,15 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     small { color: #94a3b8; }
   `
 })
-export class RegistrationFormComponent {
+export class RegistrationFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
+
+  communities = signal<Community[]>([]);
+
+  ngOnInit(): void {
+    this.api.listCommunities().subscribe(c => this.communities.set(c));
+  }
 
   form = this.fb.group({
     firstName: ['', Validators.required],
@@ -204,7 +213,7 @@ export class RegistrationFormComponent {
     email: [''],
     phone: ['', Validators.required],
     idNumber: ['', Validators.required],
-    communityName: [''],
+    communityName: ['', Validators.required],
     businessName: ['', Validators.required],
     businessType: ['', Validators.required],
     description: ['', [Validators.required, Validators.minLength(10)]],

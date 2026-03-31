@@ -1,171 +1,237 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService, ProductResponse } from '../../services/api.service';
+import { ApiService, ProductResponse, IncomeEntryResponse, IncomeSummary } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-hustler-dashboard-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <section class="layout">
+      <!-- HERO -->
       <header class="hero">
         <p class="eyebrow">Hustler Dashboard</p>
         <h1>{{ auth.state()?.businessName }}</h1>
-        <p style="color:rgba(255,255,255,0.7)">Manage your products and services in the marketplace.</p>
-        <p class="product-count" [class.near-limit]="products().length >= 35">
-          {{ products().length }} / 40 products
-        </p>
+        <p style="color:rgba(255,255,255,0.7)">Welcome back, {{ auth.state()?.firstName }}!</p>
+        <div class="chips">
+          <div class="chip">
+            <span class="chip-label">Today</span>
+            <span class="chip-val">R {{ (summary()?.today ?? 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="chip">
+            <span class="chip-label">This Week</span>
+            <span class="chip-val">R {{ (summary()?.weekToDate ?? 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="chip">
+            <span class="chip-label">This Month</span>
+            <span class="chip-val">R {{ (summary()?.monthToDate ?? 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="chip">
+            <span class="chip-label">Products</span>
+            <span class="chip-val">{{ products().length }} / 40</span>
+          </div>
+        </div>
       </header>
 
-      <!-- ADD PRODUCT FORM -->
-      <div class="card" *ngIf="products().length < 40">
-        <h2>Add a product or service</h2>
-        <form [formGroup]="productForm" (ngSubmit)="submitProduct()" class="product-grid">
-          <label class="span-2">
-            <span>Name *</span>
-            <input formControlName="name" placeholder="e.g. Handmade Bead Necklace" />
-          </label>
-          <label class="span-2">
-            <span>Description *</span>
-            <textarea rows="3" formControlName="description" placeholder="What is this product or service?"></textarea>
-          </label>
-          <label>
-            <span>Price (ZAR) *</span>
-            <input type="number" min="0" step="0.01" formControlName="price" placeholder="0.00" />
-          </label>
-          <label>
-            <span>Product image</span>
-            <input type="file" accept="image/*" (change)="onFileChange($event)" class="file-input" />
-            <div *ngIf="imagePreview()" class="preview-wrap">
-              <img [src]="imagePreview()!" alt="preview" class="preview" />
-            </div>
-            <small *ngIf="uploadLoading()">Uploading image…</small>
-          </label>
-
-          <button class="primary span-2" type="submit" [disabled]="productForm.invalid || addLoading() || uploadLoading()">
-            {{ addLoading() ? 'Adding…' : 'Add to marketplace' }}
-          </button>
-        </form>
-        <p *ngIf="addError()" class="error">{{ addError() }}</p>
-        <p *ngIf="addSuccess()" class="success">Product added successfully!</p>
-      </div>
-      <div class="card info" *ngIf="products().length >= 40">
-        <p>You have reached the 40-product limit. Remove a product to add a new one.</p>
+      <!-- TABS -->
+      <div class="tab-bar">
+        <button [class.active]="tab() === 'income'" (click)="tab.set('income')">Daily Income</button>
+        <button [class.active]="tab() === 'products'" (click)="tab.set('products')">Products</button>
       </div>
 
-      <!-- PRODUCT LIST -->
-      <div class="card">
-        <h2>Your products ({{ products().length }})</h2>
-        <div *ngIf="loadingProducts()" class="muted">Loading…</div>
-        <div *ngIf="!loadingProducts() && products().length === 0" class="muted">No products yet. Add your first one above!</div>
-        <div class="product-list" *ngIf="products().length > 0">
-          <article *ngFor="let p of products()" class="product-card">
-            <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" />
-            <div class="product-body">
-              <h3>{{ p.name }}</h3>
-              <p class="muted">{{ p.description }}</p>
-              <p class="price">R {{ p.price | number:'1.2-2' }}</p>
-            </div>
-            <button class="delete-btn" (click)="deleteProduct(p)" title="Remove product">&#x2715;</button>
-          </article>
+      <!-- INCOME TAB -->
+      <ng-container *ngIf="tab() === 'income'">
+        <!-- QUICK ENTRY -->
+        <div class="card">
+          <h2>Log income</h2>
+          <form [formGroup]="incomeForm" (ngSubmit)="submitIncome()" class="income-grid">
+            <label>
+              <span>Date *</span>
+              <input type="date" formControlName="date" />
+            </label>
+            <label>
+              <span>Amount (ZAR) *</span>
+              <input type="number" min="0" step="0.01" formControlName="amount" placeholder="0.00" />
+            </label>
+            <label>
+              <span>Channel *</span>
+              <select formControlName="channel">
+                <option value="CASH">Cash</option>
+                <option value="MARKETPLACE">Marketplace</option>
+              </select>
+            </label>
+            <label class="span-2">
+              <span>Notes (optional)</span>
+              <input formControlName="notes" placeholder="e.g. market day, online order" />
+            </label>
+            <button class="primary" type="submit" [disabled]="incomeForm.invalid || incomeLoading()">
+              {{ incomeLoading() ? 'Saving…' : 'Log income' }}
+            </button>
+          </form>
+          <p *ngIf="incomeSuccess()" class="success">Income logged!</p>
+          <p *ngIf="incomeError()" class="error">{{ incomeError() }}</p>
         </div>
-      </div>
+
+        <!-- HISTORY -->
+        <div class="card">
+          <div class="history-header">
+            <h2>Income history</h2>
+            <div class="history-controls">
+              <select [(ngModel)]="historyFilter" (change)="applyFilter()" [ngModelOptions]="{standalone: true}">
+                <option value="week">This week</option>
+                <option value="month">This month</option>
+                <option value="all">All time</option>
+              </select>
+              <button class="outline-btn" (click)="exportCsv('weekly')">&#8595; Weekly CSV</button>
+              <button class="outline-btn" (click)="exportCsv('monthly')">&#8595; Monthly CSV</button>
+            </div>
+          </div>
+
+          <!-- CHART -->
+          <div class="chart-wrap" *ngIf="chartData().length > 0">
+            <div *ngFor="let bar of chartData()" class="bar-row">
+              <span class="bar-label">{{ bar.label }}</span>
+              <div class="bar-track">
+                <div class="bar-fill cash" [style.width]="bar.cashPct + '%'" title="Cash: R{{bar.cash}}"></div>
+                <div class="bar-fill marketplace" [style.width]="bar.marketPct + '%'" title="Marketplace: R{{bar.market}}"></div>
+              </div>
+              <span class="bar-total">R {{ bar.total | number:'1.0-0' }}</span>
+            </div>
+            <div class="chart-legend">
+              <span class="legend-dot cash"></span> Cash
+              <span class="legend-dot marketplace" style="margin-left:1rem"></span> Marketplace
+            </div>
+          </div>
+
+          <div *ngIf="incomeHistory().length === 0" class="muted" style="margin-top:1rem">No income entries yet.</div>
+          <table *ngIf="incomeHistory().length > 0" class="income-table">
+            <thead><tr><th>Date</th><th>Amount</th><th>Channel</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let e of incomeHistory()">
+                <td>{{ e.date }}</td>
+                <td>R {{ e.amount | number:'1.2-2' }}</td>
+                <td><span class="badge" [class.cash-badge]="e.channel==='CASH'" [class.market-badge]="e.channel==='MARKETPLACE'">{{ e.channel }}</span></td>
+                <td class="muted">{{ e.notes || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+
+      <!-- PRODUCTS TAB -->
+      <ng-container *ngIf="tab() === 'products'">
+        <div class="card" *ngIf="products().length < 40">
+          <h2>Add a product or service</h2>
+          <form [formGroup]="productForm" (ngSubmit)="submitProduct()" class="product-grid">
+            <label class="span-2">
+              <span>Name *</span>
+              <input formControlName="name" placeholder="e.g. Handmade Bead Necklace" />
+            </label>
+            <label class="span-2">
+              <span>Description *</span>
+              <textarea rows="3" formControlName="description"></textarea>
+            </label>
+            <label>
+              <span>Price (ZAR) *</span>
+              <input type="number" min="0" step="0.01" formControlName="price" />
+            </label>
+            <label>
+              <span>Product image</span>
+              <input type="file" accept="image/*" (change)="onFileChange($event)" class="file-input" />
+              <div *ngIf="imagePreview()" class="preview-wrap">
+                <img [src]="imagePreview()!" alt="preview" class="preview" />
+              </div>
+              <small *ngIf="uploadLoading()">Uploading…</small>
+            </label>
+            <button class="primary span-2" type="submit" [disabled]="productForm.invalid || addLoading() || uploadLoading()">
+              {{ addLoading() ? 'Adding…' : 'Add to marketplace' }}
+            </button>
+          </form>
+          <p *ngIf="addError()" class="error">{{ addError() }}</p>
+          <p *ngIf="addSuccess()" class="success">Product added!</p>
+        </div>
+        <div class="card info" *ngIf="products().length >= 40">
+          <p>Product limit of 40 reached. Remove a product to add a new one.</p>
+        </div>
+
+        <div class="card">
+          <h2>Your products ({{ products().length }})</h2>
+          <div *ngIf="loadingProducts()" class="muted">Loading…</div>
+          <div *ngIf="!loadingProducts() && products().length === 0" class="muted">No products yet.</div>
+          <div class="product-list">
+            <article *ngFor="let p of products()" class="product-card">
+              <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" />
+              <div class="product-body">
+                <h3>{{ p.name }}</h3>
+                <p class="muted">{{ p.description }}</p>
+                <p class="price">R {{ p.price | number:'1.2-2' }}</p>
+              </div>
+              <button class="delete-btn" (click)="deleteProduct(p)">&#x2715;</button>
+            </article>
+          </div>
+        </div>
+      </ng-container>
     </section>
   `,
   styles: `
-    .hero .product-count {
-      display: inline-block;
-      margin-top: 0.75rem;
-      background: rgba(255,255,255,0.15);
-      padding: 0.3rem 0.9rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: white;
-    }
-    .hero .product-count.near-limit { background: rgba(251,191,36,0.3); color: #fbbf24; }
-    .card {
-      background: white;
-      border-radius: 1.5rem;
-      padding: 2rem;
-      box-shadow: 0 25px 60px rgba(15,23,42,0.10);
-    }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; }
+    .chip { background: rgba(255,255,255,0.12); border-radius: 1rem; padding: 0.6rem 1rem; min-width: 100px; }
+    .chip-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); }
+    .chip-val { font-size: 1.1rem; font-weight: 700; color: white; }
+    .tab-bar { display: flex; gap: 0; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.08); }
+    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    .tab-bar button.active { color: #0ea5e9; border-bottom: 3px solid #0ea5e9; background: #f0f9ff; }
+    .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 25px 60px rgba(15,23,42,0.08); }
     @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
     .card.info { background: #fef3c7; }
-    .product-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-top: 1.25rem;
-    }
-    @media (max-width: 600px) { .product-grid { grid-template-columns: 1fr; } .span-2 { grid-column: span 1 !important; } }
-    label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      font-size: 0.9rem;
-      color: #475569;
-    }
+    .income-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }
+    .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }
+    @media (max-width: 600px) { .income-grid, .product-grid { grid-template-columns: 1fr; } .span-2 { grid-column: span 1 !important; } }
+    label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem; color: #475569; }
     label.span-2 { grid-column: span 2; }
-    input, textarea {
-      border-radius: 0.8rem;
-      border: 1px solid #cbd5e1;
-      padding: 0.65rem 0.9rem;
-      font-size: 1rem;
-      font-family: inherit;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    input:focus, textarea:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
+    input, textarea, select { border-radius: 0.8rem; border: 1px solid #cbd5e1; padding: 0.65rem 0.9rem; font-size: 1rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
     .file-input { border: none; padding: 0; font-size: 0.9rem; }
     .preview-wrap { margin-top: 0.5rem; }
-    .preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 0.75rem; }
-    .primary {
-      border: none;
-      border-radius: 999px;
-      padding: 0.9rem;
-      font-size: 1rem;
-      font-weight: 700;
-      background: linear-gradient(120deg, #0ea5e9, #22c55e);
-      color: white;
-      cursor: pointer;
-    }
+    .preview { width: 100%; max-height: 140px; object-fit: cover; border-radius: 0.75rem; }
+    .primary { border: none; border-radius: 999px; padding: 0.9rem; font-size: 1rem; font-weight: 700; background: linear-gradient(120deg, #0ea5e9, #22c55e); color: white; cursor: pointer; }
     .primary.span-2 { grid-column: span 2; }
     .primary:disabled { opacity: 0.6; cursor: not-allowed; }
-    .error { color: #dc2626; font-weight: 600; margin-top: 0.75rem; }
     .success { color: #16a34a; font-weight: 600; margin-top: 0.75rem; }
-    .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+    .error { color: #dc2626; font-weight: 600; margin-top: 0.75rem; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+    .history-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .outline-btn { border: 1px solid #cbd5e1; background: white; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.85rem; cursor: pointer; color: #475569; }
+    .outline-btn:hover { background: #f1f5f9; }
+    .income-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    .income-table th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
+    .income-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+    .cash-badge { background: #dcfce7; color: #16a34a; }
+    .market-badge { background: #dbeafe; color: #2563eb; }
+    .chart-wrap { margin: 1rem 0; }
+    .bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; font-size: 0.85rem; }
+    .bar-label { width: 80px; text-align: right; color: #64748b; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 18px; background: #f1f5f9; border-radius: 999px; overflow: hidden; display: flex; }
+    .bar-fill { height: 100%; transition: width 0.4s; }
+    .bar-fill.cash { background: #22c55e; }
+    .bar-fill.marketplace { background: #0ea5e9; }
+    .bar-total { width: 70px; font-weight: 700; color: #0f172a; flex-shrink: 0; }
+    .chart-legend { display: flex; align-items: center; font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; }
+    .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+    .legend-dot.cash { background: #22c55e; }
+    .legend-dot.marketplace { background: #0ea5e9; }
+    .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
     @media (max-width: 600px) { .product-list { grid-template-columns: 1fr; } }
-    .product-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 1rem;
-      overflow: hidden;
-      background: #f8fafc;
-      position: relative;
-    }
-    .product-img { width: 100%; height: 160px; object-fit: cover; display: block; }
+    .product-card { border: 1px solid #e2e8f0; border-radius: 1rem; overflow: hidden; background: #f8fafc; position: relative; }
+    .product-img { width: 100%; height: 150px; object-fit: cover; display: block; }
     .product-body { padding: 0.9rem; }
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; }
     .price { font-weight: 700; color: #0ea5e9; margin-top: 0.4rem; }
-    .delete-btn {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      background: rgba(220,38,38,0.85);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(220,38,38,0.85); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
     small { color: #94a3b8; font-size: 0.8rem; }
   `
 })
@@ -175,6 +241,44 @@ export class HustlerDashboardPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
+  tab = signal<'income' | 'products'>('income');
+
+  // Income
+  incomeHistory = signal<IncomeEntryResponse[]>([]);
+  summary = signal<IncomeSummary | null>(null);
+  incomeLoading = signal(false);
+  incomeSuccess = signal(false);
+  incomeError = signal('');
+  historyFilter = 'week';
+
+  incomeForm = this.fb.group({
+    date: [new Date().toISOString().slice(0, 10), Validators.required],
+    amount: [null as number | null, [Validators.required, Validators.min(0)]],
+    channel: ['CASH', Validators.required],
+    notes: [''],
+  });
+
+  // Chart data derived from history
+  chartData = computed(() => {
+    const entries = this.incomeHistory();
+    if (!entries.length) return [];
+    // Group by date, last 7 entries
+    const byDate = new Map<string, { cash: number; market: number }>();
+    for (const e of entries.slice(0, 14)) {
+      const d = e.date;
+      const cur = byDate.get(d) ?? { cash: 0, market: 0 };
+      if (e.channel === 'CASH') cur.cash += Number(e.amount);
+      else cur.market += Number(e.amount);
+      byDate.set(d, cur);
+    }
+    const maxTotal = Math.max(...Array.from(byDate.values()).map(v => v.cash + v.market), 1);
+    return Array.from(byDate.entries()).slice(0, 7).map(([label, v]) => {
+      const total = v.cash + v.market;
+      return { label, cash: v.cash, market: v.market, total, cashPct: (v.cash / maxTotal) * 100, marketPct: (v.market / maxTotal) * 100 };
+    });
+  });
+
+  // Products
   products = signal<ProductResponse[]>([]);
   loadingProducts = signal(true);
   addLoading = signal(false);
@@ -191,79 +295,93 @@ export class HustlerDashboardPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (!this.auth.isLoggedIn()) {
-      this.router.navigate(['/register']);
-      return;
-    }
+    if (!this.auth.isLoggedIn()) { this.router.navigate(['/register']); return; }
     this.loadProducts();
+    this.loadIncome();
+    this.loadSummary();
+  }
+
+  loadIncome(): void {
+    const token = this.auth.getToken()!;
+    const today = new Date();
+    let from: string | undefined;
+    if (this.historyFilter === 'week') {
+      const d = new Date(today); d.setDate(d.getDate() - 7);
+      from = d.toISOString().slice(0, 10);
+    } else if (this.historyFilter === 'month') {
+      from = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    }
+    const to = today.toISOString().slice(0, 10);
+    this.api.listMyIncome(token, from, this.historyFilter !== 'all' ? to : undefined)
+      .subscribe({ next: list => this.incomeHistory.set(list), error: () => {} });
+  }
+
+  loadSummary(): void {
+    this.api.getIncomeSummary(this.auth.getToken()!).subscribe({ next: s => this.summary.set(s), error: () => {} });
+  }
+
+  applyFilter(): void { this.loadIncome(); }
+
+  submitIncome(): void {
+    if (this.incomeForm.invalid) return;
+    this.incomeLoading.set(true);
+    this.incomeError.set('');
+    this.api.logIncome(this.incomeForm.value as any, this.auth.getToken()!).subscribe({
+      next: (entry) => {
+        this.incomeLoading.set(false);
+        this.incomeSuccess.set(true);
+        this.incomeHistory.update(h => [entry, ...h]);
+        this.loadSummary();
+        this.incomeForm.patchValue({ date: new Date().toISOString().slice(0, 10), amount: null, notes: '' });
+        setTimeout(() => this.incomeSuccess.set(false), 2500);
+      },
+      error: (err) => { this.incomeLoading.set(false); this.incomeError.set(err?.error?.message || 'Failed to log income.'); }
+    });
+  }
+
+  exportCsv(period: 'weekly' | 'monthly'): void {
+    this.api.exportIncomeCsv(this.auth.getToken()!, period).subscribe(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `income-${period}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    });
   }
 
   loadProducts(): void {
-    const token = this.auth.getToken()!;
-    this.api.listMyProducts(token).subscribe({
-      next: (list) => { this.products.set(list); this.loadingProducts.set(false); },
+    this.api.listMyProducts(this.auth.getToken()!).subscribe({
+      next: list => { this.products.set(list); this.loadingProducts.set(false); },
       error: () => this.loadingProducts.set(false)
     });
   }
 
   onFileChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-
-    // preview
     const reader = new FileReader();
     reader.onload = (e) => this.imagePreview.set(e.target?.result as string);
     reader.readAsDataURL(file);
-
-    // upload
     this.uploadLoading.set(true);
     this.api.uploadImage(file, this.auth.getToken()!).subscribe({
       next: (res) => { this.pendingImageUrl.set(res.url); this.uploadLoading.set(false); },
-      error: () => { this.uploadLoading.set(false); this.addError.set('Image upload failed. You can still add the product without an image.'); }
+      error: () => this.uploadLoading.set(false)
     });
   }
 
   submitProduct(): void {
-    if (this.productForm.invalid) { this.productForm.markAllAsTouched(); return; }
+    if (this.productForm.invalid) return;
     this.addLoading.set(true);
     this.addError.set('');
-    this.addSuccess.set(false);
-
-    const payload = {
-      name: this.productForm.value.name!,
-      description: this.productForm.value.description!,
-      price: this.productForm.value.price!,
-      mediaUrl: this.pendingImageUrl() ?? undefined,
-    };
-
+    const payload = { name: this.productForm.value.name!, description: this.productForm.value.description!, price: this.productForm.value.price!, mediaUrl: this.pendingImageUrl() ?? undefined };
     this.api.createProduct(payload, this.auth.getToken()!).subscribe({
-      next: (p) => {
-        this.products.update(list => [p, ...list]);
-        this.productForm.reset();
-        this.imagePreview.set(null);
-        this.pendingImageUrl.set(null);
-        this.addLoading.set(false);
-        this.addSuccess.set(true);
-        setTimeout(() => this.addSuccess.set(false), 3000);
-      },
-      error: (err) => {
-        this.addLoading.set(false);
-        this.addError.set(err?.error?.message || 'Failed to add product.');
-      }
+      next: (p) => { this.products.update(l => [p, ...l]); this.productForm.reset(); this.imagePreview.set(null); this.pendingImageUrl.set(null); this.addLoading.set(false); this.addSuccess.set(true); setTimeout(() => this.addSuccess.set(false), 2500); },
+      error: (err) => { this.addLoading.set(false); this.addError.set(err?.error?.message || 'Failed to add product.'); }
     });
   }
 
-  deleteProduct(product: ProductResponse): void {
-    if (!confirm(`Remove "${product.name}" from your marketplace?`)) return;
-    this.api.deleteProduct(product.id, this.auth.getToken()!).subscribe({
-      next: () => this.products.update(list => list.filter(p => p.id !== product.id)),
-      error: () => alert('Failed to delete product.')
-    });
+  deleteProduct(p: ProductResponse): void {
+    if (!confirm(`Remove "${p.name}"?`)) return;
+    this.api.deleteProduct(p.id, this.auth.getToken()!).subscribe({ next: () => this.products.update(l => l.filter(x => x.id !== p.id)), error: () => alert('Failed.') });
   }
 
-  resolveUrl(mediaUrl: string): string {
-    if (mediaUrl.startsWith('http')) return mediaUrl;
-    return this.api.baseUrl + mediaUrl;
-  }
+  resolveUrl(u: string): string { return u.startsWith('http') ? u : this.api.baseUrl + u; }
 }

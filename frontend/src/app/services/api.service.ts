@@ -31,8 +31,10 @@ export class ApiService {
     return this.http.post<HustlerApplication>(`${this.baseUrl}/api/hustlers`, payload);
   }
 
-  listApplications(status = 'PENDING'): Observable<HustlerApplication[]> {
-    return this.http.get<HustlerApplication[]>(`${this.baseUrl}/api/hustlers`, { params: { status } });
+  listApplications(status = 'PENDING', communityId?: string): Observable<HustlerApplication[]> {
+    const params: Record<string, string> = { status };
+    if (communityId) params['communityId'] = communityId;
+    return this.http.get<HustlerApplication[]>(`${this.baseUrl}/api/hustlers`, { params });
   }
 
   decideApplication(id: string, payload: { status: string; facilitatorNotes?: string }): Observable<HustlerApplication> {
@@ -61,6 +63,37 @@ export class ApiService {
   listProducts(communityId?: string): Observable<ProductResponse[]> {
     return this.http.get<ProductResponse[]>(`${this.baseUrl}/api/products`, {
       params: communityId ? { communityId } : undefined
+    });
+  }
+
+  // Income
+  logIncome(payload: IncomeEntryRequest, token: string): Observable<IncomeEntryResponse> {
+    return this.http.post<IncomeEntryResponse>(`${this.baseUrl}/api/income`, payload, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  listMyIncome(token: string, from?: string, to?: string): Observable<IncomeEntryResponse[]> {
+    const params: Record<string, string> = {};
+    if (from) params['from'] = from;
+    if (to) params['to'] = to;
+    return this.http.get<IncomeEntryResponse[]>(`${this.baseUrl}/api/income/my`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token }),
+      params
+    });
+  }
+
+  getIncomeSummary(token: string): Observable<IncomeSummary> {
+    return this.http.get<IncomeSummary>(`${this.baseUrl}/api/income/summary`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  exportIncomeCsv(token: string, period: 'weekly' | 'monthly'): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/api/income/export`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token }),
+      params: { period },
+      responseType: 'blob'
     });
   }
 
@@ -102,6 +135,12 @@ export interface HustlerApplication {
   community?: { id: string; name: string };
   status: string;
   submittedAt: string;
+  phone?: string;
+  email?: string;
+  idNumber?: string;
+  vision?: string;
+  mission?: string;
+  operatingArea?: string;
 }
 
 export interface Community {
@@ -140,3 +179,27 @@ export interface ProductResponse {
 
 // Keep backwards compat alias
 export type Product = ProductResponse;
+
+export interface IncomeEntryRequest {
+  date: string; // ISO date yyyy-MM-dd
+  amount: number;
+  channel: 'CASH' | 'MARKETPLACE';
+  notes?: string;
+}
+
+export interface IncomeEntryResponse {
+  id: string;
+  date: string;
+  amount: number;
+  channel: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface IncomeSummary {
+  today: number;
+  weekToDate: number;
+  monthToDate: number;
+  totalCash: number;
+  totalMarketplace: number;
+}
