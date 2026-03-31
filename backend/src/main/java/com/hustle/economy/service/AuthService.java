@@ -25,7 +25,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(AuthRequest request) {
-        HustlerApplication application = applicationRepository.findByPhone(request.getPhone())
+        HustlerApplication application = applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(request.getPhone())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No account found for this phone number"));
 
         if (application.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), application.getPasswordHash())) {
