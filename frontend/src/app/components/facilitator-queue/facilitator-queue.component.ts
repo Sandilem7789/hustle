@@ -82,8 +82,9 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
                 </div>
               </div>
 
-              <!-- ACTIVATE / DEACTIVATE FOOTER -->
+              <!-- FOOTER: Edit + Activate/Deactivate -->
               <div class="hc-footer">
+                <button *ngIf="hEditingId() !== h.businessProfileId" class="btn btn-edit" (click)="startHEdit(h)">&#x270E; Edit business details</button>
                 <button
                   class="btn"
                   [class.btn-deactivate]="h.active"
@@ -93,6 +94,47 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
                 >
                   {{ activeToggling() === h.businessProfileId ? 'Saving…' : (h.active ? '⏸ Deactivate Hustler' : '▶ Activate Hustler') }}
                 </button>
+              </div>
+
+              <!-- HUSTLER INLINE EDIT FORM -->
+              <div class="edit-section" *ngIf="hEditingId() === h.businessProfileId">
+                <p class="edit-heading">Edit business details</p>
+                <div class="edit-grid">
+                  <label class="span-2">
+                    <span class="field-label">Community</span>
+                    <select [(ngModel)]="hEditData.communityId" [ngModelOptions]="{standalone: true}">
+                      <option value="">— keep current —</option>
+                      <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
+                    </select>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Operating area</span>
+                    <input [(ngModel)]="hEditData.operatingArea" [ngModelOptions]="{standalone: true}" />
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Description</span>
+                    <textarea rows="3" [(ngModel)]="hEditData.description" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Target Customers</span>
+                    <textarea rows="2" [(ngModel)]="hEditData.targetCustomers" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Vision</span>
+                    <textarea rows="2" [(ngModel)]="hEditData.vision" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Mission / Support needed</span>
+                    <textarea rows="2" [(ngModel)]="hEditData.mission" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                </div>
+                <p *ngIf="hEditError()" class="edit-error">{{ hEditError() }}</p>
+                <div class="edit-actions">
+                  <button class="btn approve" (click)="saveHEdit(h)" [disabled]="hEditSaving()">
+                    {{ hEditSaving() ? 'Saving…' : '&#10003; Save changes' }}
+                  </button>
+                  <button class="btn btn-cancel" (click)="hEditingId.set(null)">Cancel</button>
+                </div>
               </div>
 
               <!-- DEACTIVATE CONFIRM OVERLAY -->
@@ -332,7 +374,8 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
     .edit-error { color: #dc2626; font-size: 0.85rem; margin: 0.5rem 0 0; }
 
     /* Activate / Deactivate footer */
-    .hc-footer { border-top: 1px dashed #e2e8f0; padding-top: 0.75rem; margin-top: 0.75rem; }
+    .hc-footer { border-top: 1px dashed #e2e8f0; padding-top: 0.75rem; margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-edit { background: #0ea5e9; color: white; }
     .btn-deactivate { background: #dc2626; color: white; }
     .btn-activate { background: #16a34a; color: white; }
     .btn-cancel { background: #e2e8f0; color: #475569; }
@@ -358,6 +401,10 @@ export class FacilitatorQueueComponent implements OnInit {
   hSubTab = signal<'finance' | 'business'>('finance');
   confirmingDeactivate = signal<string | null>(null);
   activeToggling = signal<string | null>(null);
+  hEditingId = signal<string | null>(null);
+  hEditData: HustlerProfileUpdate = {};
+  hEditSaving = signal(false);
+  hEditError = signal('');
 
   // Applications tab state
   applications = signal<HustlerApplication[]>([]);
@@ -391,11 +438,52 @@ export class FacilitatorQueueComponent implements OnInit {
     if (this.expandedHustler() === id) {
       this.expandedHustler.set(null);
       this.confirmingDeactivate.set(null);
+      this.hEditingId.set(null);
     } else {
       this.expandedHustler.set(id);
       this.hSubTab.set('finance');
       this.confirmingDeactivate.set(null);
+      this.hEditingId.set(null);
     }
+  }
+
+  startHEdit(h: FacilitatorHustler): void {
+    this.hEditingId.set(h.businessProfileId);
+    this.hEditData = {
+      description: h.description ?? '',
+      targetCustomers: h.targetCustomers ?? '',
+      vision: h.vision ?? '',
+      mission: h.mission ?? '',
+      operatingArea: h.operatingArea ?? '',
+      communityId: h.communityId ?? '',
+    };
+    this.hEditError.set('');
+  }
+
+  saveHEdit(h: FacilitatorHustler): void {
+    if (!h.applicationId) return;
+    this.hEditSaving.set(true);
+    this.hEditError.set('');
+    const payload: HustlerProfileUpdate = {
+      description: this.hEditData.description || undefined,
+      targetCustomers: this.hEditData.targetCustomers || undefined,
+      vision: this.hEditData.vision || undefined,
+      mission: this.hEditData.mission || undefined,
+      operatingArea: this.hEditData.operatingArea || undefined,
+      communityId: this.hEditData.communityId || undefined,
+    };
+    this.api.updateHustlerProfile(h.applicationId, payload).subscribe({
+      next: () => {
+        // Reload hustlers to pick up the updated fields
+        this.hEditingId.set(null);
+        this.hEditSaving.set(false);
+        this.loadHustlers();
+      },
+      error: (err) => {
+        this.hEditSaving.set(false);
+        this.hEditError.set(err?.error?.message || 'Failed to save changes.');
+      }
+    });
   }
 
   toggleActive(h: FacilitatorHustler): void {

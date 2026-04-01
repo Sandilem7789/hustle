@@ -43,23 +43,7 @@ public class FacilitatorService {
                             .map(IncomeEntry::getAmount)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                    return FacilitatorHustlerResponse.builder()
-                            .businessProfileId(bp.getId())
-                            .firstName(bp.getApplication().getFirstName())
-                            .lastName(bp.getApplication().getLastName())
-                            .businessName(bp.getBusinessName())
-                            .businessType(bp.getBusinessType())
-                            .communityName(bp.getCommunity() != null ? bp.getCommunity().getName() : null)
-                            .operatingArea(bp.getOperatingArea())
-                            .description(bp.getDescription())
-                            .targetCustomers(bp.getTargetCustomers())
-                            .vision(bp.getVision())
-                            .mission(bp.getMission())
-                            .monthIncome(income)
-                            .monthExpenses(expenses)
-                            .monthProfit(income.subtract(expenses))
-                            .active(bp.isActive())
-                            .build();
+                    return toResponse(bp, income, expenses);
                 })
                 .toList();
     }
@@ -86,10 +70,16 @@ public class FacilitatorService {
                 .map(IncomeEntry::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        return toResponse(bp, income, expenses);
+    }
+
+    private FacilitatorHustlerResponse toResponse(BusinessProfile bp, BigDecimal income, BigDecimal expenses) {
         return FacilitatorHustlerResponse.builder()
                 .businessProfileId(bp.getId())
-                .firstName(bp.getApplication().getFirstName())
-                .lastName(bp.getApplication().getLastName())
+                .applicationId(bp.getApplication() != null ? bp.getApplication().getId() : null)
+                .communityId(bp.getCommunity() != null ? bp.getCommunity().getId().toString() : null)
+                .firstName(bp.getApplication() != null ? bp.getApplication().getFirstName() : "")
+                .lastName(bp.getApplication() != null ? bp.getApplication().getLastName() : "")
                 .businessName(bp.getBusinessName())
                 .businessType(bp.getBusinessType())
                 .communityName(bp.getCommunity() != null ? bp.getCommunity().getName() : null)

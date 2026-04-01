@@ -10,6 +10,8 @@ import java.util.UUID;
 @Builder
 public class FacilitatorHustlerResponse {
     private UUID businessProfileId;
+    private UUID applicationId;
+    private String communityId;
     private String firstName;
     private String lastName;
     private String businessName;

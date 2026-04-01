@@ -228,6 +228,8 @@ export interface HustlerProfileUpdate {
 
 export interface FacilitatorHustler {
   businessProfileId: string;
+  applicationId?: string;
+  communityId?: string;
   firstName: string;
   lastName: string;
   businessName: string;

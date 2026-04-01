@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull:*)",
+      "Bash(docker compose:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8080)",
+      "Bash(tasklist:*)",
+      "Bash(docker ps:*)",
+      "Bash(taskkill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); budgets=d[''''projects''''][''''frontend''''][''''architect''''][''''build''''][''''configurations''''][''''production''''][''''budgets'''']; print\\(json.dumps\\(budgets, indent=2\\)\\)\")",
+      "Bash(curl -s http://localhost:8080/api/products)",
+      "Bash(docker exec:*)",
+      "Bash(npx ng:*)",
+      "Bash(npm install:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(mvn compile:*)"
+    ]
+  }
+}
