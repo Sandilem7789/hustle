@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService, HustlerApplication, Community, HustlerProfileUpdate } from '../../services/api.service';
+import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler } from '../../services/api.service';
 
 @Component({
   selector: 'app-facilitator-queue',
@@ -9,142 +9,259 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate } from 
   imports: [CommonModule, FormsModule],
   template: `
     <section class="card">
-      <header>
-        <p class="eyebrow">Facilitator Queue</p>
-        <h2>Review applications</h2>
-        <p class="muted">Filter by community and status, then approve, reject, or reconsider.</p>
-      </header>
-
-      <div class="filters">
-        <label>
-          <span>Status</span>
-          <select [(ngModel)]="selectedStatus" (change)="load()">
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
-        </label>
-        <label>
-          <span>Community</span>
-          <select [(ngModel)]="selectedCommunity" (change)="load()">
-            <option value="">All communities</option>
-            <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-          </select>
-        </label>
+      <!-- TOP TABS -->
+      <div class="top-tabs">
+        <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Hustlers</button>
+        <button [class.active]="fTab() === 'applications'" (click)="fTab.set('applications')">Applications</button>
       </div>
 
-      <p class="muted count" *ngIf="applications().length > 0">{{ applications().length }} application(s) found</p>
+      <!-- ===== HUSTLERS TAB ===== -->
+      <ng-container *ngIf="fTab() === 'hustlers'">
+        <p class="muted sub-heading">Active hustlers in this cohort — click a record to view details.</p>
 
-      <div class="queue" *ngIf="applications().length; else empty">
-        <article *ngFor="let app of applications()" class="queue-card" [class.expanded]="expanded() === app.id">
-          <!-- SUMMARY ROW -->
-          <div class="card-summary" (click)="toggle(app.id)">
-            <div class="card-main">
-              <h3>{{ app.businessName }}</h3>
-              <p class="muted">{{ app.firstName }} {{ app.lastName }} &middot; {{ app.businessType }}</p>
-              <p class="muted small">{{ app.community?.name || 'No community' }} &middot; Submitted {{ app.submittedAt | date:'mediumDate' }}</p>
-            </div>
-            <div class="card-right">
-              <span class="status-badge" [class]="'status-' + app.status.toLowerCase()">{{ app.status }}</span>
-              <span class="chevron">{{ expanded() === app.id ? '&#9650;' : '&#9660;' }}</span>
-            </div>
-          </div>
+        <div *ngIf="hustlersLoading()" class="muted">Loading hustlers…</div>
 
-          <!-- EXPANDED DETAIL -->
-          <div class="card-detail" *ngIf="expanded() === app.id">
-
-            <!-- DETAIL FIELDS (always visible) -->
-            <div class="detail-grid">
-              <div class="detail-field"><span class="field-label">Phone</span><span>{{ app.phone || '—' }}</span></div>
-              <div class="detail-field"><span class="field-label">Email</span><span>{{ app.email || '—' }}</span></div>
-              <div class="detail-field"><span class="field-label">ID No.</span><span>{{ app.idNumber || '—' }}</span></div>
-              <div class="detail-field"><span class="field-label">Community</span><span>{{ app.community?.name || '—' }}</span></div>
-              <div class="detail-field span-2"><span class="field-label">Operating area</span><span>{{ app.operatingArea || '—' }}</span></div>
-              <div class="detail-field span-2"><span class="field-label">Description</span><p>{{ app.description }}</p></div>
-              <div class="detail-field span-2"><span class="field-label">Target Customers</span><p>{{ app.targetCustomers }}</p></div>
-              <div class="detail-field span-2"><span class="field-label">Vision</span><p>{{ app.vision }}</p></div>
-              <div class="detail-field span-2"><span class="field-label">Mission / Support needed</span><p>{{ app.mission }}</p></div>
+        <div class="hustler-list" *ngIf="!hustlersLoading()">
+          <article
+            *ngFor="let h of hustlers()"
+            class="hustler-card"
+            [class.expanded]="expandedHustler() === h.businessProfileId"
+            (click)="toggleHustler(h.businessProfileId)"
+          >
+            <!-- SUMMARY ROW -->
+            <div class="hc-summary">
+              <div class="hc-main">
+                <h3>{{ h.firstName }} {{ h.lastName }}</h3>
+                <p class="muted small">{{ h.businessName }} &middot; {{ h.businessType }}</p>
+                <p class="muted small">{{ h.communityName || 'No community' }}</p>
+              </div>
+              <div class="hc-right">
+                <div class="profit-chip" [class.positive]="h.monthProfit >= 0" [class.negative]="h.monthProfit < 0">
+                  <span class="profit-label">Month profit</span>
+                  <span class="profit-val">R {{ h.monthProfit | number:'1.2-2' }}</span>
+                </div>
+                <span class="chevron">{{ expandedHustler() === h.businessProfileId ? '&#9650;' : '&#9660;' }}</span>
+              </div>
             </div>
 
-            <label class="notes-label">
-              <span>Facilitator notes</span>
-              <textarea rows="3" [(ngModel)]="notes[app.id]" placeholder="Leave a note…"></textarea>
-            </label>
+            <!-- EXPANDED DETAIL -->
+            <div class="hc-detail" *ngIf="expandedHustler() === h.businessProfileId" (click)="$event.stopPropagation()">
+              <!-- Sub-tabs -->
+              <div class="sub-tabs">
+                <button [class.active]="hSubTab() === 'finance'" (click)="hSubTab.set('finance')">Finances</button>
+                <button [class.active]="hSubTab() === 'business'" (click)="hSubTab.set('business')">Business</button>
+              </div>
 
-            <!-- STATUS ACTIONS -->
-            <div class="actions">
-              <ng-container *ngIf="app.status === 'PENDING'">
-                <button class="btn approve" (click)="decide(app, 'APPROVED')">&#10003; Approve</button>
-                <button class="btn reject" (click)="decide(app, 'REJECTED')">&#10005; Reject</button>
-              </ng-container>
-              <ng-container *ngIf="app.status === 'REJECTED'">
-                <span class="status-badge status-rejected">Rejected</span>
-                <button class="btn approve" (click)="decide(app, 'APPROVED')">&#8629; Reconsider &amp; Approve</button>
-              </ng-container>
+              <!-- Finance sub-tab -->
+              <div *ngIf="hSubTab() === 'finance'" class="finance-panel">
+                <div class="stat-row">
+                  <div class="stat-box">
+                    <span class="stat-label">Month Income</span>
+                    <span class="stat-val income">R {{ h.monthIncome | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-label">Month Expenses</span>
+                    <span class="stat-val expense">R {{ h.monthExpenses | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-label">Month Profit</span>
+                    <span class="stat-val" [class.income]="h.monthProfit >= 0" [class.expense]="h.monthProfit < 0">R {{ h.monthProfit | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Business sub-tab -->
+              <div *ngIf="hSubTab() === 'business'" class="business-panel">
+                <div class="detail-grid">
+                  <div class="detail-field"><span class="field-label">Community</span><span>{{ h.communityName || '—' }}</span></div>
+                  <div class="detail-field"><span class="field-label">Operating area</span><span>{{ h.operatingArea || '—' }}</span></div>
+                  <div class="detail-field span-2"><span class="field-label">Description</span><p>{{ h.description || '—' }}</p></div>
+                  <div class="detail-field span-2"><span class="field-label">Target Customers</span><p>{{ h.targetCustomers || '—' }}</p></div>
+                  <div class="detail-field span-2"><span class="field-label">Vision</span><p>{{ h.vision || '—' }}</p></div>
+                  <div class="detail-field span-2"><span class="field-label">Mission / Support needed</span><p>{{ h.mission || '—' }}</p></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <p *ngIf="hustlers().length === 0" class="muted empty-msg">No active hustlers found.</p>
+        </div>
+      </ng-container>
+
+      <!-- ===== APPLICATIONS TAB ===== -->
+      <ng-container *ngIf="fTab() === 'applications'">
+        <header>
+          <p class="eyebrow">Facilitator Queue</p>
+          <h2>Review applications</h2>
+          <p class="muted">Filter by community and status, then approve, reject, or reconsider.</p>
+        </header>
+
+        <div class="filters">
+          <label>
+            <span>Status</span>
+            <select [(ngModel)]="selectedStatus" (change)="load()">
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </label>
+          <label>
+            <span>Community</span>
+            <select [(ngModel)]="selectedCommunity" (change)="load()">
+              <option value="">All communities</option>
+              <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
+            </select>
+          </label>
+        </div>
+
+        <p class="muted count" *ngIf="applications().length > 0">{{ applications().length }} application(s) found</p>
+
+        <div class="queue" *ngIf="applications().length; else empty">
+          <article *ngFor="let app of applications()" class="queue-card" [class.expanded]="expanded() === app.id">
+            <!-- SUMMARY ROW -->
+            <div class="card-summary" (click)="toggle(app.id)">
+              <div class="card-main">
+                <h3>{{ app.businessName }}</h3>
+                <p class="muted">{{ app.firstName }} {{ app.lastName }} &middot; {{ app.businessType }}</p>
+                <p class="muted small">{{ app.community?.name || 'No community' }} &middot; Submitted {{ app.submittedAt | date:'mediumDate' }}</p>
+              </div>
+              <div class="card-right">
+                <span class="status-badge" [class]="'status-' + app.status.toLowerCase()">{{ app.status }}</span>
+                <span class="chevron">{{ expanded() === app.id ? '&#9650;' : '&#9660;' }}</span>
+              </div>
+            </div>
+
+            <!-- EXPANDED DETAIL -->
+            <div class="card-detail" *ngIf="expanded() === app.id">
+              <div class="detail-grid">
+                <div class="detail-field"><span class="field-label">Phone</span><span>{{ app.phone || '—' }}</span></div>
+                <div class="detail-field"><span class="field-label">Email</span><span>{{ app.email || '—' }}</span></div>
+                <div class="detail-field"><span class="field-label">ID No.</span><span>{{ app.idNumber || '—' }}</span></div>
+                <div class="detail-field"><span class="field-label">Community</span><span>{{ app.community?.name || '—' }}</span></div>
+                <div class="detail-field span-2"><span class="field-label">Operating area</span><span>{{ app.operatingArea || '—' }}</span></div>
+                <div class="detail-field span-2"><span class="field-label">Description</span><p>{{ app.description }}</p></div>
+                <div class="detail-field span-2"><span class="field-label">Target Customers</span><p>{{ app.targetCustomers }}</p></div>
+                <div class="detail-field span-2"><span class="field-label">Vision</span><p>{{ app.vision }}</p></div>
+                <div class="detail-field span-2"><span class="field-label">Mission / Support needed</span><p>{{ app.mission }}</p></div>
+              </div>
+
+              <label class="notes-label">
+                <span>Facilitator notes</span>
+                <textarea rows="3" [(ngModel)]="notes[app.id]" placeholder="Leave a note…"></textarea>
+              </label>
+
+              <div class="actions">
+                <ng-container *ngIf="app.status === 'PENDING'">
+                  <button class="btn approve" (click)="decide(app, 'APPROVED')">&#10003; Approve</button>
+                  <button class="btn reject" (click)="decide(app, 'REJECTED')">&#10005; Reject</button>
+                </ng-container>
+                <ng-container *ngIf="app.status === 'REJECTED'">
+                  <span class="status-badge status-rejected">Rejected</span>
+                  <button class="btn approve" (click)="decide(app, 'APPROVED')">&#8629; Reconsider &amp; Approve</button>
+                </ng-container>
+                <ng-container *ngIf="app.status === 'APPROVED'">
+                  <span class="status-badge status-approved">Approved</span>
+                  <button class="btn reject" (click)="decide(app, 'REJECTED')">Revoke</button>
+                </ng-container>
+              </div>
+
+              <!-- EDIT SECTION — footer, toggled -->
               <ng-container *ngIf="app.status === 'APPROVED'">
-                <span class="status-badge status-approved">Approved</span>
-                <button class="btn reject" (click)="decide(app, 'REJECTED')">Revoke</button>
+                <div class="edit-footer">
+                  <button *ngIf="editingId() !== app.id" class="btn edit" (click)="startEdit(app)">&#x270E; Edit business details</button>
+                </div>
+
+                <div class="edit-section" *ngIf="editingId() === app.id">
+                  <p class="edit-heading">Edit business details</p>
+                  <div class="edit-grid">
+                    <label class="span-2">
+                      <span class="field-label">Community</span>
+                      <select [(ngModel)]="editData.communityId" [ngModelOptions]="{standalone: true}">
+                        <option value="">— keep current —</option>
+                        <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
+                      </select>
+                    </label>
+                    <label class="span-2">
+                      <span class="field-label">Operating area</span>
+                      <input [(ngModel)]="editData.operatingArea" [ngModelOptions]="{standalone: true}" />
+                    </label>
+                    <label class="span-2">
+                      <span class="field-label">Description</span>
+                      <textarea rows="3" [(ngModel)]="editData.description" [ngModelOptions]="{standalone: true}"></textarea>
+                    </label>
+                    <label class="span-2">
+                      <span class="field-label">Target Customers</span>
+                      <textarea rows="2" [(ngModel)]="editData.targetCustomers" [ngModelOptions]="{standalone: true}"></textarea>
+                    </label>
+                    <label class="span-2">
+                      <span class="field-label">Vision</span>
+                      <textarea rows="2" [(ngModel)]="editData.vision" [ngModelOptions]="{standalone: true}"></textarea>
+                    </label>
+                    <label class="span-2">
+                      <span class="field-label">Mission / Support needed</span>
+                      <textarea rows="2" [(ngModel)]="editData.mission" [ngModelOptions]="{standalone: true}"></textarea>
+                    </label>
+                  </div>
+                  <p *ngIf="editError()" class="edit-error">{{ editError() }}</p>
+                  <div class="edit-actions">
+                    <button class="btn approve" (click)="saveEdit(app)" [disabled]="editSaving()">
+                      {{ editSaving() ? 'Saving…' : '&#10003; Save changes' }}
+                    </button>
+                    <button class="btn neutral" (click)="cancelEdit()">Cancel</button>
+                  </div>
+                </div>
               </ng-container>
             </div>
+          </article>
+        </div>
 
-            <!-- EDIT SECTION — footer, toggled -->
-            <ng-container *ngIf="app.status === 'APPROVED'">
-              <div class="edit-footer">
-                <button *ngIf="editingId() !== app.id" class="btn edit" (click)="startEdit(app)">&#x270E; Edit business details</button>
-              </div>
-
-              <div class="edit-section" *ngIf="editingId() === app.id">
-                <p class="edit-heading">Edit business details</p>
-                <div class="edit-grid">
-                  <label class="span-2">
-                    <span class="field-label">Community</span>
-                    <select [(ngModel)]="editData.communityId" [ngModelOptions]="{standalone: true}">
-                      <option value="">— keep current —</option>
-                      <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-                    </select>
-                  </label>
-                  <label class="span-2">
-                    <span class="field-label">Operating area</span>
-                    <input [(ngModel)]="editData.operatingArea" [ngModelOptions]="{standalone: true}" />
-                  </label>
-                  <label class="span-2">
-                    <span class="field-label">Description</span>
-                    <textarea rows="3" [(ngModel)]="editData.description" [ngModelOptions]="{standalone: true}"></textarea>
-                  </label>
-                  <label class="span-2">
-                    <span class="field-label">Target Customers</span>
-                    <textarea rows="2" [(ngModel)]="editData.targetCustomers" [ngModelOptions]="{standalone: true}"></textarea>
-                  </label>
-                  <label class="span-2">
-                    <span class="field-label">Vision</span>
-                    <textarea rows="2" [(ngModel)]="editData.vision" [ngModelOptions]="{standalone: true}"></textarea>
-                  </label>
-                  <label class="span-2">
-                    <span class="field-label">Mission / Support needed</span>
-                    <textarea rows="2" [(ngModel)]="editData.mission" [ngModelOptions]="{standalone: true}"></textarea>
-                  </label>
-                </div>
-                <p *ngIf="editError()" class="edit-error">{{ editError() }}</p>
-                <div class="edit-actions">
-                  <button class="btn approve" (click)="saveEdit(app)" [disabled]="editSaving()">
-                    {{ editSaving() ? 'Saving…' : '&#10003; Save changes' }}
-                  </button>
-                  <button class="btn neutral" (click)="cancelEdit()">Cancel</button>
-                </div>
-              </div>
-            </ng-container>
-          </div>
-        </article>
-      </div>
-
-      <ng-template #empty>
-        <p class="muted empty-msg">No applications found.</p>
-      </ng-template>
+        <ng-template #empty>
+          <p class="muted empty-msg">No applications found.</p>
+        </ng-template>
+      </ng-container>
     </section>
   `,
   styles: `
     .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 25px 60px rgba(15,23,42,0.12); }
     @media (max-width: 600px) { .card { padding: 1.25rem; } }
+
+    /* Top-level tabs */
+    .top-tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; }
+    .top-tabs button { flex: 1; padding: 0.85rem 1rem; border: none; background: none; font-size: 1rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    .top-tabs button.active { color: #0ea5e9; border-bottom: 2px solid #0ea5e9; margin-bottom: -2px; }
+
+    .sub-heading { margin: 0 0 1.25rem; font-size: 0.9rem; }
+
+    /* Hustler list */
+    .hustler-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .hustler-card { border: 1px solid #e2e8f0; border-radius: 1rem; overflow: hidden; background: #f8fafc; cursor: pointer; }
+    .hustler-card.expanded { border-color: #0ea5e9; }
+    .hc-summary { display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem 1.25rem; gap: 1rem; }
+    .hc-summary:hover { background: #f0f9ff; }
+    .hc-main h3 { margin: 0 0 0.2rem; font-size: 1rem; }
+    .hc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; flex-shrink: 0; }
+    .profit-chip { display: flex; flex-direction: column; align-items: flex-end; padding: 0.35rem 0.75rem; border-radius: 0.75rem; }
+    .profit-chip.positive { background: #dcfce7; }
+    .profit-chip.negative { background: #fee2e2; }
+    .profit-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+    .profit-val { font-size: 0.95rem; font-weight: 700; }
+    .profit-chip.positive .profit-val { color: #16a34a; }
+    .profit-chip.negative .profit-val { color: #dc2626; }
+
+    /* Hustler expanded detail */
+    .hc-detail { border-top: 1px solid #e2e8f0; padding: 1rem 1.25rem; }
+    .sub-tabs { display: flex; gap: 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem; }
+    .sub-tabs button { padding: 0.5rem 1.25rem; border: none; background: none; font-size: 0.9rem; font-weight: 600; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .sub-tabs button.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
+
+    .stat-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .stat-box { flex: 1; min-width: 100px; background: #f8fafc; border-radius: 0.75rem; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .stat-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+    .stat-val { font-size: 1rem; font-weight: 700; color: #334155; }
+    .stat-val.income { color: #16a34a; }
+    .stat-val.expense { color: #dc2626; }
+
+    /* Applications tab shared */
     .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1.25rem 0; }
     .filters label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: #475569; min-width: 160px; }
     select { border-radius: 0.8rem; border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; font-size: 0.95rem; font-family: inherit; background: white; }
@@ -193,6 +310,16 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate } from 
 export class FacilitatorQueueComponent implements OnInit {
   private readonly api = inject(ApiService);
 
+  // Top-level tab
+  fTab = signal<'hustlers' | 'applications'>('hustlers');
+
+  // Hustlers tab state
+  hustlers = signal<FacilitatorHustler[]>([]);
+  hustlersLoading = signal(false);
+  expandedHustler = signal<string | null>(null);
+  hSubTab = signal<'finance' | 'business'>('finance');
+
+  // Applications tab state
   applications = signal<HustlerApplication[]>([]);
   communities = signal<Community[]>([]);
   selectedStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING';
@@ -209,6 +336,24 @@ export class FacilitatorQueueComponent implements OnInit {
   ngOnInit(): void {
     this.api.listCommunities().subscribe(c => this.communities.set(c));
     this.load();
+    this.loadHustlers();
+  }
+
+  loadHustlers(): void {
+    this.hustlersLoading.set(true);
+    this.api.listFacilitatorHustlers().subscribe({
+      next: (list) => { this.hustlers.set(list); this.hustlersLoading.set(false); },
+      error: () => this.hustlersLoading.set(false)
+    });
+  }
+
+  toggleHustler(id: string): void {
+    if (this.expandedHustler() === id) {
+      this.expandedHustler.set(null);
+    } else {
+      this.expandedHustler.set(id);
+      this.hSubTab.set('finance');
+    }
   }
 
   load(): void {

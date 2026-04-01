@@ -124,6 +124,11 @@ export class ApiService {
   listHustlersByCommunity(communityId: string): Observable<BusinessProfile[]> {
     return this.http.get<BusinessProfile[]>(`${this.baseUrl}/api/communities/${communityId}/hustlers`);
   }
+
+  // Facilitator
+  listFacilitatorHustlers(): Observable<FacilitatorHustler[]> {
+    return this.http.get<FacilitatorHustler[]>(`${this.baseUrl}/api/facilitator/hustlers`);
+  }
 }
 
 export interface AuthResponse {
@@ -215,6 +220,23 @@ export interface HustlerProfileUpdate {
   mission?: string;
   operatingArea?: string;
   communityId?: string;
+}
+
+export interface FacilitatorHustler {
+  businessProfileId: string;
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  businessType: string;
+  communityName?: string;
+  operatingArea?: string;
+  description?: string;
+  targetCustomers?: string;
+  vision?: string;
+  mission?: string;
+  monthIncome: number;
+  monthExpenses: number;
+  monthProfit: number;
 }
 
 export interface IncomeSummary {
