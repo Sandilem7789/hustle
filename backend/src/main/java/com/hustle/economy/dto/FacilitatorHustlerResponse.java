@@ -23,4 +23,5 @@ public class FacilitatorHustlerResponse {
     private BigDecimal monthIncome;
     private BigDecimal monthExpenses;
     private BigDecimal monthProfit;
+    private boolean active;
 }

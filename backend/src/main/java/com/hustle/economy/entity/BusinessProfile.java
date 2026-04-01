@@ -62,6 +62,9 @@ public class BusinessProfile {
 
     private OffsetDateTime updatedAt;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean active = true;
+
     @OneToMany(mappedBy = "business", cascade = CascadeType.ALL)
     private List<Product> products;
 }

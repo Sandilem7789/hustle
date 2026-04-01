@@ -81,6 +81,31 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
                   <div class="detail-field span-2"><span class="field-label">Mission / Support needed</span><p>{{ h.mission || '—' }}</p></div>
                 </div>
               </div>
+
+              <!-- ACTIVATE / DEACTIVATE FOOTER -->
+              <div class="hc-footer">
+                <button
+                  class="btn"
+                  [class.btn-deactivate]="h.active"
+                  [class.btn-activate]="!h.active"
+                  (click)="toggleActive(h)"
+                  [disabled]="activeToggling() === h.businessProfileId"
+                >
+                  {{ activeToggling() === h.businessProfileId ? 'Saving…' : (h.active ? '⏸ Deactivate Hustler' : '▶ Activate Hustler') }}
+                </button>
+              </div>
+
+              <!-- DEACTIVATE CONFIRM OVERLAY -->
+              <div class="confirm-overlay" *ngIf="confirmingDeactivate() === h.businessProfileId">
+                <div class="confirm-box">
+                  <p class="confirm-title">Deactivate Hustler?</p>
+                  <p class="confirm-msg">Are you sure you want to deactivate <strong>{{ h.firstName }} {{ h.lastName }}</strong> ({{ h.businessName }})?</p>
+                  <div class="confirm-actions">
+                    <button class="btn btn-deactivate" (click)="confirmDeactivate(h)">Yes, deactivate</button>
+                    <button class="btn btn-cancel" (click)="confirmingDeactivate.set(null)">Cancel</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </article>
 
@@ -305,6 +330,19 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
     .edit-grid input, .edit-grid textarea, .edit-grid select { border-radius: 0.6rem; border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; }
     .edit-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
     .edit-error { color: #dc2626; font-size: 0.85rem; margin: 0.5rem 0 0; }
+
+    /* Activate / Deactivate footer */
+    .hc-footer { border-top: 1px dashed #e2e8f0; padding-top: 0.75rem; margin-top: 0.75rem; }
+    .btn-deactivate { background: #dc2626; color: white; }
+    .btn-activate { background: #16a34a; color: white; }
+    .btn-cancel { background: #e2e8f0; color: #475569; }
+
+    /* Confirm overlay */
+    .confirm-overlay { position: relative; margin-top: 0.5rem; }
+    .confirm-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.75rem; padding: 1rem 1.25rem; }
+    .confirm-title { font-weight: 700; font-size: 1rem; margin: 0 0 0.4rem; color: #9a3412; }
+    .confirm-msg { font-size: 0.9rem; color: #334155; margin: 0 0 0.75rem; }
+    .confirm-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   `
 })
 export class FacilitatorQueueComponent implements OnInit {
@@ -318,6 +356,8 @@ export class FacilitatorQueueComponent implements OnInit {
   hustlersLoading = signal(false);
   expandedHustler = signal<string | null>(null);
   hSubTab = signal<'finance' | 'business'>('finance');
+  confirmingDeactivate = signal<string | null>(null);
+  activeToggling = signal<string | null>(null);
 
   // Applications tab state
   applications = signal<HustlerApplication[]>([]);
@@ -350,10 +390,40 @@ export class FacilitatorQueueComponent implements OnInit {
   toggleHustler(id: string): void {
     if (this.expandedHustler() === id) {
       this.expandedHustler.set(null);
+      this.confirmingDeactivate.set(null);
     } else {
       this.expandedHustler.set(id);
       this.hSubTab.set('finance');
+      this.confirmingDeactivate.set(null);
     }
+  }
+
+  toggleActive(h: FacilitatorHustler): void {
+    if (h.active) {
+      // Show confirmation before deactivating
+      this.confirmingDeactivate.set(h.businessProfileId);
+    } else {
+      // Activate immediately
+      this.doSetActive(h, true);
+    }
+  }
+
+  confirmDeactivate(h: FacilitatorHustler): void {
+    this.confirmingDeactivate.set(null);
+    this.doSetActive(h, false);
+  }
+
+  private doSetActive(h: FacilitatorHustler, active: boolean): void {
+    this.activeToggling.set(h.businessProfileId);
+    this.api.setHustlerActive(h.businessProfileId, active).subscribe({
+      next: (updated) => {
+        this.hustlers.update(list => list.map(x =>
+          x.businessProfileId === updated.businessProfileId ? updated : x
+        ));
+        this.activeToggling.set(null);
+      },
+      error: () => this.activeToggling.set(null)
+    });
   }
 
   load(): void {

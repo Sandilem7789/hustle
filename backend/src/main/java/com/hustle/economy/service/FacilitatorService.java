@@ -6,6 +6,7 @@ import com.hustle.economy.entity.EntryType;
 import com.hustle.economy.entity.IncomeEntry;
 import com.hustle.economy.repository.BusinessProfileRepository;
 import com.hustle.economy.repository.IncomeEntryRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -56,8 +58,50 @@ public class FacilitatorService {
                             .monthIncome(income)
                             .monthExpenses(expenses)
                             .monthProfit(income.subtract(expenses))
+                            .active(bp.isActive())
                             .build();
                 })
                 .toList();
+    }
+
+    @Transactional
+    public FacilitatorHustlerResponse setActive(UUID businessProfileId, boolean active) {
+        BusinessProfile bp = businessProfileRepository.findById(businessProfileId)
+                .orElseThrow(() -> new EntityNotFoundException("Business profile not found"));
+        bp.setActive(active);
+        businessProfileRepository.save(bp);
+
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate today = LocalDate.now();
+        List<IncomeEntry> entries = incomeEntryRepository
+                .findByBusinessProfileIdAndDateBetween(bp.getId(), monthStart, today);
+
+        BigDecimal income = entries.stream()
+                .filter(e -> e.getEntryType() == null || e.getEntryType() == EntryType.INCOME)
+                .map(IncomeEntry::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal expenses = entries.stream()
+                .filter(e -> e.getEntryType() == EntryType.EXPENSE)
+                .map(IncomeEntry::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return FacilitatorHustlerResponse.builder()
+                .businessProfileId(bp.getId())
+                .firstName(bp.getApplication().getFirstName())
+                .lastName(bp.getApplication().getLastName())
+                .businessName(bp.getBusinessName())
+                .businessType(bp.getBusinessType())
+                .communityName(bp.getCommunity() != null ? bp.getCommunity().getName() : null)
+                .operatingArea(bp.getOperatingArea())
+                .description(bp.getDescription())
+                .targetCustomers(bp.getTargetCustomers())
+                .vision(bp.getVision())
+                .mission(bp.getMission())
+                .monthIncome(income)
+                .monthExpenses(expenses)
+                .monthProfit(income.subtract(expenses))
+                .active(bp.isActive())
+                .build();
     }
 }

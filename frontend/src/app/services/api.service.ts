@@ -129,6 +129,10 @@ export class ApiService {
   listFacilitatorHustlers(): Observable<FacilitatorHustler[]> {
     return this.http.get<FacilitatorHustler[]>(`${this.baseUrl}/api/facilitator/hustlers`);
   }
+
+  setHustlerActive(id: string, active: boolean): Observable<FacilitatorHustler> {
+    return this.http.patch<FacilitatorHustler>(`${this.baseUrl}/api/facilitator/hustlers/${id}/active`, { active });
+  }
 }
 
 export interface AuthResponse {
@@ -237,6 +241,7 @@ export interface FacilitatorHustler {
   monthIncome: number;
   monthExpenses: number;
   monthProfit: number;
+  active: boolean;
 }
 
 export interface IncomeSummary {
