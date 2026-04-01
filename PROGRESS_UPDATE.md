@@ -1,187 +1,100 @@
-# Hustle WebApp - Detailed Progress Update for Mesh Audio Bot
+# Hustle WebApp - Progress Update
 
 ## Summary
-The Hustle backend is functionally running on local development environment with Docker Compose. Core data pipeline (submission → Postgres) is working. However, two critical blockers prevent full facilitator functionality: (1) lazy-loading serialization errors on API endpoints, and (2) Java 25 compiler compatibility issue with Lombok. Both are identified and have clear remediation paths.
+The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully functional locally. All core features are live: hustler registration with auth, facilitator review queue, hustler dashboard with income tracking and product management, and a community marketplace. The most recent sprint added marketplace product browsing, inline product editing from the hustler dashboard, and facilitator-side business profile editing for approved hustlers.
 
 ---
 
-## ✅ Completed Work
+## ✅ Completed Features (Full History)
 
-### Infrastructure & Environment Setup
-- **Local Development Environment**: Cloned Hustle repo, set up on Windows laptop to replace VPS workflow
-- **Docker Compose**: Full stack running successfully:
-  - PostgreSQL database on port 5432
-  - Spring Boot backend on port 8080
-  - Angular frontend via Nginx on port 4173
-- **Build Tools Installed**: Java 21.0.10, Maven 3.9.14, Docker Desktop
-- **Backend Verification**: Application starts without crashing, connects to Postgres database successfully
+### Infrastructure & Environment
+- Docker Compose stack: PostgreSQL (5432), Spring Boot backend (8080), Angular/Nginx frontend (4173)
+- Java 21 (pinned — Maven image constraint), Spring Boot 3.x, Angular 18 standalone components
+- Nginx reverse-proxying `/api` to backend to avoid CORS issues in production-like setup
+- Named Docker volume `uploads_data` for product image persistence
 
-### Core Functionality Verified
-- **Hustler Application Submission**: End-to-end workflow works
-  - Frontend form captures and validates hustler details
-  - POST to `/api/hustlers/apply` succeeds
-  - Data persists correctly in Postgres
-  - Application status defaults to `PENDING` as expected
+### Authentication & Registration
+- Hustler registration form with password + confirm password, SA ID number field, community dropdown (loaded from API), business type dropdown (Service / Product / Service & Products)
+- BCrypt password hashing via `spring-security-crypto`
+- Session token auth (`X-Auth-Token` header, `hustler_sessions` table)
+- Login by phone number + password; status gate (PENDING/REJECTED blocked from logging in)
+- `AuthService` (Angular) with signal-based state, `localStorage` persistence
 
-### CORS Configuration Added
-- Created `CorsConfig.java` in `backend/src/main/java/com/hustle/economy/config/`
-- Configured CORS to allow Angular frontend (localhost:4173) to communicate with Spring Boot backend
-- Endpoints `/api/**` now accept GET, POST, PUT, DELETE, OPTIONS from local frontend
+### Hustler Dashboard (`/dashboard`)
+- Redirects to `/register` if not logged in
+- **Income tab**: log daily income (date, amount, channel, notes); summary chips (today / this week / this month); CSS bar chart (cash vs marketplace split); history table with week/month/all filter; weekly and monthly CSV export
+- **Products tab**:
+  - Shop name badge + listing count (`BusinessName — X / 40 listings`) at top of products container
+  - Add product form (name, description, price, image upload)
+  - 40-product limit enforced on backend and frontend
+  - Each product card has inline **edit** (pencil) and **delete** (✕) controls
+  - Edit mode opens in-card form for name, description, price, optional image replacement — saves via `PATCH /api/products/{id}`
 
-### Java Runtime Upgrade Initiated
-- Upgraded target Java version from 21 → 25 (latest LTS as of March 2026)
-- Updated `pom.xml`: `<java.version>25</java.version>`
-- Updated Lombok to 1.18.32 for Java 25 compatibility
-- Added maven-compiler-plugin with annotation processor configuration for Lombok
+### Facilitator Queue (`/facilitator`)
+- Filter by status (Pending / Approved / Rejected) and community
+- Expandable application cards with full detail view
+- Facilitator notes textarea per application
+- Contextual action buttons: Approve, Reject, Revoke, Reconsider & Approve
+- **Edit business details** button at footer of expanded view (APPROVED applications only):
+  - Editable fields: Community, Operating Area, Description, Target Customers, Vision, Mission / Support needed
+  - Phone and email are **not** editable by facilitators (reserved for Coordinator role — future dashboard)
+  - Saves via `PATCH /api/hustlers/{id}/profile`; syncs both `HustlerApplication` and `BusinessProfile`
 
----
+### Marketplace (`/`)
+- Community filter pill bar: **All communities** (default) + one pill per seeded community
+- Loads products via `GET /api/products?communityId=...` (no communityId = all)
+- Product cards: image, product name, shop name (business), description (2-line clamp), price
+- Read-only — no edit or delete controls
 
-## ✅ Recently Resolved Issues
+### Community Seeding
+- `DataInitializer` seeds 5 KwaZulu-Natal communities on startup: KwaNgwenya, KwaNibela, KwaMakhasa, KwaJobe, KwaMnqobokazi
 
-### Issue #1: Lazy-Loading Serialization Error (FIXED - 2026-03-31)
-**Status**: ✅ Fixed and deployed
-
-**Affected Endpoints** (previously):
-- `GET /api/hustlers` - Was returning 500 Internal Server Error
-- `GET /api/hustlers?status=PENDING` - Was returning 500 Internal Server Error
-
-**Root Cause**:
-- `HustlerApplication` entity has lazy-loaded `@ManyToOne` relationship to `Community`
-- The mapper accessed `community.name` after the `@Transactional` service method had already closed the Hibernate session, causing `LazyInitializationException`
-
-**Fix Applied**:
-- Added `LEFT JOIN FETCH a.community` to both JPQL queries in `HustlerApplicationRepository`
-- Community is now loaded eagerly within the same query/session, eliminating the error
-
-**Files Changed**:
-- `backend/src/main/java/com/hustle/economy/repository/HustlerApplicationRepository.java`
-
----
-
-### Issue #2: Java 25 Compiler Compatibility (RESOLVED - 2026-03-31)
-**Status**: ✅ Resolved by downgrading to Java 21
-
-**Root Cause**:
-- The Maven Docker image (`maven:3.9.6-eclipse-temurin-21`) only supports up to Java 21
-- `pom.xml` had `<java.version>25</java.version>` which caused a build failure
-
-**Fix Applied**:
-- Reverted `<java.version>` from `25` → `21` in `pom.xml`
-- Java 25 upgrade deferred until tooling matures (Q2/Q3 2026)
-
-**Files Changed**:
-- `backend/pom.xml`
+### Backend API Summary
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | Login by phone + password |
+| POST | `/api/hustlers` | Submit application |
+| GET | `/api/hustlers?status=&communityId=` | List applications (facilitator) |
+| PATCH | `/api/hustlers/{id}/decision` | Approve / Reject |
+| PATCH | `/api/hustlers/{id}/profile` | Edit business details (facilitator) |
+| GET | `/api/communities` | List all communities |
+| POST | `/api/products` | Add product (auth required) |
+| GET | `/api/products/my` | List own products (auth required) |
+| PATCH | `/api/products/{id}` | Update product (auth required) |
+| DELETE | `/api/products/{id}` | Delete product (auth required) |
+| GET | `/api/products?communityId=` | Public product listing |
+| POST | `/api/uploads` | Upload image (auth required) |
+| GET | `/api/uploads/{filename}` | Serve uploaded image |
+| POST | `/api/income` | Log income entry (auth required) |
+| GET | `/api/income/my` | List own income (auth required) |
+| GET | `/api/income/summary` | Income summary today/week/month |
+| GET | `/api/income/export?period=` | CSV export |
 
 ---
 
-## 📋 Current Project State
+## 🔧 Known Gaps & Planned Work
 
-### What Works Right Now
-✅ Docker Compose with all services running
-✅ Backend starts and connects to database
-✅ Hustler applications can be submitted from frontend
-✅ Data persists in Postgres
-✅ CORS configuration in place
-✅ Maven builds successfully with Java 21
-✅ Facilitator API endpoints return data correctly
-✅ Facilitator dashboard displays pending applications
-✅ Approve / Reject decisions work end-to-end
-
-### What Doesn't Work
-~~❌ Facilitator API endpoints (lazy-loading bug)~~ ✅ Fixed
-~~❌ Facilitator dashboard UI (no data returned)~~ ✅ Fixed
-~~❌ Java 25 compilation (Lombok incompatibility)~~ ✅ Resolved (pinned to Java 21)
-
-### Test Results
-- **Compilation**: ✅ Passes with Java 21 (baseline before upgrade attempt)
-- **Tests**: 0 tests defined (no unit/integration tests present)
-- **Integration**: ✅ Frontend ↔ Backend ↔ Database pipeline functional for submissions
+| Item | Notes |
+|------|-------|
+| **Coordinator dashboard** | Separate role; can edit phone/email (login credentials) and other sensitive fields. Planned for a future sprint. |
+| **Unit / integration tests** | 0 tests currently. Should be added post-MVP. |
+| **Pagination** | All list endpoints return full result sets. Add if dataset grows large. |
+| **VPS deployment** | Currently running on localhost only. Docker Compose is production-ready once pointed at a server. |
 
 ---
 
-## 🔧 Recommended Next Steps (Priority Order)
+## Recent Commits (April 2026)
 
-### Phase 1: Facilitator Functionality (COMPLETE ✅)
-- ~~Implement DTO-based API response~~
-- ~~Fix lazy-loading on facilitator endpoints~~
-- ~~Verify facilitator dashboard displays applications~~
-- ~~Test approve/reject flow end-to-end~~
-
-### Phase 2: Testing & Hardening (LOW PRIORITY - Post-MVP)
-- Write unit tests for service layer (HustlerApplicationService, etc.)
-- Write integration tests for API endpoints
-- Add error handling for edge cases
-- Document API in Swagger/OpenAPI
+| Commit | Description |
+|--------|-------------|
+| `6d75748` | feat: marketplace product browsing, editable product cards, facilitator profile editing |
+| `bc93b98` | feat: community seeding, income ledger, upgraded dashboards (MeshCode plan) |
+| `67f5fa5` | fix: login crash when same phone registered multiple times |
+| `a1a3071` | fix: lazy-load crash on approve/reject decision endpoint |
+| `c8a53af` | fix: CORS blocking PATCH, login error messages, rejected app access |
 
 ---
 
-## Technical Debt & Future Work
-
-| Item | Priority | Est. Effort | Notes |
-|------|----------|-------------|-------|
-| Implement unit/integration tests | Low | 4-6h | Currently 0 tests exist |
-| Add error handling & validation | Low | 2-3h | 400/500 responses not consistently handled |
-| Pagination for large datasets | Low | 1-2h | Only if facilitator dashboard shows many applications |
-| API documentation (Swagger) | Low | 2-3h | Helpful for future expansion |
-| Business profile image uploads | Low | 3-4h | HustlerApplication mentions no file handling yet |
-
----
-
-## Resources & Files Modified
-
-### Files Created/Modified Today:
-- `backend/src/main/java/com/hustle/economy/config/CorsConfig.java` (NEW - CORS configuration)
-- `backend/pom.xml` (UPDATED - Java version 25, Lombok 1.18.32, compiler plugin config)
-- `.github/java-upgrade/20260328133842/plan.md` (NEW - Upgrade plan documentation)
-- `.github/java-upgrade/20260328133842/progress.md` (NEW - Execution progress tracking)
-
-### Key Source Files (Context for Fixes):
-- `HustlerApplication.java` - Entity with lazy-loaded Community relationship (source of lazy-loading bug)
-- `HustlerApplicationService.java` - Business logic for application processing
-- `HustlerApplicationController.java` - REST endpoints throwing 500 errors
-- `Application.properties` - Database connection & Spring config
-
----
-
-## Estimated Timeline to Full Facilitator Feature
-
-| Phase | Task | Effort | Blocker? |
-|-------|------|--------|----------|
-| NOW | DTO Implementation for API | 2h | Yes - blocks facilitator feature |
-| +2h | Frontend Integration Testing | 1h | No - follow-up verification |
-| +3h | (Optional) Java 25 Resolution | 2-6h | No - nice-to-have stability improvement |
-| **TOTAL** | **Facilitator Feature Complete** | **~3-4 hours minimum** | **By end of today if pursued** |
-
----
-
-## Honest Assessment
-
-**What's Working Well:**
-- Docker/database infrastructure is solid
-- Core submit pipeline is functioning correctly
-- CORS is now in place
-- Error root causes are well-identified with clear remediation paths
-
-**What Needs Attention:**
-- Lazy-loading bug is a known, solvable pattern (DTO pattern is industry standard)
-- Java 25 compatibility is bonus work, not blocking core features
-- Zero tests mean bugs can sneak in; should add basic suite post-launch
-
-**Risk Level**: 🟡 MODERATE
-- Facilitator dashboard is blocked, but data integrity is intact
-- Fixes are straightforward (not architectural issues)
-- Can be resolved in 3-4 hours of focused work
-
----
-
-## Questions for Mesh Audio Bot / Next Steps
-
-1. **Priority**: Should we focus on fixing the facilitator dashboard first, or pursue Java 25 compatibility as critical path?
-2. **Testing**: Once facilitator feature is working, should we write integration tests before declaring "ready for VPS deployment"?
-3. **Timeline**: Need this live on VPS today, or is staging/testing on localhost acceptable until next review?
-
----
-
-**Last Updated**: 2026-03-31 UTC+2
-**Session ID**: 20260328133842 (Java upgrade tracking)
-**Next Review**: After Phase 2 testing & hardening
+**Last Updated**: 2026-04-01
+**Branch**: `main`
+**Repo**: https://github.com/Sandilem7789/hustle
