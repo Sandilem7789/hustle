@@ -12,12 +12,6 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
   imports: [CommonModule, ReactiveFormsModule, RegistrationFormComponent],
   template: `
     <section class="layout">
-      <header class="hero">
-        <p class="eyebrow">Hustler Dashboard</p>
-        <h1>Join the Hustle Economy</h1>
-        <p class="muted" style="color:rgba(255,255,255,0.7)">Register your business or log in to manage your products.</p>
-      </header>
-
       <div class="tab-card" [class.login-mode]="activeTab() === 'login'" [class.register-mode]="activeTab() === 'register'">
         <div class="tabs">
           <button [class.active]="activeTab() === 'login'" (click)="activeTab.set('login')">Login</button>

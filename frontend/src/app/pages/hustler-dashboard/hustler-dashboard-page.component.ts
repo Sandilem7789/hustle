@@ -12,30 +12,31 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <section class="layout">
-      <!-- HERO -->
-      <header class="hero">
-        <p class="eyebrow">Hustler Dashboard</p>
-        <h1>{{ auth.state()?.businessName }}</h1>
-        <p style="color:rgba(255,255,255,0.7)">Welcome back, {{ auth.state()?.firstName }}!</p>
-        <div class="chips">
-          <div class="chip">
-            <span class="chip-label">Today Income</span>
-            <span class="chip-val">R {{ (summary()?.todayIncome ?? 0) | number:'1.2-2' }}</span>
+      <!-- MINIMALIST HEADER -->
+      <div class="dash-header">
+        <div class="dash-identity">
+          <h1 class="biz-name">{{ auth.state()?.businessName }}</h1>
+          <span class="muted">Welcome back, {{ auth.state()?.firstName }}</span>
+        </div>
+        <div class="month-stats">
+          <div class="stat-item">
+            <span class="stat-label">Month Income</span>
+            <span class="stat-val stat-income">R {{ (summary()?.monthIncome ?? 0) | number:'1.2-2' }}</span>
           </div>
-          <div class="chip">
-            <span class="chip-label">Week Profit</span>
-            <span class="chip-val" [class.chip-loss]="(summary()?.weekProfit ?? 0) < 0">R {{ (summary()?.weekProfit ?? 0) | number:'1.2-2' }}</span>
+          <div class="stat-sep"></div>
+          <div class="stat-item">
+            <span class="stat-label">Month Expenses</span>
+            <span class="stat-val stat-expense">R {{ (summary()?.monthExpenses ?? 0) | number:'1.2-2' }}</span>
           </div>
-          <div class="chip">
-            <span class="chip-label">Month Profit</span>
-            <span class="chip-val" [class.chip-loss]="(summary()?.monthProfit ?? 0) < 0">R {{ (summary()?.monthProfit ?? 0) | number:'1.2-2' }}</span>
-          </div>
-          <div class="chip">
-            <span class="chip-label">Products</span>
-            <span class="chip-val">{{ products().length }} / 40</span>
+          <div class="stat-sep"></div>
+          <div class="stat-item">
+            <span class="stat-label">Month Profit</span>
+            <span class="stat-val" [class.stat-income]="(summary()?.monthProfit ?? 0) >= 0" [class.stat-expense]="(summary()?.monthProfit ?? 0) < 0">
+              R {{ (summary()?.monthProfit ?? 0) | number:'1.2-2' }}
+            </span>
           </div>
         </div>
-      </header>
+      </div>
 
       <!-- TABS -->
       <div class="tab-bar">
@@ -259,11 +260,17 @@ import { AuthService } from '../../services/auth.service';
     </section>
   `,
   styles: `
-    .chips { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; }
-    .chip { background: rgba(255,255,255,0.12); border-radius: 1rem; padding: 0.6rem 1rem; min-width: 100px; }
-    .chip-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); }
-    .chip-val { font-size: 1.1rem; font-weight: 700; color: white; }
-    .chip-loss { color: #fca5a5; }
+    .dash-header { background: white; border-radius: 1.25rem; padding: 1.25rem 1.75rem; box-shadow: 0 4px 20px rgba(15,23,42,0.07); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    @media (max-width: 600px) { .dash-header { flex-direction: column; align-items: flex-start; padding: 1rem 1.25rem; } }
+    .dash-identity { display: flex; flex-direction: column; gap: 0.2rem; }
+    .biz-name { margin: 0; font-size: 1.35rem; font-weight: 800; color: #0f172a; }
+    .month-stats { display: flex; align-items: center; gap: 0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.9rem; overflow: hidden; }
+    .stat-item { padding: 0.6rem 1.25rem; display: flex; flex-direction: column; gap: 0.15rem; }
+    .stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 700; }
+    .stat-val { font-size: 1rem; font-weight: 700; color: #0f172a; }
+    .stat-income { color: #16a34a; }
+    .stat-expense { color: #dc2626; }
+    .stat-sep { width: 1px; background: #e2e8f0; align-self: stretch; }
     .tab-bar { display: flex; gap: 0; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.08); }
     .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
     .tab-bar button.active { color: #0ea5e9; border-bottom: 3px solid #0ea5e9; background: #f0f9ff; }
