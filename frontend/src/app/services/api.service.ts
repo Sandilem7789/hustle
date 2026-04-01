@@ -41,6 +41,10 @@ export class ApiService {
     return this.http.patch<HustlerApplication>(`${this.baseUrl}/api/hustlers/${id}/decision`, payload);
   }
 
+  updateHustlerProfile(id: string, payload: HustlerProfileUpdate): Observable<HustlerApplication> {
+    return this.http.patch<HustlerApplication>(`${this.baseUrl}/api/hustlers/${id}/profile`, payload);
+  }
+
   // Products
   createProduct(payload: ProductRequest, token: string): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(`${this.baseUrl}/api/products`, payload, {
@@ -50,6 +54,12 @@ export class ApiService {
 
   listMyProducts(token: string): Observable<ProductResponse[]> {
     return this.http.get<ProductResponse[]>(`${this.baseUrl}/api/products/my`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  updateProduct(id: string, payload: ProductRequest, token: string): Observable<ProductResponse> {
+    return this.http.patch<ProductResponse>(`${this.baseUrl}/api/products/${id}`, payload, {
       headers: new HttpHeaders({ 'X-Auth-Token': token })
     });
   }
@@ -194,6 +204,15 @@ export interface IncomeEntryResponse {
   channel: string;
   notes?: string;
   createdAt: string;
+}
+
+export interface HustlerProfileUpdate {
+  description?: string;
+  targetCustomers?: string;
+  vision?: string;
+  mission?: string;
+  operatingArea?: string;
+  communityId?: string;
 }
 
 export interface IncomeSummary {

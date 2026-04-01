@@ -36,6 +36,15 @@ public class ProductController {
         return ResponseEntity.ok(productService.listMyProducts(profile.getId()));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProductResponse> updateProduct(
+            @RequestHeader("X-Auth-Token") String token,
+            @PathVariable UUID id,
+            @RequestBody @Valid ProductRequest request) {
+        BusinessProfile profile = authService.requireAuth(token);
+        return ResponseEntity.ok(productService.updateProduct(id, request, profile.getId()));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(
             @RequestHeader("X-Auth-Token") String token,

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService, ProductResponse, IncomeEntryResponse, IncomeSummary } from '../../services/api.service';
+import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, IncomeSummary } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -158,18 +158,57 @@ import { AuthService } from '../../services/auth.service';
         </div>
 
         <div class="card">
-          <h2>Your products ({{ products().length }})</h2>
+          <div class="shop-header">
+            <div class="shop-name-badge">&#x1F6D2; {{ auth.state()?.businessName }}</div>
+            <span class="muted">{{ products().length }} / 40 listings</span>
+          </div>
           <div *ngIf="loadingProducts()" class="muted">Loading…</div>
-          <div *ngIf="!loadingProducts() && products().length === 0" class="muted">No products yet.</div>
+          <div *ngIf="!loadingProducts() && products().length === 0" class="muted" style="margin-top:0.75rem">No products yet.</div>
           <div class="product-list">
             <article *ngFor="let p of products()" class="product-card">
-              <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" />
-              <div class="product-body">
-                <h3>{{ p.name }}</h3>
-                <p class="muted">{{ p.description }}</p>
-                <p class="price">R {{ p.price | number:'1.2-2' }}</p>
-              </div>
-              <button class="delete-btn" (click)="deleteProduct(p)">&#x2715;</button>
+              <!-- VIEW MODE -->
+              <ng-container *ngIf="editingProductId() !== p.id">
+                <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" />
+                <div class="product-body">
+                  <h3>{{ p.name }}</h3>
+                  <p class="muted">{{ p.description }}</p>
+                  <p class="price">R {{ p.price | number:'1.2-2' }}</p>
+                </div>
+                <div class="card-actions">
+                  <button class="edit-btn" (click)="startEdit(p)" title="Edit">&#x270E;</button>
+                  <button class="delete-btn" (click)="deleteProduct(p)" title="Remove">&#x2715;</button>
+                </div>
+              </ng-container>
+
+              <!-- EDIT MODE -->
+              <ng-container *ngIf="editingProductId() === p.id">
+                <div class="edit-form">
+                  <label>
+                    <span>Name *</span>
+                    <input [value]="editName" (input)="editName = $any($event.target).value" />
+                  </label>
+                  <label>
+                    <span>Description *</span>
+                    <textarea rows="3" [value]="editDescription" (input)="editDescription = $any($event.target).value"></textarea>
+                  </label>
+                  <label>
+                    <span>Price (ZAR) *</span>
+                    <input type="number" min="0" step="0.01" [value]="editPrice" (input)="editPrice = +$any($event.target).value" />
+                  </label>
+                  <label>
+                    <span>Replace image</span>
+                    <input type="file" accept="image/*" (change)="onEditFileChange($event)" class="file-input" />
+                    <small *ngIf="uploadLoading()">Uploading…</small>
+                  </label>
+                  <div class="edit-actions">
+                    <button class="primary small-btn" (click)="saveEdit(p)" [disabled]="saveLoading() || uploadLoading()">
+                      {{ saveLoading() ? 'Saving…' : 'Save' }}
+                    </button>
+                    <button class="outline-btn" (click)="cancelEdit()">Cancel</button>
+                  </div>
+                  <p *ngIf="saveError()" class="error">{{ saveError() }}</p>
+                </div>
+              </ng-container>
             </article>
           </div>
         </div>
@@ -226,12 +265,19 @@ import { AuthService } from '../../services/auth.service';
     .legend-dot.marketplace { background: #0ea5e9; }
     .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
     @media (max-width: 600px) { .product-list { grid-template-columns: 1fr; } }
+    .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .shop-name-badge { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
     .product-card { border: 1px solid #e2e8f0; border-radius: 1rem; overflow: hidden; background: #f8fafc; position: relative; }
     .product-img { width: 100%; height: 150px; object-fit: cover; display: block; }
-    .product-body { padding: 0.9rem; }
+    .product-body { padding: 0.9rem 0.9rem 0.4rem; }
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; }
     .price { font-weight: 700; color: #0ea5e9; margin-top: 0.4rem; }
-    .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(220,38,38,0.85); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
+    .card-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.3rem; }
+    .edit-btn { background: rgba(14,165,233,0.85); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
+    .delete-btn { background: rgba(220,38,38,0.85); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
+    .edit-form { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .edit-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .small-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
     small { color: #94a3b8; font-size: 0.8rem; }
   `
 })
@@ -287,6 +333,15 @@ export class HustlerDashboardPageComponent implements OnInit {
   addSuccess = signal(false);
   imagePreview = signal<string | null>(null);
   private pendingImageUrl = signal<string | null>(null);
+
+  // Edit state
+  editingProductId = signal<string | null>(null);
+  editName = '';
+  editDescription = '';
+  editPrice = 0;
+  private editPendingImageUrl: string | null = null;
+  saveLoading = signal(false);
+  saveError = signal('');
 
   productForm = this.fb.group({
     name: ['', Validators.required],
@@ -381,6 +436,53 @@ export class HustlerDashboardPageComponent implements OnInit {
   deleteProduct(p: ProductResponse): void {
     if (!confirm(`Remove "${p.name}"?`)) return;
     this.api.deleteProduct(p.id, this.auth.getToken()!).subscribe({ next: () => this.products.update(l => l.filter(x => x.id !== p.id)), error: () => alert('Failed.') });
+  }
+
+  startEdit(p: ProductResponse): void {
+    this.editingProductId.set(p.id);
+    this.editName = p.name;
+    this.editDescription = p.description;
+    this.editPrice = Number(p.price);
+    this.editPendingImageUrl = null;
+    this.saveError.set('');
+  }
+
+  cancelEdit(): void {
+    this.editingProductId.set(null);
+    this.saveError.set('');
+  }
+
+  onEditFileChange(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.uploadLoading.set(true);
+    this.api.uploadImage(file, this.auth.getToken()!).subscribe({
+      next: (res) => { this.editPendingImageUrl = res.url; this.uploadLoading.set(false); },
+      error: () => this.uploadLoading.set(false)
+    });
+  }
+
+  saveEdit(p: ProductResponse): void {
+    if (!this.editName || !this.editDescription || this.editPrice < 0) return;
+    this.saveLoading.set(true);
+    this.saveError.set('');
+    const payload: ProductRequest = {
+      name: this.editName,
+      description: this.editDescription,
+      price: this.editPrice,
+      mediaUrl: this.editPendingImageUrl ?? p.mediaUrl
+    };
+    this.api.updateProduct(p.id, payload, this.auth.getToken()!).subscribe({
+      next: (updated) => {
+        this.products.update(list => list.map(x => x.id === updated.id ? updated : x));
+        this.editingProductId.set(null);
+        this.saveLoading.set(false);
+      },
+      error: (err) => {
+        this.saveLoading.set(false);
+        this.saveError.set(err?.error?.message || 'Failed to save changes.');
+      }
+    });
   }
 
   resolveUrl(u: string): string { return u.startsWith('http') ? u : this.api.baseUrl + u; }

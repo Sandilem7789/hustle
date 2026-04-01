@@ -65,6 +65,23 @@ public class ProductService {
     }
 
     @Transactional
+    public ProductResponse updateProduct(UUID productId, ProductRequest request, UUID businessProfileId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+        if (!product.getBusiness().getId().equals(businessProfileId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this product");
+        }
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        if (request.getMediaUrl() != null) {
+            product.setMediaUrl(request.getMediaUrl());
+        }
+        product.setUpdatedAt(OffsetDateTime.now());
+        return toResponse(productRepository.save(product));
+    }
+
+    @Transactional
     public void deleteProduct(UUID productId, UUID businessProfileId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));

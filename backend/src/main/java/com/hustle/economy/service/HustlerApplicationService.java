@@ -2,6 +2,7 @@ package com.hustle.economy.service;
 
 import com.hustle.economy.dto.HustlerApplicationRequest;
 import com.hustle.economy.dto.HustlerDecisionRequest;
+import com.hustle.economy.dto.HustlerProfileUpdateRequest;
 import com.hustle.economy.entity.ApplicationStatus;
 import com.hustle.economy.entity.BusinessProfile;
 import com.hustle.economy.entity.Community;
@@ -80,6 +81,41 @@ public class HustlerApplicationService {
         }
 
         return application;
+    }
+
+    @Transactional
+    public HustlerApplication updateProfile(UUID applicationId, HustlerProfileUpdateRequest request) {
+        HustlerApplication application = applicationRepository.findByIdFetched(applicationId)
+                .orElseThrow(() -> new EntityNotFoundException("Application not found"));
+
+        if (request.getDescription() != null) application.setDescription(request.getDescription());
+        if (request.getTargetCustomers() != null) application.setTargetCustomers(request.getTargetCustomers());
+        if (request.getVision() != null) application.setVision(request.getVision());
+        if (request.getMission() != null) application.setMission(request.getMission());
+        if (request.getOperatingArea() != null) application.setOperatingArea(request.getOperatingArea());
+
+        if (request.getCommunityId() != null && !request.getCommunityId().isBlank()) {
+            Community community = communityRepository.findById(UUID.fromString(request.getCommunityId()))
+                    .orElseThrow(() -> new EntityNotFoundException("Community not found"));
+            application.setCommunity(community);
+        }
+
+        // Keep BusinessProfile in sync if it exists
+        businessProfileRepository.findByApplication_Id(applicationId).ifPresent(profile -> {
+            if (request.getDescription() != null) profile.setDescription(request.getDescription());
+            if (request.getTargetCustomers() != null) profile.setTargetCustomers(request.getTargetCustomers());
+            if (request.getVision() != null) profile.setVision(request.getVision());
+            if (request.getMission() != null) profile.setMission(request.getMission());
+            if (request.getOperatingArea() != null) profile.setOperatingArea(request.getOperatingArea());
+            if (request.getCommunityId() != null && !request.getCommunityId().isBlank()) {
+                communityRepository.findById(UUID.fromString(request.getCommunityId()))
+                        .ifPresent(profile::setCommunity);
+            }
+            profile.setUpdatedAt(OffsetDateTime.now());
+            businessProfileRepository.save(profile);
+        });
+
+        return applicationRepository.save(application);
     }
 
     private void upsertBusinessProfile(HustlerApplication application) {

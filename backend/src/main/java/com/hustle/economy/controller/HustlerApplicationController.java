@@ -3,6 +3,7 @@ package com.hustle.economy.controller;
 import com.hustle.economy.dto.HustlerApplicationRequest;
 import com.hustle.economy.dto.HustlerApplicationResponse;
 import com.hustle.economy.dto.HustlerDecisionRequest;
+import com.hustle.economy.dto.HustlerProfileUpdateRequest;
 import com.hustle.economy.mapper.HustlerApplicationMapper;
 import com.hustle.economy.service.HustlerApplicationService;
 import jakarta.validation.Valid;
@@ -38,5 +39,11 @@ public class HustlerApplicationController {
     public ResponseEntity<HustlerApplicationResponse> decide(@PathVariable UUID id,
                                                              @RequestBody @Valid HustlerDecisionRequest request) {
         return ResponseEntity.ok(hustlerApplicationMapper.toResponse(hustlerApplicationService.decide(id, request)));
+    }
+
+    @PatchMapping("/{id}/profile")
+    public ResponseEntity<HustlerApplicationResponse> updateProfile(@PathVariable UUID id,
+                                                                    @RequestBody HustlerProfileUpdateRequest request) {
+        return ResponseEntity.ok(hustlerApplicationMapper.toResponse(hustlerApplicationService.updateProfile(id, request)));
     }
 }

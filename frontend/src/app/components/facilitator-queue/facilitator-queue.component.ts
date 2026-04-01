@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService, HustlerApplication, Community } from '../../services/api.service';
+import { ApiService, HustlerApplication, Community, HustlerProfileUpdate } from '../../services/api.service';
 
 @Component({
   selector: 'app-facilitator-queue',
@@ -52,15 +52,18 @@ import { ApiService, HustlerApplication, Community } from '../../services/api.se
 
           <!-- EXPANDED DETAIL -->
           <div class="card-detail" *ngIf="expanded() === app.id">
+
+            <!-- DETAIL FIELDS (always visible) -->
             <div class="detail-grid">
               <div class="detail-field"><span class="field-label">Phone</span><span>{{ app.phone || '—' }}</span></div>
               <div class="detail-field"><span class="field-label">Email</span><span>{{ app.email || '—' }}</span></div>
               <div class="detail-field"><span class="field-label">ID No.</span><span>{{ app.idNumber || '—' }}</span></div>
+              <div class="detail-field"><span class="field-label">Community</span><span>{{ app.community?.name || '—' }}</span></div>
+              <div class="detail-field span-2"><span class="field-label">Operating area</span><span>{{ app.operatingArea || '—' }}</span></div>
               <div class="detail-field span-2"><span class="field-label">Description</span><p>{{ app.description }}</p></div>
               <div class="detail-field span-2"><span class="field-label">Target Customers</span><p>{{ app.targetCustomers }}</p></div>
               <div class="detail-field span-2"><span class="field-label">Vision</span><p>{{ app.vision }}</p></div>
               <div class="detail-field span-2"><span class="field-label">Mission / Support needed</span><p>{{ app.mission }}</p></div>
-              <div class="detail-field"><span class="field-label">Operating area</span><span>{{ app.operatingArea }}</span></div>
             </div>
 
             <label class="notes-label">
@@ -68,6 +71,7 @@ import { ApiService, HustlerApplication, Community } from '../../services/api.se
               <textarea rows="3" [(ngModel)]="notes[app.id]" placeholder="Leave a note…"></textarea>
             </label>
 
+            <!-- STATUS ACTIONS -->
             <div class="actions">
               <ng-container *ngIf="app.status === 'PENDING'">
                 <button class="btn approve" (click)="decide(app, 'APPROVED')">&#10003; Approve</button>
@@ -82,6 +86,53 @@ import { ApiService, HustlerApplication, Community } from '../../services/api.se
                 <button class="btn reject" (click)="decide(app, 'REJECTED')">Revoke</button>
               </ng-container>
             </div>
+
+            <!-- EDIT SECTION — footer, toggled -->
+            <ng-container *ngIf="app.status === 'APPROVED'">
+              <div class="edit-footer">
+                <button *ngIf="editingId() !== app.id" class="btn edit" (click)="startEdit(app)">&#x270E; Edit business details</button>
+              </div>
+
+              <div class="edit-section" *ngIf="editingId() === app.id">
+                <p class="edit-heading">Edit business details</p>
+                <div class="edit-grid">
+                  <label class="span-2">
+                    <span class="field-label">Community</span>
+                    <select [(ngModel)]="editData.communityId" [ngModelOptions]="{standalone: true}">
+                      <option value="">— keep current —</option>
+                      <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
+                    </select>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Operating area</span>
+                    <input [(ngModel)]="editData.operatingArea" [ngModelOptions]="{standalone: true}" />
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Description</span>
+                    <textarea rows="3" [(ngModel)]="editData.description" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Target Customers</span>
+                    <textarea rows="2" [(ngModel)]="editData.targetCustomers" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Vision</span>
+                    <textarea rows="2" [(ngModel)]="editData.vision" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                  <label class="span-2">
+                    <span class="field-label">Mission / Support needed</span>
+                    <textarea rows="2" [(ngModel)]="editData.mission" [ngModelOptions]="{standalone: true}"></textarea>
+                  </label>
+                </div>
+                <p *ngIf="editError()" class="edit-error">{{ editError() }}</p>
+                <div class="edit-actions">
+                  <button class="btn approve" (click)="saveEdit(app)" [disabled]="editSaving()">
+                    {{ editSaving() ? 'Saving…' : '&#10003; Save changes' }}
+                  </button>
+                  <button class="btn neutral" (click)="cancelEdit()">Cancel</button>
+                </div>
+              </div>
+            </ng-container>
           </div>
         </article>
       </div>
@@ -125,6 +176,18 @@ import { ApiService, HustlerApplication, Community } from '../../services/api.se
     .approve { background: #16a34a; color: white; }
     .reject { background: #dc2626; color: white; }
     .empty-msg { margin-top: 1rem; }
+    .edit-footer { margin: 1rem 0 0; border-top: 1px dashed #e2e8f0; padding-top: 0.75rem; }
+    .btn.edit { background: #0ea5e9; color: white; }
+    .btn.neutral { background: #e2e8f0; color: #475569; }
+    .edit-section { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.8rem; padding: 1rem; margin: 0.75rem 0; }
+    .edit-heading { margin: 0 0 0.75rem; font-weight: 700; font-size: 0.9rem; color: #0369a1; }
+    .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 600px) { .edit-grid { grid-template-columns: 1fr; } .edit-grid .span-2 { grid-column: span 1; } }
+    .edit-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: #475569; }
+    .edit-grid label.span-2 { grid-column: span 2; }
+    .edit-grid input, .edit-grid textarea, .edit-grid select { border-radius: 0.6rem; border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; }
+    .edit-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+    .edit-error { color: #dc2626; font-size: 0.85rem; margin: 0.5rem 0 0; }
   `
 })
 export class FacilitatorQueueComponent implements OnInit {
@@ -136,6 +199,12 @@ export class FacilitatorQueueComponent implements OnInit {
   selectedCommunity = '';
   expanded = signal<string | null>(null);
   notes: Record<string, string> = {};
+
+  // Inline edit state
+  editingId = signal<string | null>(null);
+  editData: HustlerProfileUpdate = {};
+  editSaving = signal(false);
+  editError = signal('');
 
   ngOnInit(): void {
     this.api.listCommunities().subscribe(c => this.communities.set(c));
@@ -154,5 +223,47 @@ export class FacilitatorQueueComponent implements OnInit {
   decide(app: HustlerApplication, status: 'APPROVED' | 'REJECTED'): void {
     this.api.decideApplication(app.id, { status, facilitatorNotes: this.notes[app.id] })
       .subscribe(() => this.load());
+  }
+
+  startEdit(app: HustlerApplication): void {
+    this.editingId.set(app.id);
+    this.editData = {
+      description: app.description ?? '',
+      targetCustomers: app.targetCustomers ?? '',
+      vision: app.vision ?? '',
+      mission: app.mission ?? '',
+      operatingArea: app.operatingArea ?? '',
+      communityId: app.community?.id ?? '',
+    };
+    this.editError.set('');
+  }
+
+  cancelEdit(): void {
+    this.editingId.set(null);
+    this.editError.set('');
+  }
+
+  saveEdit(app: HustlerApplication): void {
+    this.editSaving.set(true);
+    this.editError.set('');
+    const payload: HustlerProfileUpdate = {
+      description: this.editData.description || undefined,
+      targetCustomers: this.editData.targetCustomers || undefined,
+      vision: this.editData.vision || undefined,
+      mission: this.editData.mission || undefined,
+      operatingArea: this.editData.operatingArea || undefined,
+      communityId: this.editData.communityId || undefined,
+    };
+    this.api.updateHustlerProfile(app.id, payload).subscribe({
+      next: (updated) => {
+        this.applications.update(list => list.map(a => a.id === updated.id ? updated : a));
+        this.editingId.set(null);
+        this.editSaving.set(false);
+      },
+      error: (err) => {
+        this.editSaving.set(false);
+        this.editError.set(err?.error?.message || 'Failed to save changes.');
+      }
+    });
   }
 }
