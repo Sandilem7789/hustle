@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { jsPDF } from 'jspdf';
 import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, IncomeSummary } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 
@@ -56,18 +57,38 @@ import { AuthService } from '../../services/auth.service';
               <span>Amount (ZAR) *</span>
               <input type="number" min="0" step="0.01" formControlName="amount" placeholder="0.00" />
             </label>
-            <label>
-              <span>Channel *</span>
-              <select formControlName="channel">
-                <option value="CASH">Cash</option>
-                <option value="MARKETPLACE">Marketplace</option>
-              </select>
-            </label>
             <label class="span-2">
               <span>Notes (optional)</span>
-              <input formControlName="notes" placeholder="e.g. market day, online order" />
+              <input formControlName="notes" placeholder="e.g. sold beaded necklace, market day" />
             </label>
-            <button class="primary" type="submit" [disabled]="incomeForm.invalid || incomeLoading()">
+
+            <!-- SERVICE INCOME TOGGLE -->
+            <label class="checkbox-row span-2">
+              <input type="checkbox" [(ngModel)]="isServiceIncome" [ngModelOptions]="{standalone: true}" />
+              <span>This is for a service</span>
+            </label>
+
+            <!-- INVOICE FIELDS -->
+            <ng-container *ngIf="isServiceIncome">
+              <div class="service-section span-2">
+                <p class="service-heading">&#x1F4CB; Invoice details</p>
+                <label>
+                  <span>Customer name *</span>
+                  <input [(ngModel)]="invoiceCustomer" [ngModelOptions]="{standalone: true}" placeholder="e.g. Sipho Dlamini" />
+                </label>
+                <label>
+                  <span>Service description *</span>
+                  <input [(ngModel)]="invoiceService" [ngModelOptions]="{standalone: true}" placeholder="e.g. Hair braiding — full head" />
+                </label>
+                <button type="button" class="invoice-btn"
+                  (click)="createInvoicePdf()"
+                  [disabled]="!invoiceCustomer || !invoiceService || !incomeForm.get('amount')?.value">
+                  &#x1F4C4; Create &amp; Save Invoice as PDF
+                </button>
+              </div>
+            </ng-container>
+
+            <button class="primary span-2" type="submit" [disabled]="incomeForm.invalid || incomeLoading()">
               {{ incomeLoading() ? 'Saving…' : 'Log income' }}
             </button>
           </form>
@@ -241,6 +262,15 @@ import { AuthService } from '../../services/auth.service';
     .primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .success { color: #16a34a; font-weight: 600; margin-top: 0.75rem; }
     .error { color: #dc2626; font-weight: 600; margin-top: 0.75rem; }
+    .checkbox-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: #334155; cursor: pointer; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #16a34a; flex-shrink: 0; }
+    .service-section { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.8rem; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .service-heading { margin: 0; font-weight: 700; font-size: 0.9rem; color: #15803d; }
+    .service-section label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; color: #475569; }
+    .service-section input { border-radius: 0.6rem; border: 1px solid #cbd5e1; padding: 0.55rem 0.8rem; font-size: 0.95rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; }
+    .invoice-btn { border: 2px solid #16a34a; color: #16a34a; font-weight: 700; padding: 0.65rem 1rem; border-radius: 999px; background: white; cursor: pointer; font-size: 0.9rem; transition: background 0.15s; }
+    .invoice-btn:hover:not(:disabled) { background: #dcfce7; }
+    .invoice-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
     .history-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .outline-btn { border: 1px solid #cbd5e1; background: white; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.85rem; cursor: pointer; color: #475569; }
@@ -297,10 +327,13 @@ export class HustlerDashboardPageComponent implements OnInit {
   incomeError = signal('');
   historyFilter = 'week';
 
+  isServiceIncome = false;
+  invoiceCustomer = '';
+  invoiceService = '';
+
   incomeForm = this.fb.group({
     date: [new Date().toISOString().slice(0, 10), Validators.required],
     amount: [null as number | null, [Validators.required, Validators.min(0)]],
-    channel: ['CASH', Validators.required],
     notes: [''],
   });
 
@@ -381,17 +414,162 @@ export class HustlerDashboardPageComponent implements OnInit {
     if (this.incomeForm.invalid) return;
     this.incomeLoading.set(true);
     this.incomeError.set('');
-    this.api.logIncome(this.incomeForm.value as any, this.auth.getToken()!).subscribe({
+    const payload = { ...this.incomeForm.value, channel: 'CASH' as const };
+    this.api.logIncome(payload as any, this.auth.getToken()!).subscribe({
       next: (entry) => {
         this.incomeLoading.set(false);
         this.incomeSuccess.set(true);
         this.incomeHistory.update(h => [entry, ...h]);
         this.loadSummary();
         this.incomeForm.patchValue({ date: new Date().toISOString().slice(0, 10), amount: null, notes: '' });
+        this.isServiceIncome = false;
+        this.invoiceCustomer = '';
+        this.invoiceService = '';
         setTimeout(() => this.incomeSuccess.set(false), 2500);
       },
       error: (err) => { this.incomeLoading.set(false); this.incomeError.set(err?.error?.message || 'Failed to log income.'); }
     });
+  }
+
+  createInvoicePdf(): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const businessName = this.auth.state()?.businessName ?? 'Business';
+    const amount = Number(this.incomeForm.get('amount')?.value ?? 0);
+    const dateVal = this.incomeForm.get('date')?.value ?? new Date().toISOString().slice(0, 10);
+    const notes = this.incomeForm.get('notes')?.value ?? '';
+    const invoiceNo = `INV-${Date.now()}`;
+    const formattedDate = new Date(dateVal + 'T00:00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const lm = 20;          // left margin
+    const rm = 190;         // right margin x
+    const mid = rm - lm;    // usable width
+    let y = 22;
+
+    // ── Header ──
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('HUSTLE ECONOMY', lm, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Empowering local hustlers', lm, y);
+    y += 5;
+    doc.setDrawColor(14, 165, 233);
+    doc.setLineWidth(0.6);
+    doc.line(lm, y, rm, y);
+
+    // ── Invoice title + meta ──
+    y += 10;
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('INVOICE', lm, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text('Invoice No:', lm, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(invoiceNo, lm + 30, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text('Date:', lm, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(formattedDate, lm + 30, y);
+
+    // ── From / To ──
+    y += 10;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(lm, y, rm, y);
+    y += 8;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(148, 163, 184);
+    doc.text('FROM', lm, y);
+    doc.text('TO', lm + mid / 2, y);
+    y += 5;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(businessName, lm, y);
+    doc.text(this.invoiceCustomer, lm + mid / 2, y);
+
+    // ── Line items table ──
+    y += 12;
+    doc.setDrawColor(226, 232, 240);
+    doc.line(lm, y, rm, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(148, 163, 184);
+    doc.text('DESCRIPTION', lm, y);
+    doc.text('AMOUNT', rm, y, { align: 'right' });
+    y += 4;
+    doc.setDrawColor(14, 165, 233);
+    doc.setLineWidth(0.5);
+    doc.line(lm, y, rm, y);
+
+    y += 7;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    const serviceLines = doc.splitTextToSize(this.invoiceService, mid - 50);
+    doc.text(serviceLines, lm, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(`R ${amount.toFixed(2)}`, rm, y, { align: 'right' });
+    y += (serviceLines.length - 1) * 5;
+
+    // ── Total ──
+    y += 8;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(lm, y, rm, y);
+    y += 6;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('TOTAL', lm, y);
+    doc.setTextColor(14, 165, 233);
+    doc.text(`R ${amount.toFixed(2)}`, rm, y, { align: 'right' });
+    y += 3;
+    doc.setDrawColor(14, 165, 233);
+    doc.setLineWidth(0.6);
+    doc.line(lm, y, rm, y);
+
+    // ── Notes ──
+    if (notes) {
+      y += 10;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('Notes:', lm, y);
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      const noteLines = doc.splitTextToSize(notes, mid);
+      doc.text(noteLines, lm, y);
+    }
+
+    // ── Footer ──
+    y += 16;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(15, 23, 42);
+    doc.text('Thank you for your business!', lm, y);
+    y += 6;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text('Powered by Hustle Economy', lm, y);
+
+    doc.save(`${invoiceNo}.pdf`);
   }
 
   exportCsv(period: 'weekly' | 'monthly'): void {

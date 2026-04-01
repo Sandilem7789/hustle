@@ -77,6 +77,8 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 | Item | Notes |
 |------|-------|
 | **Coordinator dashboard** | Separate role; can edit phone/email (login credentials) and other sensitive fields. Planned for a future sprint. |
+| **WhatsApp integration** | Send invoices and notifications directly to customers via WhatsApp Business API. Planned once API integration approach is decided. Invoice PDF generation is already in place — the send-to-customer button will be wired up when WhatsApp is ready. |
+| **Barcode / marketplace scanner** | Marketplace channel income (products sold via the platform) will be tracked automatically once a barcode/QR scan flow is built. Currently all income is captured as cash. |
 | **Unit / integration tests** | 0 tests currently. Should be added post-MVP. |
 | **Pagination** | All list endpoints return full result sets. Add if dataset grows large. |
 | **VPS deployment** | Currently running on localhost only. Docker Compose is production-ready once pointed at a server. |
@@ -87,6 +89,8 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 | Commit | Description |
 |--------|-------------|
+| *(pending)* | feat: cash-only income, service checkbox, invoice PDF generator |
+| `7d770d3` | docs: update PROGRESS_UPDATE.md |
 | `6d75748` | feat: marketplace product browsing, editable product cards, facilitator profile editing |
 | `bc93b98` | feat: community seeding, income ledger, upgraded dashboards (MeshCode plan) |
 | `67f5fa5` | fix: login crash when same phone registered multiple times |
