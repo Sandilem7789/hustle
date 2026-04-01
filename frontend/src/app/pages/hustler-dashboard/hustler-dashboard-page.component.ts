@@ -116,22 +116,6 @@ import { AuthService } from '../../services/auth.service';
             </div>
           </div>
 
-          <!-- CHART -->
-          <div class="chart-wrap" *ngIf="chartData().length > 0">
-            <div *ngFor="let bar of chartData()" class="bar-row">
-              <span class="bar-label">{{ bar.label }}</span>
-              <div class="bar-track">
-                <div class="bar-fill income-bar" [style.width]="bar.incomePct + '%'" title="Income: R{{bar.income}}"></div>
-                <div class="bar-fill expense-bar" [style.width]="bar.expensePct + '%'" title="Expenses: R{{bar.expense}}"></div>
-              </div>
-              <span class="bar-total" [class.bar-loss]="bar.profit < 0">R {{ bar.profit | number:'1.0-0' }}</span>
-            </div>
-            <div class="chart-legend">
-              <span class="legend-dot income-bar"></span> Income
-              <span class="legend-dot expense-bar" style="margin-left:1rem"></span> Expenses
-            </div>
-          </div>
-
           <div *ngIf="incomeHistory().length === 0" class="muted" style="margin-top:1rem">No entries yet.</div>
           <table *ngIf="incomeHistory().length > 0" class="income-table">
             <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Notes</th></tr></thead>
@@ -162,6 +146,37 @@ import { AuthService } from '../../services/auth.service';
               <strong [class.ps-income]="periodSummary().profit >= 0" [class.ps-expense]="periodSummary().profit < 0">R {{ periodSummary().profit | number:'1.2-2' }}</strong>
             </div>
           </div>
+
+          <!-- LINE CHART -->
+          <ng-container *ngIf="lineChartData() as lcd">
+            <ng-container *ngIf="lcd.points.length >= 2">
+              <div class="lc-toggles">
+                <label [class.lc-disabled]="!canToggle('income')">
+                  <input type="checkbox" [checked]="showIncome()" (change)="toggleLine('income')" [disabled]="!canToggle('income')" />
+                  <span class="lc-dot" style="background:#22c55e"></span> Income
+                </label>
+                <label [class.lc-disabled]="!canToggle('expense')">
+                  <input type="checkbox" [checked]="showExpense()" (change)="toggleLine('expense')" [disabled]="!canToggle('expense')" />
+                  <span class="lc-dot" style="background:#f87171"></span> Expenses
+                </label>
+                <label [class.lc-disabled]="!canToggle('profit')">
+                  <input type="checkbox" [checked]="showProfit()" (change)="toggleLine('profit')" [disabled]="!canToggle('profit')" />
+                  <span class="lc-dot" style="background:#0ea5e9"></span> Profit
+                </label>
+              </div>
+              <svg viewBox="0 0 600 200" class="line-chart" preserveAspectRatio="xMidYMid meet">
+                <line *ngFor="let y of lcd.gridlines" x1="15" x2="585" [attr.y1]="y" [attr.y2]="y" class="lc-grid" />
+                <line x1="15" x2="585" [attr.y1]="lcd.zeroY" [attr.y2]="lcd.zeroY" class="lc-zero" />
+                <polyline *ngIf="showIncome()" [attr.points]="lcd.incomePoints" class="lc-line lc-income" />
+                <polyline *ngIf="showExpense()" [attr.points]="lcd.expensePoints" class="lc-line lc-expense" />
+                <polyline *ngIf="showProfit()" [attr.points]="lcd.profitPoints" class="lc-line lc-profit" />
+                <text *ngFor="let l of lcd.labels" [attr.x]="l.x" [attr.y]="l.y" class="lc-label">{{ l.text }}</text>
+              </svg>
+            </ng-container>
+            <p *ngIf="lcd.points.length < 2 && incomeHistory().length > 0" class="muted" style="font-size:0.83rem;margin-top:1rem">
+              Log entries on at least 2 different dates to see the trend graph.
+            </p>
+          </ng-container>
         </div>
       </ng-container>
 
@@ -316,19 +331,18 @@ import { AuthService } from '../../services/auth.service';
     .expense-badge { background: #fee2e2; color: #dc2626; }
     .expense-row td { background: #fff5f5; }
     .expense-amt { color: #dc2626; font-weight: 600; }
-    .chart-wrap { margin: 1rem 0; }
-    .bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; font-size: 0.85rem; }
-    .bar-label { width: 80px; text-align: right; color: #64748b; flex-shrink: 0; }
-    .bar-track { flex: 1; height: 18px; background: #f1f5f9; border-radius: 999px; overflow: hidden; display: flex; }
-    .bar-fill { height: 100%; transition: width 0.4s; }
-    .bar-fill.income-bar { background: #22c55e; }
-    .bar-fill.expense-bar { background: #f87171; }
-    .bar-total { width: 70px; font-weight: 700; color: #0f172a; flex-shrink: 0; }
-    .bar-loss { color: #dc2626; }
-    .chart-legend { display: flex; align-items: center; font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; }
-    .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
-    .legend-dot.income-bar { background: #22c55e; }
-    .legend-dot.expense-bar { background: #f87171; }
+    .lc-toggles { display: flex; gap: 1.25rem; flex-wrap: wrap; margin: 1.25rem 0 0.4rem; }
+    .lc-toggles label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #334155; cursor: pointer; user-select: none; }
+    .lc-toggles label.lc-disabled { opacity: 0.4; cursor: not-allowed; }
+    .lc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .line-chart { width: 100%; height: auto; display: block; }
+    .lc-grid { stroke: #f1f5f9; stroke-width: 1; }
+    .lc-zero { stroke: #cbd5e1; stroke-width: 1; stroke-dasharray: 4 3; }
+    .lc-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .lc-income { stroke: #22c55e; }
+    .lc-expense { stroke: #f87171; }
+    .lc-profit { stroke: #0ea5e9; }
+    .lc-label { font-size: 10px; fill: #94a3b8; text-anchor: middle; font-family: inherit; }
     .period-summary { display: flex; align-items: center; gap: 0; margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; overflow: hidden; }
     .ps-item { flex: 1; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
     .ps-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; font-weight: 700; }
@@ -380,23 +394,68 @@ export class HustlerDashboardPageComponent implements OnInit {
     notes: [''],
   });
 
-  // Chart data — income vs expense per day
-  chartData = computed(() => {
+  // Line chart visibility toggles
+  showIncome = signal(true);
+  showExpense = signal(true);
+  showProfit = signal(true);
+  visibleCount = computed(() => (this.showIncome() ? 1 : 0) + (this.showExpense() ? 1 : 0) + (this.showProfit() ? 1 : 0));
+
+  canToggle(line: 'income' | 'expense' | 'profit'): boolean {
+    const vis = line === 'income' ? this.showIncome() : line === 'expense' ? this.showExpense() : this.showProfit();
+    return !(vis && this.visibleCount() === 1);
+  }
+
+  toggleLine(line: 'income' | 'expense' | 'profit'): void {
+    if (!this.canToggle(line)) return;
+    if (line === 'income') this.showIncome.update(v => !v);
+    else if (line === 'expense') this.showExpense.update(v => !v);
+    else this.showProfit.update(v => !v);
+  }
+
+  // Line chart data
+  lineChartData = computed(() => {
     const entries = this.incomeHistory();
-    if (!entries.length) return [];
     const byDate = new Map<string, { income: number; expense: number }>();
-    for (const e of entries.slice(0, 14)) {
+    for (const e of entries) {
       const d = e.date;
       const cur = byDate.get(d) ?? { income: 0, expense: 0 };
       if (e.entryType === 'EXPENSE') cur.expense += Number(e.amount);
       else cur.income += Number(e.amount);
       byDate.set(d, cur);
     }
-    const maxVal = Math.max(...Array.from(byDate.values()).map(v => Math.max(v.income, v.expense)), 1);
-    return Array.from(byDate.entries()).slice(0, 7).map(([label, v]) => ({
-      label, income: v.income, expense: v.expense, profit: v.income - v.expense,
-      incomePct: (v.income / maxVal) * 100, expensePct: (v.expense / maxVal) * 100
-    }));
+    const sorted = Array.from(byDate.entries()).sort(([a], [b]) => a.localeCompare(b));
+    const points = sorted.map(([, v]) => ({ income: v.income, expense: v.expense, profit: v.income - v.expense }));
+    const dates = sorted.map(([d]) => d);
+
+    if (points.length < 2) return { points, incomePoints: '', expensePoints: '', profitPoints: '', zeroY: '100', gridlines: [] as string[], labels: [] as { x: string; y: string; text: string }[] };
+
+    const W = 600, H = 200, PL = 20, PR = 580, PT = 15, PB = 35;
+    const CW = PR - PL, CH = H - PT - PB;
+    const allVals = points.flatMap(p => [p.income, p.expense, p.profit]);
+    const maxV = Math.max(...allVals, 1);
+    const minV = Math.min(...allVals, 0);
+    const range = maxV - minV || 1;
+
+    const tx = (i: number) => (PL + (i / (points.length - 1)) * CW).toFixed(1);
+    const ty = (v: number) => (PT + (1 - (v - minV) / range) * CH).toFixed(1);
+    const pts = (vals: number[]) => vals.map((v, i) => `${tx(i)},${ty(v)}`).join(' ');
+
+    const step = Math.max(1, Math.ceil(dates.length / 6));
+    const labels = dates
+      .map((d, i) => ({ x: tx(i), y: String(H - 8), text: d.slice(5) }))
+      .filter((_, i) => i % step === 0 || i === dates.length - 1);
+
+    const gridlines = [0.25, 0.5, 0.75].map(p => ty(minV + p * range));
+
+    return {
+      points,
+      incomePoints: pts(points.map(p => p.income)),
+      expensePoints: pts(points.map(p => p.expense)),
+      profitPoints: pts(points.map(p => p.profit)),
+      zeroY: ty(0),
+      gridlines,
+      labels
+    };
   });
 
   // Period summary derived from loaded history
