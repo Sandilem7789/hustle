@@ -18,14 +18,14 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
         <p class="muted" style="color:rgba(255,255,255,0.7)">Register your business or log in to manage your products.</p>
       </header>
 
-      <div class="tab-card">
+      <div class="tab-card" [class.login-mode]="activeTab() === 'login'" [class.register-mode]="activeTab() === 'register'">
         <div class="tabs">
           <button [class.active]="activeTab() === 'login'" (click)="activeTab.set('login')">Login</button>
           <button [class.active]="activeTab() === 'register'" (click)="activeTab.set('register')">Register</button>
         </div>
 
         <!-- LOGIN FORM -->
-        <div *ngIf="activeTab() === 'login'" class="form-section">
+        <div *ngIf="activeTab() === 'login'" class="form-section login-section">
           <h2>Welcome back</h2>
           <p class="muted">Log in with your phone number and password.</p>
           <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-grid">
@@ -59,7 +59,12 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
       border-radius: 1.5rem;
       box-shadow: 0 25px 60px rgba(15,23,42,0.12);
       overflow: hidden;
+      width: 100%;
+      margin: 0 auto;
+      transition: max-width 0.3s ease;
     }
+    .tab-card.login-mode { max-width: 460px; }
+    .tab-card.register-mode { max-width: 100%; }
     .tabs {
       display: flex;
       border-bottom: 2px solid #e2e8f0;
@@ -82,12 +87,22 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
     }
     .form-section { padding: 2rem; }
     @media (max-width: 600px) { .form-section { padding: 1.25rem; } }
+    .login-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 2.5rem 2rem;
+    }
+    .login-section h2 { margin: 0 0 0.4rem; }
+    .login-section .muted { margin: 0; }
     .login-grid {
       display: flex;
       flex-direction: column;
       gap: 1rem;
       margin-top: 1.5rem;
-      max-width: 420px;
+      width: 100%;
+      text-align: left;
     }
     label {
       display: flex;

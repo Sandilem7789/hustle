@@ -13,7 +13,7 @@
     <ng-container *ngIf="auth.isLoggedIn()">
       <a routerLink="/dashboard" routerLinkActive="active">My Dashboard</a>
       <span class="user-name">{{ auth.state()?.firstName }}</span>
-      <button class="logout-btn" (click)="auth.logout()">Logout</button>
+      <button class="logout-btn" (click)="logout()">Logout</button>
     </ng-container>
     <a routerLink="/facilitator" routerLinkActive="active">Facilitator</a>
     <a routerLink="/marketplace" routerLinkActive="active">Marketplace</a>
