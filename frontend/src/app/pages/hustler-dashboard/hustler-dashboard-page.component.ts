@@ -19,16 +19,16 @@ import { AuthService } from '../../services/auth.service';
         <p style="color:rgba(255,255,255,0.7)">Welcome back, {{ auth.state()?.firstName }}!</p>
         <div class="chips">
           <div class="chip">
-            <span class="chip-label">Today</span>
-            <span class="chip-val">R {{ (summary()?.today ?? 0) | number:'1.2-2' }}</span>
+            <span class="chip-label">Today Income</span>
+            <span class="chip-val">R {{ (summary()?.todayIncome ?? 0) | number:'1.2-2' }}</span>
           </div>
           <div class="chip">
-            <span class="chip-label">This Week</span>
-            <span class="chip-val">R {{ (summary()?.weekToDate ?? 0) | number:'1.2-2' }}</span>
+            <span class="chip-label">Week Profit</span>
+            <span class="chip-val" [class.chip-loss]="(summary()?.weekProfit ?? 0) < 0">R {{ (summary()?.weekProfit ?? 0) | number:'1.2-2' }}</span>
           </div>
           <div class="chip">
-            <span class="chip-label">This Month</span>
-            <span class="chip-val">R {{ (summary()?.monthToDate ?? 0) | number:'1.2-2' }}</span>
+            <span class="chip-label">Month Profit</span>
+            <span class="chip-val" [class.chip-loss]="(summary()?.monthProfit ?? 0) < 0">R {{ (summary()?.monthProfit ?? 0) | number:'1.2-2' }}</span>
           </div>
           <div class="chip">
             <span class="chip-label">Products</span>
@@ -39,15 +39,19 @@ import { AuthService } from '../../services/auth.service';
 
       <!-- TABS -->
       <div class="tab-bar">
-        <button [class.active]="tab() === 'income'" (click)="tab.set('income')">Daily Income</button>
+        <button [class.active]="tab() === 'income'" (click)="tab.set('income')">Finances</button>
         <button [class.active]="tab() === 'products'" (click)="tab.set('products')">Products</button>
       </div>
 
-      <!-- INCOME TAB -->
+      <!-- FINANCES TAB -->
       <ng-container *ngIf="tab() === 'income'">
         <!-- QUICK ENTRY -->
         <div class="card">
-          <h2>Log income</h2>
+          <!-- Log sub-tabs -->
+          <div class="log-tabs">
+            <button [class.active]="logTab() === 'income'" (click)="logTab.set('income')">Log Income</button>
+            <button [class.active]="logTab() === 'expense'" (click)="logTab.set('expense')">Log Expense</button>
+          </div>
           <form [formGroup]="incomeForm" (ngSubmit)="submitIncome()" class="income-grid">
             <label>
               <span>Date *</span>
@@ -116,29 +120,47 @@ import { AuthService } from '../../services/auth.service';
             <div *ngFor="let bar of chartData()" class="bar-row">
               <span class="bar-label">{{ bar.label }}</span>
               <div class="bar-track">
-                <div class="bar-fill cash" [style.width]="bar.cashPct + '%'" title="Cash: R{{bar.cash}}"></div>
-                <div class="bar-fill marketplace" [style.width]="bar.marketPct + '%'" title="Marketplace: R{{bar.market}}"></div>
+                <div class="bar-fill income-bar" [style.width]="bar.incomePct + '%'" title="Income: R{{bar.income}}"></div>
+                <div class="bar-fill expense-bar" [style.width]="bar.expensePct + '%'" title="Expenses: R{{bar.expense}}"></div>
               </div>
-              <span class="bar-total">R {{ bar.total | number:'1.0-0' }}</span>
+              <span class="bar-total" [class.bar-loss]="bar.profit < 0">R {{ bar.profit | number:'1.0-0' }}</span>
             </div>
             <div class="chart-legend">
-              <span class="legend-dot cash"></span> Cash
-              <span class="legend-dot marketplace" style="margin-left:1rem"></span> Marketplace
+              <span class="legend-dot income-bar"></span> Income
+              <span class="legend-dot expense-bar" style="margin-left:1rem"></span> Expenses
             </div>
           </div>
 
-          <div *ngIf="incomeHistory().length === 0" class="muted" style="margin-top:1rem">No income entries yet.</div>
+          <div *ngIf="incomeHistory().length === 0" class="muted" style="margin-top:1rem">No entries yet.</div>
           <table *ngIf="incomeHistory().length > 0" class="income-table">
-            <thead><tr><th>Date</th><th>Amount</th><th>Channel</th><th>Notes</th></tr></thead>
+            <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Notes</th></tr></thead>
             <tbody>
-              <tr *ngFor="let e of incomeHistory()">
+              <tr *ngFor="let e of incomeHistory()" [class.expense-row]="e.entryType === 'EXPENSE'">
                 <td>{{ e.date }}</td>
-                <td>R {{ e.amount | number:'1.2-2' }}</td>
-                <td><span class="badge" [class.cash-badge]="e.channel==='CASH'" [class.market-badge]="e.channel==='MARKETPLACE'">{{ e.channel }}</span></td>
+                <td><span class="badge" [class.income-badge]="e.entryType !== 'EXPENSE'" [class.expense-badge]="e.entryType === 'EXPENSE'">{{ e.entryType === 'EXPENSE' ? 'Expense' : 'Income' }}</span></td>
+                <td [class.expense-amt]="e.entryType === 'EXPENSE'">{{ e.entryType === 'EXPENSE' ? '−' : '' }}R {{ e.amount | number:'1.2-2' }}</td>
                 <td class="muted">{{ e.notes || '—' }}</td>
               </tr>
             </tbody>
           </table>
+
+          <!-- PERIOD SUMMARY -->
+          <div class="period-summary" *ngIf="incomeHistory().length > 0">
+            <div class="ps-item">
+              <span class="ps-label">Income</span>
+              <strong class="ps-income">R {{ periodSummary().income | number:'1.2-2' }}</strong>
+            </div>
+            <div class="ps-divider"></div>
+            <div class="ps-item">
+              <span class="ps-label">Expenses</span>
+              <strong class="ps-expense">R {{ periodSummary().expenses | number:'1.2-2' }}</strong>
+            </div>
+            <div class="ps-divider"></div>
+            <div class="ps-item">
+              <span class="ps-label">Profit</span>
+              <strong [class.ps-income]="periodSummary().profit >= 0" [class.ps-expense]="periodSummary().profit < 0">R {{ periodSummary().profit | number:'1.2-2' }}</strong>
+            </div>
+          </div>
         </div>
       </ng-container>
 
@@ -241,9 +263,13 @@ import { AuthService } from '../../services/auth.service';
     .chip { background: rgba(255,255,255,0.12); border-radius: 1rem; padding: 0.6rem 1rem; min-width: 100px; }
     .chip-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); }
     .chip-val { font-size: 1.1rem; font-weight: 700; color: white; }
+    .chip-loss { color: #fca5a5; }
     .tab-bar { display: flex; gap: 0; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.08); }
     .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
     .tab-bar button.active { color: #0ea5e9; border-bottom: 3px solid #0ea5e9; background: #f0f9ff; }
+    .log-tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.25rem; }
+    .log-tabs button { flex: 1; padding: 0.65rem; border: none; background: none; font-size: 0.95rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    .log-tabs button.active { color: #0ea5e9; border-bottom: 2px solid #0ea5e9; margin-bottom: -2px; }
     .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 25px 60px rgba(15,23,42,0.08); }
     @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
     .card.info { background: #fef3c7; }
@@ -279,20 +305,29 @@ import { AuthService } from '../../services/auth.service';
     .income-table th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
     .income-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; }
     .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
-    .cash-badge { background: #dcfce7; color: #16a34a; }
-    .market-badge { background: #dbeafe; color: #2563eb; }
+    .income-badge { background: #dcfce7; color: #16a34a; }
+    .expense-badge { background: #fee2e2; color: #dc2626; }
+    .expense-row td { background: #fff5f5; }
+    .expense-amt { color: #dc2626; font-weight: 600; }
     .chart-wrap { margin: 1rem 0; }
     .bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; font-size: 0.85rem; }
     .bar-label { width: 80px; text-align: right; color: #64748b; flex-shrink: 0; }
     .bar-track { flex: 1; height: 18px; background: #f1f5f9; border-radius: 999px; overflow: hidden; display: flex; }
     .bar-fill { height: 100%; transition: width 0.4s; }
-    .bar-fill.cash { background: #22c55e; }
-    .bar-fill.marketplace { background: #0ea5e9; }
+    .bar-fill.income-bar { background: #22c55e; }
+    .bar-fill.expense-bar { background: #f87171; }
     .bar-total { width: 70px; font-weight: 700; color: #0f172a; flex-shrink: 0; }
+    .bar-loss { color: #dc2626; }
     .chart-legend { display: flex; align-items: center; font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; }
     .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
-    .legend-dot.cash { background: #22c55e; }
-    .legend-dot.marketplace { background: #0ea5e9; }
+    .legend-dot.income-bar { background: #22c55e; }
+    .legend-dot.expense-bar { background: #f87171; }
+    .period-summary { display: flex; align-items: center; gap: 0; margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; overflow: hidden; }
+    .ps-item { flex: 1; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .ps-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; font-weight: 700; }
+    .ps-income { font-size: 1rem; font-weight: 700; color: #16a34a; }
+    .ps-expense { font-size: 1rem; font-weight: 700; color: #dc2626; }
+    .ps-divider { width: 1px; background: #e2e8f0; align-self: stretch; }
     .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
     @media (max-width: 600px) { .product-list { grid-template-columns: 1fr; } }
     .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
@@ -318,6 +353,7 @@ export class HustlerDashboardPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   tab = signal<'income' | 'products'>('income');
+  logTab = signal<'income' | 'expense'>('income');
 
   // Income
   incomeHistory = signal<IncomeEntryResponse[]>([]);
@@ -337,24 +373,31 @@ export class HustlerDashboardPageComponent implements OnInit {
     notes: [''],
   });
 
-  // Chart data derived from history
+  // Chart data — income vs expense per day
   chartData = computed(() => {
     const entries = this.incomeHistory();
     if (!entries.length) return [];
-    // Group by date, last 7 entries
-    const byDate = new Map<string, { cash: number; market: number }>();
+    const byDate = new Map<string, { income: number; expense: number }>();
     for (const e of entries.slice(0, 14)) {
       const d = e.date;
-      const cur = byDate.get(d) ?? { cash: 0, market: 0 };
-      if (e.channel === 'CASH') cur.cash += Number(e.amount);
-      else cur.market += Number(e.amount);
+      const cur = byDate.get(d) ?? { income: 0, expense: 0 };
+      if (e.entryType === 'EXPENSE') cur.expense += Number(e.amount);
+      else cur.income += Number(e.amount);
       byDate.set(d, cur);
     }
-    const maxTotal = Math.max(...Array.from(byDate.values()).map(v => v.cash + v.market), 1);
-    return Array.from(byDate.entries()).slice(0, 7).map(([label, v]) => {
-      const total = v.cash + v.market;
-      return { label, cash: v.cash, market: v.market, total, cashPct: (v.cash / maxTotal) * 100, marketPct: (v.market / maxTotal) * 100 };
-    });
+    const maxVal = Math.max(...Array.from(byDate.values()).map(v => Math.max(v.income, v.expense)), 1);
+    return Array.from(byDate.entries()).slice(0, 7).map(([label, v]) => ({
+      label, income: v.income, expense: v.expense, profit: v.income - v.expense,
+      incomePct: (v.income / maxVal) * 100, expensePct: (v.expense / maxVal) * 100
+    }));
+  });
+
+  // Period summary derived from loaded history
+  periodSummary = computed(() => {
+    const entries = this.incomeHistory();
+    const income = entries.filter(e => e.entryType !== 'EXPENSE').reduce((s, e) => s + Number(e.amount), 0);
+    const expenses = entries.filter(e => e.entryType === 'EXPENSE').reduce((s, e) => s + Number(e.amount), 0);
+    return { income, expenses, profit: income - expenses };
   });
 
   // Products
@@ -414,7 +457,11 @@ export class HustlerDashboardPageComponent implements OnInit {
     if (this.incomeForm.invalid) return;
     this.incomeLoading.set(true);
     this.incomeError.set('');
-    const payload = { ...this.incomeForm.value, channel: 'CASH' as const };
+    const payload = {
+      ...this.incomeForm.value,
+      channel: 'CASH' as const,
+      entryType: (this.logTab() === 'expense' ? 'EXPENSE' : 'INCOME') as 'INCOME' | 'EXPENSE'
+    };
     this.api.logIncome(payload as any, this.auth.getToken()!).subscribe({
       next: (entry) => {
         this.incomeLoading.set(false);

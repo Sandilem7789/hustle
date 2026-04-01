@@ -14,6 +14,7 @@ public class IncomeEntryResponse {
     private LocalDate date;
     private BigDecimal amount;
     private String channel;
+    private String entryType;
     private String notes;
     private OffsetDateTime createdAt;
 }

@@ -4,6 +4,7 @@ import com.hustle.economy.dto.IncomeEntryRequest;
 import com.hustle.economy.dto.IncomeEntryResponse;
 import com.hustle.economy.dto.IncomeSummaryResponse;
 import com.hustle.economy.entity.BusinessProfile;
+import com.hustle.economy.entity.EntryType;
 import com.hustle.economy.entity.IncomeEntry;
 import com.hustle.economy.repository.IncomeEntryRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +27,17 @@ public class IncomeService {
 
     @Transactional
     public IncomeEntryResponse logIncome(IncomeEntryRequest request, BusinessProfile profile) {
+        EntryType type = EntryType.INCOME;
+        if ("EXPENSE".equalsIgnoreCase(request.getEntryType())) {
+            type = EntryType.EXPENSE;
+        }
+
         IncomeEntry entry = IncomeEntry.builder()
                 .businessProfile(profile)
                 .date(request.getDate())
                 .amount(request.getAmount())
                 .channel(request.getChannel().toUpperCase(Locale.ROOT))
+                .entryType(type)
                 .notes(request.getNotes())
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -55,17 +62,23 @@ public class IncomeService {
 
         List<IncomeEntry> all = incomeEntryRepository.findByBusinessProfileId(businessProfileId);
 
-        BigDecimal todayTotal = sum(all, today, today);
-        BigDecimal weekTotal = sum(all, weekStart, today);
-        BigDecimal monthTotal = sum(all, monthStart, today);
-        BigDecimal cash = all.stream().filter(e -> "CASH".equals(e.getChannel()))
-                .map(IncomeEntry::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal marketplace = all.stream().filter(e -> "MARKETPLACE".equals(e.getChannel()))
-                .map(IncomeEntry::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal todayIncome   = sumByType(all, today, today, true);
+        BigDecimal todayExpenses = sumByType(all, today, today, false);
+        BigDecimal weekIncome    = sumByType(all, weekStart, today, true);
+        BigDecimal weekExpenses  = sumByType(all, weekStart, today, false);
+        BigDecimal monthIncome   = sumByType(all, monthStart, today, true);
+        BigDecimal monthExpenses = sumByType(all, monthStart, today, false);
 
         return IncomeSummaryResponse.builder()
-                .today(todayTotal).weekToDate(weekTotal).monthToDate(monthTotal)
-                .totalCash(cash).totalMarketplace(marketplace)
+                .todayIncome(todayIncome)
+                .todayExpenses(todayExpenses)
+                .todayProfit(todayIncome.subtract(todayExpenses))
+                .weekIncome(weekIncome)
+                .weekExpenses(weekExpenses)
+                .weekProfit(weekIncome.subtract(weekExpenses))
+                .monthIncome(monthIncome)
+                .monthExpenses(monthExpenses)
+                .monthProfit(monthIncome.subtract(monthExpenses))
                 .build();
     }
 
@@ -78,9 +91,11 @@ public class IncomeService {
         List<IncomeEntry> entries = incomeEntryRepository
                 .findByBusinessProfileIdAndDateBetween(businessProfileId, from, today);
 
-        StringBuilder sb = new StringBuilder("Date,Amount,Channel,Notes\n");
+        StringBuilder sb = new StringBuilder("Date,Type,Amount,Channel,Notes\n");
         for (IncomeEntry e : entries) {
+            String type = e.getEntryType() != null ? e.getEntryType().name() : "INCOME";
             sb.append(e.getDate()).append(",")
+              .append(type).append(",")
               .append(e.getAmount()).append(",")
               .append(e.getChannel()).append(",")
               .append(e.getNotes() != null ? e.getNotes().replace(",", ";") : "").append("\n");
@@ -88,9 +103,14 @@ public class IncomeService {
         return sb.toString();
     }
 
-    private BigDecimal sum(List<IncomeEntry> entries, LocalDate from, LocalDate to) {
+    private boolean isIncome(IncomeEntry e) {
+        return e.getEntryType() == null || e.getEntryType() == EntryType.INCOME;
+    }
+
+    private BigDecimal sumByType(List<IncomeEntry> entries, LocalDate from, LocalDate to, boolean income) {
         return entries.stream()
                 .filter(e -> !e.getDate().isBefore(from) && !e.getDate().isAfter(to))
+                .filter(e -> income ? isIncome(e) : e.getEntryType() == EntryType.EXPENSE)
                 .map(IncomeEntry::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -98,7 +118,9 @@ public class IncomeService {
     private IncomeEntryResponse toResponse(IncomeEntry e) {
         return IncomeEntryResponse.builder()
                 .id(e.getId()).date(e.getDate()).amount(e.getAmount())
-                .channel(e.getChannel()).notes(e.getNotes()).createdAt(e.getCreatedAt())
+                .channel(e.getChannel())
+                .entryType(e.getEntryType() != null ? e.getEntryType().name() : "INCOME")
+                .notes(e.getNotes()).createdAt(e.getCreatedAt())
                 .build();
     }
 }

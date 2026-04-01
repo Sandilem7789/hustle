@@ -28,6 +28,9 @@ public class IncomeEntry {
     @Column(nullable = false)
     private String channel; // CASH or MARKETPLACE
 
+    @Enumerated(EnumType.STRING)
+    private EntryType entryType; // nullable for backward compat; null treated as INCOME
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 

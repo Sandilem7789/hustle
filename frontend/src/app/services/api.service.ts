@@ -191,9 +191,10 @@ export interface ProductResponse {
 export type Product = ProductResponse;
 
 export interface IncomeEntryRequest {
-  date: string; // ISO date yyyy-MM-dd
+  date: string;
   amount: number;
   channel: 'CASH' | 'MARKETPLACE';
+  entryType: 'INCOME' | 'EXPENSE';
   notes?: string;
 }
 
@@ -202,6 +203,7 @@ export interface IncomeEntryResponse {
   date: string;
   amount: number;
   channel: string;
+  entryType: string;
   notes?: string;
   createdAt: string;
 }
@@ -216,9 +218,13 @@ export interface HustlerProfileUpdate {
 }
 
 export interface IncomeSummary {
-  today: number;
-  weekToDate: number;
-  monthToDate: number;
-  totalCash: number;
-  totalMarketplace: number;
+  todayIncome: number;
+  todayExpenses: number;
+  todayProfit: number;
+  weekIncome: number;
+  weekExpenses: number;
+  weekProfit: number;
+  monthIncome: number;
+  monthExpenses: number;
+  monthProfit: number;
 }

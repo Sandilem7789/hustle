@@ -17,5 +17,6 @@ public class IncomeEntryRequest {
     private BigDecimal amount;
     @NotBlank
     private String channel; // CASH or MARKETPLACE
+    private String entryType; // INCOME or EXPENSE; defaults to INCOME
     private String notes;
 }

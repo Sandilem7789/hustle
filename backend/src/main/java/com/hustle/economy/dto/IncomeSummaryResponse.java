@@ -7,9 +7,13 @@ import java.math.BigDecimal;
 
 @Getter @Builder
 public class IncomeSummaryResponse {
-    private BigDecimal today;
-    private BigDecimal weekToDate;
-    private BigDecimal monthToDate;
-    private BigDecimal totalCash;
-    private BigDecimal totalMarketplace;
+    private BigDecimal todayIncome;
+    private BigDecimal todayExpenses;
+    private BigDecimal todayProfit;
+    private BigDecimal weekIncome;
+    private BigDecimal weekExpenses;
+    private BigDecimal weekProfit;
+    private BigDecimal monthIncome;
+    private BigDecimal monthExpenses;
+    private BigDecimal monthProfit;
 }
