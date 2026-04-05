@@ -78,6 +78,9 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 |------|-------|
 | **Coordinator dashboard** | Separate role; can edit phone/email (login credentials) and other sensitive fields. Planned for a future sprint. |
 | **WhatsApp integration** | Send invoices and notifications directly to customers via WhatsApp Business API. Planned once API integration approach is decided. Invoice PDF generation is already in place — the send-to-customer button will be wired up when WhatsApp is ready. |
+| **Payments & payouts roadmap** | Adopt Peach Payments as the primary gateway (split settlements, wallets) and pair with Ozow/Stitch for instant EFT. Start by prototyping on PayFast if needed, then migrate checkout + automated payouts once underwriting is approved. |
+| **Marketplace purchase flow** | Add buyer-side actions: start with CTA or guest checkout (collect name/phone/address per order), then graduate to full customer accounts with carts/order history once logistics + payments are ready. |
+| **PWA / offline hustler mode** | Convert the Angular app to a PWA (`ng add @angular/pwa`), cache the hustler dashboard, store offline income entries/products in IndexedDB, and sync via background tasks so logging works without connectivity. |
 | **Barcode / marketplace scanner** | Marketplace channel income (products sold via the platform) will be tracked automatically once a barcode/QR scan flow is built. Currently all income is captured as cash. |
 | **Unit / integration tests** | 0 tests currently. Should be added post-MVP. |
 | **Pagination** | All list endpoints return full result sets. Add if dataset grows large. |
