@@ -8,6 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private static final String[] ALLOWED_ORIGINS = {
+            "http://localhost:4200",
             "http://localhost:4173",
             "http://148.230.79.29:4173",
             "http://148.230.79.29"
