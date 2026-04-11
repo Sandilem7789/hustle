@@ -55,6 +55,7 @@ public class AuthService {
                 .businessName(profile.getBusinessName())
                 .firstName(application.getFirstName())
                 .lastName(application.getLastName())
+                .businessType(profile.getBusinessType())
                 .build();
     }
 

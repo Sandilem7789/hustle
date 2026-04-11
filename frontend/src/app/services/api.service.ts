@@ -233,6 +233,7 @@ export interface AuthResponse {
   businessName: string;
   firstName: string;
   lastName: string;
+  businessType?: string;
 }
 
 export interface CustomerRegisterRequest {

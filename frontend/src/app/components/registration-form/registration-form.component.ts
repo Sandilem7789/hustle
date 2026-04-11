@@ -249,7 +249,8 @@ export class RegistrationFormComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.statusKind.set('error');
-        this.statusMessage.set(err?.error?.message || 'Something went wrong. Please try again.');
+        const msg = err?.error?.message;
+        this.statusMessage.set(msg ? `Registration failed: ${msg}` : 'Registration failed. Please check your details and try again.');
       }
     });
   }

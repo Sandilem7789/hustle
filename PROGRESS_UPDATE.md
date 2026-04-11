@@ -1,7 +1,7 @@
 # Hustle WebApp - Progress Update
 
 ## Summary
-The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully functional locally. All core features are live: hustler registration with auth, facilitator review queue, hustler dashboard with income tracking and product management, and a community marketplace. The most recent sprint added marketplace product browsing, inline product editing from the hustler dashboard, and facilitator-side business profile editing for approved hustlers.
+The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully functional locally. All core features are live: hustler registration with auth, facilitator review queue, hustler dashboard with income tracking and product management, and a community marketplace. The most recent sprint delivered a full dashboard UI redesign — gradient hero banner, financial summary cards, prominent Log Income/Expense buttons, an Add Product modal, improved nav with Logout, and specific error messages throughout.
 
 ---
 
@@ -14,21 +14,29 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 - Named Docker volume `uploads_data` for product image persistence
 
 ### Authentication & Registration
-- Hustler registration form with password + confirm password, SA ID number field, community dropdown (loaded from API), business type dropdown (Service / Product / Service & Products)
+- Hustler registration form with password + confirm password, SA ID number ("ID no.") field, community dropdown (loaded from API), business type dropdown (Service / Product / Service & Products)
 - BCrypt password hashing via `spring-security-crypto`
 - Session token auth (`X-Auth-Token` header, `hustler_sessions` table)
 - Login by phone number + password; status gate (PENDING/REJECTED blocked from logging in)
+- Login response now includes `businessType` — stored in `AuthState` and shown as badge on dashboard
+- Registration error messages are now specific (e.g. "Registration failed: Phone number already registered") instead of generic
 - `AuthService` (Angular) with signal-based state, `localStorage` persistence
 
 ### Hustler Dashboard (`/dashboard`)
 - Redirects to `/register` if not logged in
-- **Income tab**: log daily income (date, amount, channel, notes); summary chips (today / this week / this month); CSS bar chart (cash vs marketplace split); history table with week/month/all filter; weekly and monthly CSV export
+- **Hero banner**: gradient (yellow → teal), greeting ("Hi {firstName}!"), shop name, business type badge
+- **Financial summary cards**: Income (green ↑), Expenses (red ↓), Profit (blue ≈) — each shows this-month total with icon
+- **Log Income / Log Expense buttons**: large, prominent, coloured — tap to jump straight to the correct log form
+- **Finances tab**: log daily income or expense (date, amount, notes); history table with week/month/all filter; period summary bar; line chart (income / expenses / profit toggleable); weekly and monthly CSV export; service invoice PDF generation
 - **Products tab**:
-  - Shop name badge + listing count (`BusinessName — X / 40 listings`) at top of products container
-  - Add product form (name, description, price, image upload)
-  - 40-product limit enforced on backend and frontend
+  - Shop name badge + "✓ Approved" status badge + listing count at header
+  - "+ Add Product" button opens a slide-up **modal form** (name, description, price, image upload); closes automatically on success
+  - 40-product limit enforced on backend and frontend; limit banner shown when reached
+  - Product grid with lazy-loaded images
   - Each product card has inline **edit** (pencil) and **delete** (✕) controls
-  - Edit mode opens in-card form for name, description, price, optional image replacement — saves via `PATCH /api/products/{id}`
+  - Edit mode opens in-card form for name, description, price, optional image replacement
+- **Orders tab**: incoming orders list with confirm/cancel actions
+- **Top nav (desktop)**: shows "My Dashboard", "Facilitator", and "Logout" button when hustler is logged in
 
 ### Facilitator Queue (`/facilitator`)
 - Filter by status (Pending / Approved / Rejected) and community

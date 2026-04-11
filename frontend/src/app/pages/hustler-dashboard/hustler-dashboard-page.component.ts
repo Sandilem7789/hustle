@@ -12,44 +12,69 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <section class="layout">
-      <!-- MINIMALIST HEADER -->
-      <div class="dash-header">
-        <div class="dash-identity">
-          <h1 class="biz-name">{{ auth.state()?.businessName }}</h1>
-          <span class="muted">Welcome back, {{ auth.state()?.firstName }}</span>
+
+      <!-- ── HERO BANNER ── -->
+      <div class="hero-banner">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <p class="hero-greeting">Hi {{ auth.state()?.firstName }}!</p>
+            <h1 class="hero-shop">{{ auth.state()?.businessName }}</h1>
+            <span class="biz-type-badge">{{ auth.state()?.businessType ?? 'Hustler' }}</span>
+          </div>
+          <div class="hero-avatar" aria-hidden="true">🏪</div>
         </div>
-        <div class="month-stats">
-          <div class="stat-item">
-            <span class="stat-label">Month Income</span>
-            <span class="stat-val stat-income">R {{ (summary()?.monthIncome ?? 0) | number:'1.2-2' }}</span>
+      </div>
+
+      <!-- ── FINANCIAL SUMMARY CARDS ── -->
+      <div class="fin-grid">
+        <div class="fin-card fin-income">
+          <div class="fin-icon-wrap">↑</div>
+          <div class="fin-body">
+            <p class="fin-label">Income</p>
+            <strong class="fin-val">R {{ (summary()?.monthIncome ?? 0) | number:'1.2-2' }}</strong>
+            <p class="fin-period">This month</p>
           </div>
-          <div class="stat-sep"></div>
-          <div class="stat-item">
-            <span class="stat-label">Month Expenses</span>
-            <span class="stat-val stat-expense">R {{ (summary()?.monthExpenses ?? 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="fin-card fin-expense">
+          <div class="fin-icon-wrap">↓</div>
+          <div class="fin-body">
+            <p class="fin-label">Expenses</p>
+            <strong class="fin-val">R {{ (summary()?.monthExpenses ?? 0) | number:'1.2-2' }}</strong>
+            <p class="fin-period">This month</p>
           </div>
-          <div class="stat-sep"></div>
-          <div class="stat-item">
-            <span class="stat-label">Month Profit</span>
-            <span class="stat-val" [class.stat-income]="(summary()?.monthProfit ?? 0) >= 0" [class.stat-expense]="(summary()?.monthProfit ?? 0) < 0">
+        </div>
+        <div class="fin-card fin-profit">
+          <div class="fin-icon-wrap">≈</div>
+          <div class="fin-body">
+            <p class="fin-label">Profit</p>
+            <strong class="fin-val" [class.neg]="(summary()?.monthProfit ?? 0) < 0">
               R {{ (summary()?.monthProfit ?? 0) | number:'1.2-2' }}
-            </span>
+            </strong>
+            <p class="fin-period">This month</p>
           </div>
         </div>
       </div>
 
-      <!-- TABS -->
+      <!-- ── LOG ACTION BUTTONS ── -->
+      <div class="log-actions">
+        <button class="log-btn log-income-btn" (click)="openLogIncome()">
+          <span class="log-sign">+</span> Log Income
+        </button>
+        <button class="log-btn log-expense-btn" (click)="openLogExpense()">
+          <span class="log-sign">−</span> Log Expense
+        </button>
+      </div>
+
+      <!-- ── TAB BAR ── -->
       <div class="tab-bar">
         <button [class.active]="tab() === 'income'" (click)="tab.set('income')">Finances</button>
         <button [class.active]="tab() === 'products'" (click)="tab.set('products')">Products</button>
         <button [class.active]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')">Orders</button>
       </div>
 
-      <!-- FINANCES TAB -->
+      <!-- ── FINANCES TAB ── -->
       <ng-container *ngIf="tab() === 'income'">
-        <!-- QUICK ENTRY -->
         <div class="card">
-          <!-- Log sub-tabs -->
           <div class="log-tabs">
             <button [class.active]="logTab() === 'income'" (click)="logTab.set('income')">Log Income</button>
             <button [class.active]="logTab() === 'expense'" (click)="logTab.set('expense')">Log Expense</button>
@@ -68,16 +93,14 @@ import { AuthService } from '../../services/auth.service';
               <input formControlName="notes" placeholder="e.g. sold beaded necklace, market day" />
             </label>
 
-            <!-- SERVICE INCOME TOGGLE -->
             <label class="checkbox-row span-2">
               <input type="checkbox" [(ngModel)]="isServiceIncome" [ngModelOptions]="{standalone: true}" />
-              <span>This is for a service</span>
+              <span>This is for a service (generate invoice)</span>
             </label>
 
-            <!-- INVOICE FIELDS -->
             <ng-container *ngIf="isServiceIncome">
               <div class="service-section span-2">
-                <p class="service-heading">&#x1F4CB; Invoice details</p>
+                <p class="service-heading">📋 Invoice details</p>
                 <label>
                   <span>Customer name *</span>
                   <input [(ngModel)]="invoiceCustomer" [ngModelOptions]="{standalone: true}" placeholder="e.g. Sipho Dlamini" />
@@ -89,20 +112,19 @@ import { AuthService } from '../../services/auth.service';
                 <button type="button" class="invoice-btn"
                   (click)="createInvoicePdf()"
                   [disabled]="!invoiceCustomer || !invoiceService || !incomeForm.get('amount')?.value">
-                  &#x1F4C4; Create &amp; Save Invoice as PDF
+                  📄 Create &amp; Save Invoice as PDF
                 </button>
               </div>
             </ng-container>
 
             <button class="primary span-2" type="submit" [disabled]="incomeForm.invalid || incomeLoading()">
-              {{ incomeLoading() ? 'Saving…' : 'Log income' }}
+              {{ incomeLoading() ? 'Saving…' : (logTab() === 'expense' ? 'Log Expense' : 'Log Income') }}
             </button>
           </form>
-          <p *ngIf="incomeSuccess()" class="success">Income logged!</p>
+          <p *ngIf="incomeSuccess()" class="success">{{ logTab() === 'expense' ? 'Expense' : 'Income' }} logged!</p>
           <p *ngIf="incomeError()" class="error">{{ incomeError() }}</p>
         </div>
 
-        <!-- HISTORY -->
         <div class="card">
           <div class="history-header">
             <h2>Income history</h2>
@@ -112,8 +134,8 @@ import { AuthService } from '../../services/auth.service';
                 <option value="month">This month</option>
                 <option value="all">All time</option>
               </select>
-              <button class="outline-btn" (click)="exportCsv('weekly')">&#8595; Weekly CSV</button>
-              <button class="outline-btn" (click)="exportCsv('monthly')">&#8595; Monthly CSV</button>
+              <button class="outline-btn" (click)="exportCsv('weekly')">↓ Weekly CSV</button>
+              <button class="outline-btn" (click)="exportCsv('monthly')">↓ Monthly CSV</button>
             </div>
           </div>
 
@@ -130,7 +152,6 @@ import { AuthService } from '../../services/auth.service';
             </tbody>
           </table>
 
-          <!-- PERIOD SUMMARY -->
           <div class="period-summary" *ngIf="incomeHistory().length > 0">
             <div class="ps-item">
               <span class="ps-label">Income</span>
@@ -148,7 +169,6 @@ import { AuthService } from '../../services/auth.service';
             </div>
           </div>
 
-          <!-- LINE CHART -->
           <ng-container *ngIf="lineChartData() as lcd">
             <ng-container *ngIf="lcd.points.length >= 2">
               <div class="lc-toggles">
@@ -181,62 +201,43 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </ng-container>
 
-      <!-- PRODUCTS TAB -->
+      <!-- ── PRODUCTS TAB ── -->
       <ng-container *ngIf="tab() === 'products'">
-        <div class="card" *ngIf="products().length < 40">
-          <h2>Add a product or service</h2>
-          <form [formGroup]="productForm" (ngSubmit)="submitProduct()" class="product-grid">
-            <label class="span-2">
-              <span>Name *</span>
-              <input formControlName="name" placeholder="e.g. Handmade Bead Necklace" />
-            </label>
-            <label class="span-2">
-              <span>Description *</span>
-              <textarea rows="3" formControlName="description"></textarea>
-            </label>
-            <label>
-              <span>Price (ZAR) *</span>
-              <input type="number" min="0" step="0.01" formControlName="price" />
-            </label>
-            <label>
-              <span>Product image</span>
-              <input type="file" accept="image/*" (change)="onFileChange($event)" class="file-input" />
-              <div *ngIf="imagePreview()" class="preview-wrap">
-                <img [src]="imagePreview()!" alt="preview" class="preview" />
-              </div>
-              <small *ngIf="uploadLoading()">Uploading…</small>
-            </label>
-            <button class="primary span-2" type="submit" [disabled]="productForm.invalid || addLoading() || uploadLoading()">
-              {{ addLoading() ? 'Adding…' : 'Add to marketplace' }}
-            </button>
-          </form>
-          <p *ngIf="addError()" class="error">{{ addError() }}</p>
-          <p *ngIf="addSuccess()" class="success">Product added!</p>
-        </div>
         <div class="card info" *ngIf="products().length >= 40">
-          <p>Product limit of 40 reached. Remove a product to add a new one.</p>
+          <p>You have reached the 40-product limit. Remove a product to add a new one.</p>
         </div>
 
         <div class="card">
           <div class="shop-header">
-            <div class="shop-name-badge">&#x1F6D2; {{ auth.state()?.businessName }}</div>
-            <span class="muted">{{ products().length }} / 40 listings</span>
+            <div class="shop-left">
+              <div class="shop-name-badge">🛒 {{ auth.state()?.businessName }}</div>
+              <span class="approved-badge">✓ Approved</span>
+            </div>
+            <div class="shop-right">
+              <span class="muted">{{ products().length }} / 40 listings</span>
+              <button class="add-product-btn" *ngIf="products().length < 40" (click)="showAddModal.set(true)">
+                + Add Product
+              </button>
+            </div>
           </div>
-          <div *ngIf="loadingProducts()" class="muted">Loading…</div>
-          <div *ngIf="!loadingProducts() && products().length === 0" class="muted" style="margin-top:0.75rem">No products yet.</div>
+          <p *ngIf="addSuccess()" class="success" style="margin-top:0">Product added!</p>
+          <div *ngIf="loadingProducts()" class="muted" style="margin-top:0.75rem">Loading…</div>
+          <div *ngIf="!loadingProducts() && products().length === 0" class="muted" style="margin-top:0.75rem">
+            No products yet. Tap "Add Product" to list your first item.
+          </div>
           <div class="product-list">
             <article *ngFor="let p of products()" class="product-card">
               <!-- VIEW MODE -->
               <ng-container *ngIf="editingProductId() !== p.id">
-                <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" />
+                <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" loading="lazy" />
                 <div class="product-body">
                   <h3>{{ p.name }}</h3>
                   <p class="muted">{{ p.description }}</p>
                   <p class="price">R {{ p.price | number:'1.2-2' }}</p>
                 </div>
                 <div class="card-actions">
-                  <button class="edit-btn" (click)="startEdit(p)" title="Edit">&#x270E;</button>
-                  <button class="delete-btn" (click)="deleteProduct(p)" title="Remove">&#x2715;</button>
+                  <button class="edit-btn" (click)="startEdit(p)" title="Edit" aria-label="Edit product">✎</button>
+                  <button class="delete-btn" (click)="deleteProduct(p)" title="Remove" aria-label="Remove product">✕</button>
                 </div>
               </ng-container>
 
@@ -274,7 +275,7 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </ng-container>
 
-      <!-- ORDERS TAB -->
+      <!-- ── ORDERS TAB ── -->
       <ng-container *ngIf="tab() === 'orders'">
         <div class="card">
           <h2>Incoming Orders</h2>
@@ -320,101 +321,261 @@ import { AuthService } from '../../services/auth.service';
           </div>
         </div>
       </ng-container>
+
+      <!-- ── ADD PRODUCT MODAL (fixed, inside layout for scoped styles) ── -->
+      <div class="modal-overlay" *ngIf="showAddModal()" (click)="onOverlayClick($event)">
+        <div class="modal-sheet">
+          <div class="modal-head">
+            <h2>Add a product</h2>
+            <button class="modal-close" (click)="showAddModal.set(false)" aria-label="Close modal">✕</button>
+          </div>
+          <form [formGroup]="productForm" (ngSubmit)="submitProduct()" class="product-form">
+            <label>
+              <span>Name *</span>
+              <input formControlName="name" placeholder="e.g. Handmade Bead Necklace" />
+            </label>
+            <label>
+              <span>Description *</span>
+              <textarea rows="3" formControlName="description" placeholder="Describe what you're selling"></textarea>
+            </label>
+            <label>
+              <span>Price (ZAR) *</span>
+              <input type="number" min="0" step="0.01" formControlName="price" placeholder="0.00" />
+            </label>
+            <label>
+              <span>Product image</span>
+              <input type="file" accept="image/*" (change)="onFileChange($event)" class="file-input" />
+              <div *ngIf="imagePreview()" class="preview-wrap">
+                <img [src]="imagePreview()!" alt="preview" class="preview" />
+              </div>
+              <small *ngIf="uploadLoading()">Uploading…</small>
+            </label>
+            <button class="primary" type="submit" [disabled]="productForm.invalid || addLoading() || uploadLoading()">
+              {{ addLoading() ? 'Adding…' : 'Add to marketplace' }}
+            </button>
+            <p *ngIf="addError()" class="error">{{ addError() }}</p>
+          </form>
+        </div>
+      </div>
+
     </section>
   `,
   styles: `
-    .dash-header { background: white; border-radius: 1.25rem; padding: 1.25rem 1.75rem; box-shadow: 0 4px 20px rgba(15,23,42,0.07); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    @media (max-width: 600px) { .dash-header { flex-direction: column; align-items: flex-start; padding: 1rem 1.25rem; } }
-    .dash-identity { display: flex; flex-direction: column; gap: 0.2rem; }
-    .biz-name { margin: 0; font-size: 1.35rem; font-weight: 800; color: #0f172a; }
-    .month-stats { display: flex; align-items: center; gap: 0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.9rem; overflow: hidden; }
-    .stat-item { padding: 0.6rem 1.25rem; display: flex; flex-direction: column; gap: 0.15rem; }
-    .stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 700; }
-    .stat-val { font-size: 1rem; font-weight: 700; color: #0f172a; }
-    .stat-income { color: #16a34a; }
-    .stat-expense { color: #dc2626; }
-    .stat-sep { width: 1px; background: #e2e8f0; align-self: stretch; }
-    .tab-bar { display: flex; gap: 0; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.08); }
-    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    /* ── Hero Banner ── */
+    .hero-banner {
+      background: linear-gradient(135deg, #f59e0b 0%, #10b981 100%);
+      border-radius: 1.5rem;
+      padding: 1.75rem;
+      color: white;
+      box-shadow: 0 12px 40px rgba(245,158,11,0.25);
+    }
+    .hero-inner { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .hero-text { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+    .hero-greeting { font-size: 1rem; font-weight: 500; opacity: 0.9; margin: 0; }
+    .hero-shop { font-size: 1.6rem; font-weight: 800; margin: 0; line-height: 1.15; word-break: break-word; }
+    .biz-type-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.25);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 999px;
+      padding: 0.25rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      align-self: flex-start;
+    }
+    .hero-avatar { font-size: 3rem; line-height: 1; flex-shrink: 0; }
+    @media (max-width: 480px) {
+      .hero-banner { padding: 1.25rem; }
+      .hero-shop { font-size: 1.25rem; }
+      .hero-avatar { font-size: 2rem; }
+    }
+
+    /* ── Financial Cards ── */
+    .fin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    @media (max-width: 480px) { .fin-grid { grid-template-columns: 1fr; gap: 0.6rem; } }
+    .fin-card {
+      border-radius: 1.25rem;
+      padding: 1rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .fin-income { background: linear-gradient(135deg, #dcfce7, #bbf7d0); border: 1px solid #86efac; }
+    .fin-expense { background: linear-gradient(135deg, #fee2e2, #fecaca); border: 1px solid #fca5a5; }
+    .fin-profit  { background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 1px solid #93c5fd; }
+    .fin-icon-wrap {
+      font-size: 1.4rem;
+      font-weight: 900;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .fin-income .fin-icon-wrap { background: rgba(34,197,94,0.2);  color: #16a34a; }
+    .fin-expense .fin-icon-wrap { background: rgba(220,38,38,0.15); color: #dc2626; }
+    .fin-profit  .fin-icon-wrap { background: rgba(14,165,233,0.15); color: #0369a1; }
+    .fin-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+    .fin-label  { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; margin: 0; }
+    .fin-val    { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0; word-break: break-all; }
+    .fin-val.neg { color: #dc2626; }
+    .fin-period { font-size: 0.66rem; color: #94a3b8; margin: 0; }
+
+    /* ── Log Buttons ── */
+    .log-actions { display: flex; gap: 0.75rem; }
+    .log-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      border: none;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      min-height: 56px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .log-btn:active { transform: scale(0.97); }
+    .log-income-btn { background: linear-gradient(120deg, #16a34a, #22c55e); color: white; box-shadow: 0 4px 16px rgba(34,197,94,0.35); }
+    .log-expense-btn { background: linear-gradient(120deg, #b91c1c, #ef4444); color: white; box-shadow: 0 4px 16px rgba(220,38,38,0.3); }
+    .log-sign { font-size: 1.5rem; font-weight: 900; line-height: 1; }
+
+    /* ── Tab Bar ── */
+    .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.08); }
+    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; min-height: 48px; font-family: inherit; }
     .tab-bar button.active { color: #0ea5e9; border-bottom: 3px solid #0ea5e9; background: #f0f9ff; }
-    .log-tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.25rem; }
-    .log-tabs button { flex: 1; padding: 0.65rem; border: none; background: none; font-size: 0.95rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
-    .log-tabs button.active { color: #0ea5e9; border-bottom: 2px solid #0ea5e9; margin-bottom: -2px; }
+
+    /* ── Cards ── */
     .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 25px 60px rgba(15,23,42,0.08); }
     @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
     .card.info { background: #fef3c7; }
+
+    /* ── Log Form ── */
+    .log-tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.25rem; }
+    .log-tabs button { flex: 1; padding: 0.65rem; border: none; background: none; font-size: 0.95rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; min-height: 44px; font-family: inherit; }
+    .log-tabs button.active { color: #0ea5e9; border-bottom: 2px solid #0ea5e9; margin-bottom: -2px; }
     .income-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }
-    .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }
-    @media (max-width: 600px) { .income-grid, .product-grid { grid-template-columns: 1fr; } .span-2 { grid-column: span 1 !important; } }
+    @media (max-width: 600px) { .income-grid { grid-template-columns: 1fr; } }
     label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem; color: #475569; }
     label.span-2 { grid-column: span 2; }
+    @media (max-width: 600px) { label.span-2 { grid-column: span 1; } }
     input, textarea, select { border-radius: 0.8rem; border: 1px solid #cbd5e1; padding: 0.65rem 0.9rem; font-size: 1rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; }
     input:focus, textarea:focus, select:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
-    .file-input { border: none; padding: 0; font-size: 0.9rem; }
+    .file-input { border: none; padding: 0; font-size: 0.9rem; min-height: unset !important; }
     .preview-wrap { margin-top: 0.5rem; }
     .preview { width: 100%; max-height: 140px; object-fit: cover; border-radius: 0.75rem; }
-    .primary { border: none; border-radius: 999px; padding: 0.9rem; font-size: 1rem; font-weight: 700; background: linear-gradient(120deg, #0ea5e9, #22c55e); color: white; cursor: pointer; }
+    .primary { border: none; border-radius: 999px; padding: 0.9rem; font-size: 1rem; font-weight: 700; background: linear-gradient(120deg, #0ea5e9, #22c55e); color: white; cursor: pointer; font-family: inherit; }
     .primary.span-2 { grid-column: span 2; }
+    @media (max-width: 600px) { .primary.span-2 { grid-column: span 1; } }
     .primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .success { color: #16a34a; font-weight: 600; margin-top: 0.75rem; }
-    .error { color: #dc2626; font-weight: 600; margin-top: 0.75rem; }
-    .checkbox-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: #334155; cursor: pointer; }
-    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #16a34a; flex-shrink: 0; }
+    .error   { color: #dc2626; font-weight: 600; margin-top: 0.75rem; }
+    .checkbox-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: #334155; cursor: pointer; flex-direction: row; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #16a34a; flex-shrink: 0; min-height: unset !important; }
     .service-section { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.8rem; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
     .service-heading { margin: 0; font-weight: 700; font-size: 0.9rem; color: #15803d; }
     .service-section label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; color: #475569; }
     .service-section input { border-radius: 0.6rem; border: 1px solid #cbd5e1; padding: 0.55rem 0.8rem; font-size: 0.95rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; }
-    .invoice-btn { border: 2px solid #16a34a; color: #16a34a; font-weight: 700; padding: 0.65rem 1rem; border-radius: 999px; background: white; cursor: pointer; font-size: 0.9rem; transition: background 0.15s; }
+    .invoice-btn { border: 2px solid #16a34a; color: #16a34a; font-weight: 700; padding: 0.65rem 1rem; border-radius: 999px; background: white; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: background 0.15s; }
     .invoice-btn:hover:not(:disabled) { background: #dcfce7; }
     .invoice-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── History ── */
     .history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
     .history-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-    .outline-btn { border: 1px solid #cbd5e1; background: white; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.85rem; cursor: pointer; color: #475569; }
+    .outline-btn { border: 1px solid #cbd5e1; background: white; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.85rem; cursor: pointer; color: #475569; min-height: 36px; font-family: inherit; }
     .outline-btn:hover { background: #f1f5f9; }
     .income-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
     .income-table th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
     .income-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; }
     .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
-    .income-badge { background: #dcfce7; color: #16a34a; }
+    .income-badge  { background: #dcfce7; color: #16a34a; }
     .expense-badge { background: #fee2e2; color: #dc2626; }
     .expense-row td { background: #fff5f5; }
     .expense-amt { color: #dc2626; font-weight: 600; }
+    .period-summary { display: flex; align-items: center; margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; overflow: hidden; }
+    .ps-item { flex: 1; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .ps-label   { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; font-weight: 700; }
+    .ps-income  { font-size: 1rem; font-weight: 700; color: #16a34a; }
+    .ps-expense { font-size: 1rem; font-weight: 700; color: #dc2626; }
+    .ps-divider { width: 1px; background: #e2e8f0; align-self: stretch; }
+
+    /* ── Line Chart ── */
     .lc-toggles { display: flex; gap: 1.25rem; flex-wrap: wrap; margin: 1.25rem 0 0.4rem; }
-    .lc-toggles label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #334155; cursor: pointer; user-select: none; }
+    .lc-toggles label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #334155; cursor: pointer; user-select: none; flex-direction: row; }
     .lc-toggles label.lc-disabled { opacity: 0.4; cursor: not-allowed; }
     .lc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .line-chart { width: 100%; height: auto; display: block; }
-    .lc-grid { stroke: #f1f5f9; stroke-width: 1; }
-    .lc-zero { stroke: #cbd5e1; stroke-width: 1; stroke-dasharray: 4 3; }
-    .lc-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
-    .lc-income { stroke: #22c55e; }
+    .lc-grid   { stroke: #f1f5f9; stroke-width: 1; }
+    .lc-zero   { stroke: #cbd5e1; stroke-width: 1; stroke-dasharray: 4 3; }
+    .lc-line   { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .lc-income  { stroke: #22c55e; }
     .lc-expense { stroke: #f87171; }
-    .lc-profit { stroke: #0ea5e9; }
-    .lc-label { font-size: 10px; fill: #94a3b8; text-anchor: middle; font-family: inherit; }
-    .period-summary { display: flex; align-items: center; gap: 0; margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; overflow: hidden; }
-    .ps-item { flex: 1; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
-    .ps-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; font-weight: 700; }
-    .ps-income { font-size: 1rem; font-weight: 700; color: #16a34a; }
-    .ps-expense { font-size: 1rem; font-weight: 700; color: #dc2626; }
-    .ps-divider { width: 1px; background: #e2e8f0; align-self: stretch; }
-    .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    @media (max-width: 600px) { .product-list { grid-template-columns: 1fr; } }
-    .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .lc-profit  { stroke: #0ea5e9; }
+    .lc-label  { font-size: 10px; fill: #94a3b8; text-anchor: middle; font-family: inherit; }
+
+    /* ── Products Tab ── */
+    .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem; }
+    .shop-left { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .shop-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
     .shop-name-badge { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+    .approved-badge { background: #dcfce7; color: #16a34a; border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.75rem; font-weight: 700; }
+    .add-product-btn { background: linear-gradient(120deg, #0ea5e9, #22c55e); color: white; border: none; border-radius: 999px; padding: 0.55rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; }
+    .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    @media (max-width: 600px) { .product-list { grid-template-columns: 1fr; } }
     .product-card { border: 1px solid #e2e8f0; border-radius: 1rem; overflow: hidden; background: #f8fafc; position: relative; }
     .product-img { width: 100%; height: 150px; object-fit: cover; display: block; }
     .product-body { padding: 0.9rem 0.9rem 0.4rem; }
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; }
     .price { font-weight: 700; color: #0ea5e9; margin-top: 0.4rem; }
     .card-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.3rem; }
-    .edit-btn { background: rgba(14,165,233,0.85); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
-    .delete-btn { background: rgba(220,38,38,0.85); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
+    .edit-btn   { background: rgba(14,165,233,0.9); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; min-height: unset; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .delete-btn { background: rgba(220,38,38,0.9); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; min-height: unset; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .edit-form { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
     .edit-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .small-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
+    .small-btn { padding: 0.5rem 1rem !important; font-size: 0.9rem; width: auto !important; }
     small { color: #94a3b8; font-size: 0.8rem; }
 
-    /* Orders tab */
+    /* ── Add Product Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.6);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+    @media (min-width: 600px) { .modal-overlay { align-items: center; } }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+    .modal-sheet {
+      background: white;
+      border-radius: 1.5rem 1.5rem 0 0;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 560px;
+      max-height: 92vh;
+      overflow-y: auto;
+      animation: slideUp 0.25s ease;
+    }
+    @media (min-width: 600px) { .modal-sheet { border-radius: 1.5rem; max-height: 85vh; } }
+    @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-head h2 { margin: 0; font-size: 1.2rem; }
+    .modal-close { background: #f1f5f9; border: none; border-radius: 50%; width: 36px; height: 36px; min-height: unset; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #475569; flex-shrink: 0; font-family: inherit; }
+    .modal-close:hover { background: #e2e8f0; }
+    .product-form { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* ── Orders ── */
     .orders-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
     .order-card { border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem 1.25rem; background: #f8fafc; }
     .order-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
@@ -426,12 +587,12 @@ import { AuthService } from '../../services/auth.service';
     .order-line { display: flex; justify-content: space-between; font-size: 0.88rem; color: #334155; }
     .order-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid #e2e8f0; margin-bottom: 0.75rem; }
     .order-actions { display: flex; gap: 0.5rem; }
-    .btn-confirm { flex: 1; height: 40px; border: none; border-radius: 0.75rem; background: #16a34a; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
-    .btn-cancel-order { flex: 1; height: 40px; border: none; border-radius: 0.75rem; background: #dc2626; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+    .btn-confirm    { flex: 1; height: 44px; min-height: unset; border: none; border-radius: 0.75rem; background: #16a34a; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+    .btn-cancel-order { flex: 1; height: 44px; min-height: unset; border: none; border-radius: 0.75rem; background: #dc2626; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
     .btn-confirm:disabled, .btn-cancel-order:disabled { opacity: 0.6; cursor: not-allowed; }
     .field-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
     .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
-    .order-status-pending { background: #f1f5f9; color: #475569; }
+    .order-status-pending   { background: #f1f5f9; color: #475569; }
     .order-status-confirmed { background: #dbeafe; color: #1d4ed8; }
     .order-status-cancelled { background: #fee2e2; color: #dc2626; }
     .order-status-delivered { background: #dcfce7; color: #16a34a; }
@@ -445,8 +606,9 @@ export class HustlerDashboardPageComponent implements OnInit {
 
   tab = signal<'income' | 'products' | 'orders'>('income');
   logTab = signal<'income' | 'expense'>('income');
+  showAddModal = signal(false);
 
-  // Income
+  // ── Income ──────────────────────────────────────────────────────────────────
   incomeHistory = signal<IncomeEntryResponse[]>([]);
   summary = signal<IncomeSummary | null>(null);
   incomeLoading = signal(false);
@@ -464,7 +626,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     notes: [''],
   });
 
-  // Line chart visibility toggles
+  // ── Line chart toggles ───────────────────────────────────────────────────────
   showIncome = signal(true);
   showExpense = signal(true);
   showProfit = signal(true);
@@ -482,7 +644,6 @@ export class HustlerDashboardPageComponent implements OnInit {
     else this.showProfit.update(v => !v);
   }
 
-  // Line chart data
   lineChartData = computed(() => {
     const entries = this.incomeHistory();
     const byDate = new Map<string, { income: number; expense: number }>();
@@ -499,7 +660,7 @@ export class HustlerDashboardPageComponent implements OnInit {
 
     if (points.length < 2) return { points, incomePoints: '', expensePoints: '', profitPoints: '', zeroY: '100', gridlines: [] as string[], labels: [] as { x: string; y: string; text: string }[] };
 
-    const W = 600, H = 200, PL = 20, PR = 580, PT = 15, PB = 35;
+    const PL = 20, PR = 580, PT = 15, PB = 35, H = 200;
     const CW = PR - PL, CH = H - PT - PB;
     const allVals = points.flatMap(p => [p.income, p.expense, p.profit]);
     const maxV = Math.max(...allVals, 1);
@@ -528,15 +689,14 @@ export class HustlerDashboardPageComponent implements OnInit {
     };
   });
 
-  // Period summary derived from loaded history
   periodSummary = computed(() => {
     const entries = this.incomeHistory();
-    const income = entries.filter(e => e.entryType !== 'EXPENSE').reduce((s, e) => s + Number(e.amount), 0);
+    const income   = entries.filter(e => e.entryType !== 'EXPENSE').reduce((s, e) => s + Number(e.amount), 0);
     const expenses = entries.filter(e => e.entryType === 'EXPENSE').reduce((s, e) => s + Number(e.amount), 0);
     return { income, expenses, profit: income - expenses };
   });
 
-  // Products
+  // ── Products ─────────────────────────────────────────────────────────────────
   products = signal<ProductResponse[]>([]);
   loadingProducts = signal(true);
   addLoading = signal(false);
@@ -546,7 +706,6 @@ export class HustlerDashboardPageComponent implements OnInit {
   imagePreview = signal<string | null>(null);
   private pendingImageUrl = signal<string | null>(null);
 
-  // Edit state
   editingProductId = signal<string | null>(null);
   editName = '';
   editDescription = '';
@@ -556,17 +715,18 @@ export class HustlerDashboardPageComponent implements OnInit {
   saveError = signal('');
 
   productForm = this.fb.group({
-    name: ['', Validators.required],
+    name:        ['', Validators.required],
     description: ['', Validators.required],
-    price: [null as number | null, [Validators.required, Validators.min(0)]],
+    price:       [null as number | null, [Validators.required, Validators.min(0)]],
   });
 
-  // Orders tab
+  // ── Orders ───────────────────────────────────────────────────────────────────
   incomingOrders = signal<OrderResponse[]>([]);
   ordersLoading = signal(false);
   orderActionId = signal<string | null>(null);
   orderError = signal('');
 
+  // ── Lifecycle ────────────────────────────────────────────────────────────────
   ngOnInit(): void {
     if (!this.auth.isLoggedIn()) { this.router.navigate(['/register']); return; }
     this.loadProducts();
@@ -574,6 +734,17 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.loadSummary();
   }
 
+  // ── Navigation helpers ───────────────────────────────────────────────────────
+  openLogIncome(): void { this.tab.set('income'); this.logTab.set('income'); }
+  openLogExpense(): void { this.tab.set('income'); this.logTab.set('expense'); }
+
+  onOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('modal-overlay')) {
+      this.showAddModal.set(false);
+    }
+  }
+
+  // ── Orders ───────────────────────────────────────────────────────────────────
   loadOrders(): void {
     const token = this.auth.getToken();
     if (!token) return;
@@ -593,14 +764,8 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.orderActionId.set(orderId);
     this.orderError.set('');
     this.api.updateOrderStatus(orderId, 'CONFIRMED', token).subscribe({
-      next: (updated) => {
-        this.incomingOrders.update(list => list.map(o => o.id === updated.id ? updated : o));
-        this.orderActionId.set(null);
-      },
-      error: (err) => {
-        this.orderActionId.set(null);
-        this.orderError.set(err?.error?.message || 'Failed to confirm order.');
-      }
+      next: (updated) => { this.incomingOrders.update(list => list.map(o => o.id === updated.id ? updated : o)); this.orderActionId.set(null); },
+      error: (err) => { this.orderActionId.set(null); this.orderError.set(err?.error?.message || 'Failed to confirm order.'); }
     });
   }
 
@@ -610,27 +775,20 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.orderActionId.set(orderId);
     this.orderError.set('');
     this.api.updateOrderStatus(orderId, 'CANCELLED', token).subscribe({
-      next: (updated) => {
-        this.incomingOrders.update(list => list.map(o => o.id === updated.id ? updated : o));
-        this.orderActionId.set(null);
-      },
-      error: (err) => {
-        this.orderActionId.set(null);
-        this.orderError.set(err?.error?.message || 'Failed to cancel order.');
-      }
+      next: (updated) => { this.incomingOrders.update(list => list.map(o => o.id === updated.id ? updated : o)); this.orderActionId.set(null); },
+      error: (err) => { this.orderActionId.set(null); this.orderError.set(err?.error?.message || 'Failed to cancel order.'); }
     });
   }
 
   orderStatusClass(status: string): string {
     const map: Record<string, string> = {
-      PENDING: 'order-status-pending',
-      CONFIRMED: 'order-status-confirmed',
-      CANCELLED: 'order-status-cancelled',
-      DELIVERED: 'order-status-delivered'
+      PENDING: 'order-status-pending', CONFIRMED: 'order-status-confirmed',
+      CANCELLED: 'order-status-cancelled', DELIVERED: 'order-status-delivered'
     };
     return map[status] ?? 'order-status-pending';
   }
 
+  // ── Income ───────────────────────────────────────────────────────────────────
   loadIncome(): void {
     const token = this.auth.getToken()!;
     const today = new Date();
@@ -673,149 +831,11 @@ export class HustlerDashboardPageComponent implements OnInit {
         this.invoiceService = '';
         setTimeout(() => this.incomeSuccess.set(false), 2500);
       },
-      error: (err) => { this.incomeLoading.set(false); this.incomeError.set(err?.error?.message || 'Failed to log income.'); }
+      error: (err) => {
+        this.incomeLoading.set(false);
+        this.incomeError.set(err?.error?.message || 'Failed to log entry. Please try again.');
+      }
     });
-  }
-
-  createInvoicePdf(): void {
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const businessName = this.auth.state()?.businessName ?? 'Business';
-    const amount = Number(this.incomeForm.get('amount')?.value ?? 0);
-    const dateVal = this.incomeForm.get('date')?.value ?? new Date().toISOString().slice(0, 10);
-    const notes = this.incomeForm.get('notes')?.value ?? '';
-    const invoiceNo = `INV-${Date.now()}`;
-    const formattedDate = new Date(dateVal + 'T00:00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    const lm = 20;          // left margin
-    const rm = 190;         // right margin x
-    const mid = rm - lm;    // usable width
-    let y = 22;
-
-    // ── Header ──
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text('HUSTLE ECONOMY', lm, y);
-    y += 6;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text('Empowering local hustlers', lm, y);
-    y += 5;
-    doc.setDrawColor(14, 165, 233);
-    doc.setLineWidth(0.6);
-    doc.line(lm, y, rm, y);
-
-    // ── Invoice title + meta ──
-    y += 10;
-    doc.setFontSize(15);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text('INVOICE', lm, y);
-    y += 7;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(71, 85, 105);
-    doc.text('Invoice No:', lm, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text(invoiceNo, lm + 30, y);
-    y += 6;
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(71, 85, 105);
-    doc.text('Date:', lm, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text(formattedDate, lm + 30, y);
-
-    // ── From / To ──
-    y += 10;
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.3);
-    doc.line(lm, y, rm, y);
-    y += 8;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(148, 163, 184);
-    doc.text('FROM', lm, y);
-    doc.text('TO', lm + mid / 2, y);
-    y += 5;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text(businessName, lm, y);
-    doc.text(this.invoiceCustomer, lm + mid / 2, y);
-
-    // ── Line items table ──
-    y += 12;
-    doc.setDrawColor(226, 232, 240);
-    doc.line(lm, y, rm, y);
-    y += 6;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(148, 163, 184);
-    doc.text('DESCRIPTION', lm, y);
-    doc.text('AMOUNT', rm, y, { align: 'right' });
-    y += 4;
-    doc.setDrawColor(14, 165, 233);
-    doc.setLineWidth(0.5);
-    doc.line(lm, y, rm, y);
-
-    y += 7;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(51, 65, 85);
-    const serviceLines = doc.splitTextToSize(this.invoiceService, mid - 50);
-    doc.text(serviceLines, lm, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text(`R ${amount.toFixed(2)}`, rm, y, { align: 'right' });
-    y += (serviceLines.length - 1) * 5;
-
-    // ── Total ──
-    y += 8;
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.3);
-    doc.line(lm, y, rm, y);
-    y += 6;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text('TOTAL', lm, y);
-    doc.setTextColor(14, 165, 233);
-    doc.text(`R ${amount.toFixed(2)}`, rm, y, { align: 'right' });
-    y += 3;
-    doc.setDrawColor(14, 165, 233);
-    doc.setLineWidth(0.6);
-    doc.line(lm, y, rm, y);
-
-    // ── Notes ──
-    if (notes) {
-      y += 10;
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 116, 139);
-      doc.text('Notes:', lm, y);
-      y += 5;
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(71, 85, 105);
-      const noteLines = doc.splitTextToSize(notes, mid);
-      doc.text(noteLines, lm, y);
-    }
-
-    // ── Footer ──
-    y += 16;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(15, 23, 42);
-    doc.text('Thank you for your business!', lm, y);
-    y += 6;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(148, 163, 184);
-    doc.text('Powered by Hustle Economy', lm, y);
-
-    doc.save(`${invoiceNo}.pdf`);
   }
 
   exportCsv(period: 'weekly' | 'monthly'): void {
@@ -826,6 +846,73 @@ export class HustlerDashboardPageComponent implements OnInit {
     });
   }
 
+  // ── Invoice PDF ──────────────────────────────────────────────────────────────
+  createInvoicePdf(): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const businessName = this.auth.state()?.businessName ?? 'Business';
+    const amount = Number(this.incomeForm.get('amount')?.value ?? 0);
+    const dateVal = this.incomeForm.get('date')?.value ?? new Date().toISOString().slice(0, 10);
+    const notes = this.incomeForm.get('notes')?.value ?? '';
+    const invoiceNo = `INV-${Date.now()}`;
+    const formattedDate = new Date(dateVal + 'T00:00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const lm = 20, rm = 190, mid = rm - lm;
+    let y = 22;
+
+    doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.text('HUSTLE ECONOMY', lm, y); y += 6;
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+    doc.text('Empowering local hustlers', lm, y); y += 5;
+    doc.setDrawColor(14, 165, 233); doc.setLineWidth(0.6); doc.line(lm, y, rm, y);
+
+    y += 10;
+    doc.setFontSize(15); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.text('INVOICE', lm, y); y += 7;
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
+    doc.text('Invoice No:', lm, y); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.text(invoiceNo, lm + 30, y); y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
+    doc.text('Date:', lm, y); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.text(formattedDate, lm + 30, y);
+
+    y += 10; doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3); doc.line(lm, y, rm, y);
+    y += 8; doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(148, 163, 184);
+    doc.text('FROM', lm, y); doc.text('TO', lm + mid / 2, y); y += 5;
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.text(businessName, lm, y); doc.text(this.invoiceCustomer, lm + mid / 2, y);
+
+    y += 12; doc.setDrawColor(226, 232, 240); doc.line(lm, y, rm, y);
+    y += 6; doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(148, 163, 184);
+    doc.text('DESCRIPTION', lm, y); doc.text('AMOUNT', rm, y, { align: 'right' });
+    y += 4; doc.setDrawColor(14, 165, 233); doc.setLineWidth(0.5); doc.line(lm, y, rm, y);
+
+    y += 7; doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(51, 65, 85);
+    const serviceLines = doc.splitTextToSize(this.invoiceService, mid - 50);
+    doc.text(serviceLines, lm, y); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.text(`R ${amount.toFixed(2)}`, rm, y, { align: 'right' }); y += (serviceLines.length - 1) * 5;
+
+    y += 8; doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3); doc.line(lm, y, rm, y);
+    y += 6; doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.text('TOTAL', lm, y); doc.setTextColor(14, 165, 233);
+    doc.text(`R ${amount.toFixed(2)}`, rm, y, { align: 'right' }); y += 3;
+    doc.setDrawColor(14, 165, 233); doc.setLineWidth(0.6); doc.line(lm, y, rm, y);
+
+    if (notes) {
+      y += 10; doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 116, 139);
+      doc.text('Notes:', lm, y); y += 5; doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
+      const noteLines = doc.splitTextToSize(notes, mid);
+      doc.text(noteLines, lm, y);
+    }
+
+    y += 16; doc.setFontSize(11); doc.setFont('helvetica', 'italic'); doc.setTextColor(15, 23, 42);
+    doc.text('Thank you for your business!', lm, y); y += 6;
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
+    doc.text('Powered by Hustle Economy', lm, y);
+
+    doc.save(`${invoiceNo}.pdf`);
+  }
+
+  // ── Products ─────────────────────────────────────────────────────────────────
   loadProducts(): void {
     this.api.listMyProducts(this.auth.getToken()!).subscribe({
       next: list => { this.products.set(list); this.loadingProducts.set(false); },
@@ -850,16 +937,36 @@ export class HustlerDashboardPageComponent implements OnInit {
     if (this.productForm.invalid) return;
     this.addLoading.set(true);
     this.addError.set('');
-    const payload = { name: this.productForm.value.name!, description: this.productForm.value.description!, price: this.productForm.value.price!, mediaUrl: this.pendingImageUrl() ?? undefined };
+    const payload = {
+      name: this.productForm.value.name!,
+      description: this.productForm.value.description!,
+      price: this.productForm.value.price!,
+      mediaUrl: this.pendingImageUrl() ?? undefined
+    };
     this.api.createProduct(payload, this.auth.getToken()!).subscribe({
-      next: (p) => { this.products.update(l => [p, ...l]); this.productForm.reset(); this.imagePreview.set(null); this.pendingImageUrl.set(null); this.addLoading.set(false); this.addSuccess.set(true); setTimeout(() => this.addSuccess.set(false), 2500); },
-      error: (err) => { this.addLoading.set(false); this.addError.set(err?.error?.message || 'Failed to add product.'); }
+      next: (p) => {
+        this.products.update(l => [p, ...l]);
+        this.productForm.reset();
+        this.imagePreview.set(null);
+        this.pendingImageUrl.set(null);
+        this.addLoading.set(false);
+        this.addSuccess.set(true);
+        this.showAddModal.set(false);
+        setTimeout(() => this.addSuccess.set(false), 2500);
+      },
+      error: (err) => {
+        this.addLoading.set(false);
+        this.addError.set(err?.error?.message || 'Failed to add product. Please try again.');
+      }
     });
   }
 
   deleteProduct(p: ProductResponse): void {
     if (!confirm(`Remove "${p.name}"?`)) return;
-    this.api.deleteProduct(p.id, this.auth.getToken()!).subscribe({ next: () => this.products.update(l => l.filter(x => x.id !== p.id)), error: () => alert('Failed.') });
+    this.api.deleteProduct(p.id, this.auth.getToken()!).subscribe({
+      next: () => this.products.update(l => l.filter(x => x.id !== p.id)),
+      error: () => alert('Could not delete product. Please try again.')
+    });
   }
 
   startEdit(p: ProductResponse): void {
@@ -871,10 +978,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.saveError.set('');
   }
 
-  cancelEdit(): void {
-    this.editingProductId.set(null);
-    this.saveError.set('');
-  }
+  cancelEdit(): void { this.editingProductId.set(null); this.saveError.set(''); }
 
   onEditFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -904,7 +1008,7 @@ export class HustlerDashboardPageComponent implements OnInit {
       },
       error: (err) => {
         this.saveLoading.set(false);
-        this.saveError.set(err?.error?.message || 'Failed to save changes.');
+        this.saveError.set(err?.error?.message || 'Failed to save changes. Please try again.');
       }
     });
   }

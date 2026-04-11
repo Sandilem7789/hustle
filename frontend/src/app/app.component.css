@@ -67,6 +67,25 @@
   color: white;
 }
 
+.nav-logout-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.85);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: unset;
+  transition: background 0.15s;
+}
+
+.nav-logout-btn:hover {
+  background: rgba(255,255,255,0.22);
+  color: white;
+}
+
 /* ─── Main Page Shell ─────────────────────────────────────────────────────── */
 .page-shell {
   min-height: calc(100vh - 56px);

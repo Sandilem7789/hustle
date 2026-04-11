@@ -12,18 +12,20 @@
   <nav class="desktop-nav">
     <a routerLink="/marketplace" routerLinkActive="active">🛒 Marketplace</a>
     <ng-container *ngIf="showDashboardNav()">
-      <a routerLink="/dashboard" routerLinkActive="active">📊 Dashboard</a>
+      <a routerLink="/dashboard" routerLinkActive="active">📊 My Dashboard</a>
+      <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
+      <button class="nav-logout-btn" (click)="logout()">Logout</button>
     </ng-container>
     <ng-container *ngIf="!showDashboardNav()">
-      <a routerLink="/register" routerLinkActive="active">Register</a>
-    </ng-container>
-    <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
-    <a routerLink="/driver" routerLinkActive="active">🚗 Driver</a>
-    <ng-container *ngIf="customerAuth.isLoggedIn()">
-      <a routerLink="/orders" routerLinkActive="active">📦 Orders</a>
-    </ng-container>
-    <ng-container *ngIf="!customerAuth.isLoggedIn()">
-      <a routerLink="/customer/login" routerLinkActive="active">Login</a>
+      <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
+      <a routerLink="/driver" routerLinkActive="active">🚗 Driver</a>
+      <a routerLink="/register" routerLinkActive="active">Register / Login</a>
+      <ng-container *ngIf="customerAuth.isLoggedIn()">
+        <a routerLink="/orders" routerLinkActive="active">📦 Orders</a>
+      </ng-container>
+      <ng-container *ngIf="!customerAuth.isLoggedIn()">
+        <a routerLink="/customer/login" routerLinkActive="active">Customer Login</a>
+      </ng-container>
     </ng-container>
   </nav>
 </header>

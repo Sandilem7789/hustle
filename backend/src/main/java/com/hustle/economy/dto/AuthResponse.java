@@ -11,4 +11,5 @@ public class AuthResponse {
     private String businessName;
     private String firstName;
     private String lastName;
+    private String businessType;
 }

@@ -251,6 +251,7 @@ Implementation:
 ### Building features
 - Read the relevant existing files before writing any new code
 - Check `PROGRESS_UPDATE.md` before implementing anything in the "Planned Work" section — confirm it's the right sprint
+- **Update `PROGRESS_UPDATE.md` immediately when a feature is completed** — add it to the ✅ Completed Features section, update the API summary table if new endpoints were added, and remove it from Known Gaps if it was listed there
 - For any new entity: create entity → repository → service → DTO → mapper → controller in that order
 - For any new Angular feature: create the service first, then the component
 - Mobile layout first, then add responsive overrides for wider screens

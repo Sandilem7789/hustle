@@ -6,6 +6,7 @@ export interface AuthState {
   businessName: string;
   firstName: string;
   lastName: string;
+  businessType?: string;
 }
 
 const AUTH_KEY = 'hustle_auth';
