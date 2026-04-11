@@ -3,7 +3,7 @@ import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { jsPDF } from 'jspdf';
-import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, IncomeSummary } from '../../services/api.service';
+import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, IncomeSummary, OrderResponse } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -42,6 +42,7 @@ import { AuthService } from '../../services/auth.service';
       <div class="tab-bar">
         <button [class.active]="tab() === 'income'" (click)="tab.set('income')">Finances</button>
         <button [class.active]="tab() === 'products'" (click)="tab.set('products')">Products</button>
+        <button [class.active]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')">Orders</button>
       </div>
 
       <!-- FINANCES TAB -->
@@ -272,6 +273,53 @@ import { AuthService } from '../../services/auth.service';
           </div>
         </div>
       </ng-container>
+
+      <!-- ORDERS TAB -->
+      <ng-container *ngIf="tab() === 'orders'">
+        <div class="card">
+          <h2>Incoming Orders</h2>
+          <div *ngIf="ordersLoading()" class="muted" style="margin-top:1rem">Loading orders…</div>
+          <div *ngIf="!ordersLoading() && incomingOrders().length === 0" class="muted" style="margin-top:1rem">No orders yet.</div>
+          <div class="orders-list">
+            <article *ngFor="let order of incomingOrders()" class="order-card">
+              <div class="order-head">
+                <div>
+                  <span class="order-id">#{{ order.id.slice(0, 8).toUpperCase() }}</span>
+                  <span class="muted" style="font-size:0.78rem;display:block;">{{ order.createdAt | date:'d MMM yyyy, h:mm a' }}</span>
+                </div>
+                <span class="status-badge" [ngClass]="orderStatusClass(order.status)">{{ order.status }}</span>
+              </div>
+              <div class="order-customer">
+                <span class="field-label">Customer</span>
+                <span>{{ order.customerName }}</span>
+              </div>
+              <div class="order-meta-row">
+                <span class="meta-chip">{{ order.fulfillmentType === 'DELIVERY' ? '🚚 Delivery' : '🏪 Collection' }}</span>
+                <span class="meta-chip">{{ order.transactionType }}</span>
+              </div>
+              <div class="order-items">
+                <div *ngFor="let item of order.items" class="order-line">
+                  <span>{{ item.productName }}</span>
+                  <span class="muted">× {{ item.quantity }} · R {{ item.unitPrice | number:'1.2-2' }}</span>
+                </div>
+              </div>
+              <div class="order-total-row">
+                <span class="field-label">Total</span>
+                <strong>R {{ order.totalAmount | number:'1.2-2' }}</strong>
+              </div>
+              <div class="order-actions" *ngIf="order.status === 'PENDING'">
+                <button class="btn-confirm" (click)="confirmOrder(order.id)" [disabled]="orderActionId() === order.id">
+                  {{ orderActionId() === order.id ? 'Saving…' : '✓ Confirm' }}
+                </button>
+                <button class="btn-cancel-order" (click)="cancelOrder(order.id)" [disabled]="orderActionId() === order.id">
+                  ✕ Cancel
+                </button>
+              </div>
+              <p *ngIf="orderError() && orderActionId() === order.id" class="error">{{ orderError() }}</p>
+            </article>
+          </div>
+        </div>
+      </ng-container>
     </section>
   `,
   styles: `
@@ -365,6 +413,28 @@ import { AuthService } from '../../services/auth.service';
     .edit-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .small-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
     small { color: #94a3b8; font-size: 0.8rem; }
+
+    /* Orders tab */
+    .orders-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+    .order-card { border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem 1.25rem; background: #f8fafc; }
+    .order-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+    .order-id { font-weight: 800; font-size: 0.9rem; color: #0f172a; display: block; }
+    .order-customer { display: flex; flex-direction: column; gap: 0.1rem; margin-bottom: 0.5rem; }
+    .order-meta-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .meta-chip { font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 0.15rem 0.5rem; border-radius: 999px; }
+    .order-items { margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .order-line { display: flex; justify-content: space-between; font-size: 0.88rem; color: #334155; }
+    .order-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid #e2e8f0; margin-bottom: 0.75rem; }
+    .order-actions { display: flex; gap: 0.5rem; }
+    .btn-confirm { flex: 1; height: 40px; border: none; border-radius: 0.75rem; background: #16a34a; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+    .btn-cancel-order { flex: 1; height: 40px; border: none; border-radius: 0.75rem; background: #dc2626; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+    .btn-confirm:disabled, .btn-cancel-order:disabled { opacity: 0.6; cursor: not-allowed; }
+    .field-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+    .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+    .order-status-pending { background: #f1f5f9; color: #475569; }
+    .order-status-confirmed { background: #dbeafe; color: #1d4ed8; }
+    .order-status-cancelled { background: #fee2e2; color: #dc2626; }
+    .order-status-delivered { background: #dcfce7; color: #16a34a; }
   `
 })
 export class HustlerDashboardPageComponent implements OnInit {
@@ -373,7 +443,7 @@ export class HustlerDashboardPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  tab = signal<'income' | 'products'>('income');
+  tab = signal<'income' | 'products' | 'orders'>('income');
   logTab = signal<'income' | 'expense'>('income');
 
   // Income
@@ -491,11 +561,74 @@ export class HustlerDashboardPageComponent implements OnInit {
     price: [null as number | null, [Validators.required, Validators.min(0)]],
   });
 
+  // Orders tab
+  incomingOrders = signal<OrderResponse[]>([]);
+  ordersLoading = signal(false);
+  orderActionId = signal<string | null>(null);
+  orderError = signal('');
+
   ngOnInit(): void {
     if (!this.auth.isLoggedIn()) { this.router.navigate(['/register']); return; }
     this.loadProducts();
     this.loadIncome();
     this.loadSummary();
+  }
+
+  loadOrders(): void {
+    const token = this.auth.getToken();
+    if (!token) return;
+    this.ordersLoading.set(true);
+    this.api.getIncomingOrders(token).subscribe({
+      next: (orders) => {
+        this.incomingOrders.set([...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+        this.ordersLoading.set(false);
+      },
+      error: () => this.ordersLoading.set(false)
+    });
+  }
+
+  confirmOrder(orderId: string): void {
+    const token = this.auth.getToken();
+    if (!token) return;
+    this.orderActionId.set(orderId);
+    this.orderError.set('');
+    this.api.updateOrderStatus(orderId, 'CONFIRMED', token).subscribe({
+      next: (updated) => {
+        this.incomingOrders.update(list => list.map(o => o.id === updated.id ? updated : o));
+        this.orderActionId.set(null);
+      },
+      error: (err) => {
+        this.orderActionId.set(null);
+        this.orderError.set(err?.error?.message || 'Failed to confirm order.');
+      }
+    });
+  }
+
+  cancelOrder(orderId: string): void {
+    const token = this.auth.getToken();
+    if (!token) return;
+    this.orderActionId.set(orderId);
+    this.orderError.set('');
+    this.api.updateOrderStatus(orderId, 'CANCELLED', token).subscribe({
+      next: (updated) => {
+        this.incomingOrders.update(list => list.map(o => o.id === updated.id ? updated : o));
+        this.orderActionId.set(null);
+      },
+      error: (err) => {
+        this.orderActionId.set(null);
+        this.orderError.set(err?.error?.message || 'Failed to cancel order.');
+      }
+    });
+  }
+
+  orderStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      PENDING: 'order-status-pending',
+      CONFIRMED: 'order-status-confirmed',
+      CANCELLED: 'order-status-cancelled',
+      DELIVERED: 'order-status-delivered'
+    };
+    return map[status] ?? 'order-status-pending';
   }
 
   loadIncome(): void {

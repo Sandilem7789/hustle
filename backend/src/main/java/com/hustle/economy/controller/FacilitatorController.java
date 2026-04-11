@@ -1,6 +1,8 @@
 package com.hustle.economy.controller;
 
+import com.hustle.economy.dto.DriverResponse;
 import com.hustle.economy.dto.FacilitatorHustlerResponse;
+import com.hustle.economy.entity.DriverStatus;
 import com.hustle.economy.service.FacilitatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,5 +30,18 @@ public class FacilitatorController {
             @RequestBody Map<String, Boolean> body) {
         boolean active = Boolean.TRUE.equals(body.get("active"));
         return ResponseEntity.ok(facilitatorService.setActive(id, active));
+    }
+
+    @GetMapping("/drivers")
+    public ResponseEntity<List<DriverResponse>> listDrivers() {
+        return ResponseEntity.ok(facilitatorService.listAllDrivers());
+    }
+
+    @PatchMapping("/drivers/{id}/status")
+    public ResponseEntity<DriverResponse> updateDriverStatus(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body) {
+        DriverStatus newStatus = DriverStatus.valueOf(body.get("status"));
+        return ResponseEntity.ok(facilitatorService.updateDriverStatus(id, newStatus));
     }
 }

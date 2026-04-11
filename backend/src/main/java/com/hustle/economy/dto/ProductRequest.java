@@ -1,5 +1,6 @@
 package com.hustle.economy.dto;
 
+import com.hustle.economy.entity.ProductCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -19,4 +20,5 @@ public class ProductRequest {
     @PositiveOrZero
     private BigDecimal price;
     private String mediaUrl;
+    private ProductCategory category;
 }

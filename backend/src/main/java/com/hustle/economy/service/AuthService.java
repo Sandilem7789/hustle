@@ -21,7 +21,7 @@ public class AuthService {
     private final HustlerApplicationRepository applicationRepository;
     private final BusinessProfileRepository businessProfileRepository;
     private final HustlerSessionRepository sessionRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Transactional
     public AuthResponse login(AuthRequest request) {

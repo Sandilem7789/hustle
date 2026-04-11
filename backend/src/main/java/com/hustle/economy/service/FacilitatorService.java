@@ -1,10 +1,10 @@
 package com.hustle.economy.service;
 
+import com.hustle.economy.dto.DriverResponse;
 import com.hustle.economy.dto.FacilitatorHustlerResponse;
-import com.hustle.economy.entity.BusinessProfile;
-import com.hustle.economy.entity.EntryType;
-import com.hustle.economy.entity.IncomeEntry;
+import com.hustle.economy.entity.*;
 import com.hustle.economy.repository.BusinessProfileRepository;
+import com.hustle.economy.repository.DriverRepository;
 import com.hustle.economy.repository.IncomeEntryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +22,7 @@ public class FacilitatorService {
 
     private final BusinessProfileRepository businessProfileRepository;
     private final IncomeEntryRepository incomeEntryRepository;
+    private final DriverRepository driverRepository;
 
     @Transactional(readOnly = true)
     public List<FacilitatorHustlerResponse> listActiveHustlers() {
@@ -71,6 +72,35 @@ public class FacilitatorService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return toResponse(bp, income, expenses);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DriverResponse> listAllDrivers() {
+        return driverRepository.findAll().stream()
+                .map(this::toDriverResponse)
+                .toList();
+    }
+
+    @Transactional
+    public DriverResponse updateDriverStatus(UUID driverId, DriverStatus newStatus) {
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new EntityNotFoundException("Driver not found"));
+        driver.setStatus(newStatus);
+        driver = driverRepository.save(driver);
+        return toDriverResponse(driver);
+    }
+
+    private DriverResponse toDriverResponse(Driver driver) {
+        return DriverResponse.builder()
+                .driverId(driver.getId().toString())
+                .firstName(driver.getFirstName())
+                .lastName(driver.getLastName())
+                .phone(driver.getPhone())
+                .vehicleType(driver.getVehicleType().name())
+                .communityName(driver.getCommunityBase() != null ? driver.getCommunityBase().getName() : null)
+                .status(driver.getStatus().name())
+                .createdAt(driver.getCreatedAt())
+                .build();
     }
 
     private FacilitatorHustlerResponse toResponse(BusinessProfile bp, BigDecimal income, BigDecimal expenses) {

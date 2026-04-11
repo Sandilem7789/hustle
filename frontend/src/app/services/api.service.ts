@@ -21,12 +21,99 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  // Auth
+  // ─── Hustler Auth ────────────────────────────────────────────────────────
   login(phone: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/login`, { phone, password });
   }
 
-  // Hustler applications
+  // ─── Customer Auth ───────────────────────────────────────────────────────
+  registerCustomer(payload: CustomerRegisterRequest): Observable<CustomerAuthResponse> {
+    return this.http.post<CustomerAuthResponse>(`${this.baseUrl}/api/customers/register`, payload);
+  }
+
+  loginCustomer(payload: { phone: string; password: string }): Observable<CustomerAuthResponse> {
+    return this.http.post<CustomerAuthResponse>(`${this.baseUrl}/api/customers/login`, payload);
+  }
+
+  getCustomerMe(token: string): Observable<CustomerAuthResponse> {
+    return this.http.get<CustomerAuthResponse>(`${this.baseUrl}/api/customers/me`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  // ─── Driver Auth ─────────────────────────────────────────────────────────
+  registerDriver(payload: DriverRegisterRequest): Observable<DriverAuthResponse> {
+    return this.http.post<DriverAuthResponse>(`${this.baseUrl}/api/drivers/register`, payload);
+  }
+
+  loginDriver(payload: { phone: string; password: string }): Observable<DriverAuthResponse> {
+    return this.http.post<DriverAuthResponse>(`${this.baseUrl}/api/drivers/login`, payload);
+  }
+
+  // ─── Orders ──────────────────────────────────────────────────────────────
+  placeOrder(payload: OrderRequest, customerToken: string): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.baseUrl}/api/orders`, payload, {
+      headers: new HttpHeaders({ 'X-Auth-Token': customerToken })
+    });
+  }
+
+  getMyOrders(customerToken: string): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.baseUrl}/api/orders/my`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': customerToken })
+    });
+  }
+
+  getIncomingOrders(hustlerToken: string): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.baseUrl}/api/orders/incoming`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': hustlerToken })
+    });
+  }
+
+  updateOrderStatus(orderId: string, status: string, hustlerToken: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/api/orders/${orderId}/status`, { status }, {
+      headers: new HttpHeaders({ 'X-Auth-Token': hustlerToken })
+    });
+  }
+
+  validateDeliveryDistance(payload: { sellerId: string; deliveryLat: number; deliveryLng: number }): Observable<DistanceCheckResponse> {
+    return this.http.post<DistanceCheckResponse>(`${this.baseUrl}/api/orders/validate-distance`, payload);
+  }
+
+  // ─── Driver Jobs ─────────────────────────────────────────────────────────
+  getDriverOpenJobs(driverToken: string): Observable<DeliveryJobResponse[]> {
+    return this.http.get<DeliveryJobResponse[]>(`${this.baseUrl}/api/deliveries/open`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': driverToken })
+    });
+  }
+
+  getDriverMyJobs(driverToken: string): Observable<DeliveryJobResponse[]> {
+    return this.http.get<DeliveryJobResponse[]>(`${this.baseUrl}/api/deliveries/my`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': driverToken })
+    });
+  }
+
+  acceptDeliveryJob(jobId: string, driverToken: string): Observable<DeliveryJobResponse> {
+    return this.http.post<DeliveryJobResponse>(`${this.baseUrl}/api/deliveries/${jobId}/accept`, {}, {
+      headers: new HttpHeaders({ 'X-Auth-Token': driverToken })
+    });
+  }
+
+  updateDeliveryStatus(jobId: string, payload: { status: string; proofPhotoUrl?: string }, driverToken: string): Observable<DeliveryJobResponse> {
+    return this.http.patch<DeliveryJobResponse>(`${this.baseUrl}/api/deliveries/${jobId}/status`, payload, {
+      headers: new HttpHeaders({ 'X-Auth-Token': driverToken })
+    });
+  }
+
+  // ─── Facilitator Driver Management ───────────────────────────────────────
+  listFacilitatorDrivers(): Observable<DriverResponse[]> {
+    return this.http.get<DriverResponse[]>(`${this.baseUrl}/api/facilitator/drivers`);
+  }
+
+  setDriverStatus(driverId: string, status: string): Observable<DriverResponse> {
+    return this.http.patch<DriverResponse>(`${this.baseUrl}/api/facilitator/drivers/${driverId}/status`, { status });
+  }
+
+  // ─── Hustler Applications ────────────────────────────────────────────────
   createHustlerApplication(payload: Record<string, unknown>): Observable<HustlerApplication> {
     return this.http.post<HustlerApplication>(`${this.baseUrl}/api/hustlers`, payload);
   }
@@ -45,7 +132,7 @@ export class ApiService {
     return this.http.patch<HustlerApplication>(`${this.baseUrl}/api/hustlers/${id}/profile`, payload);
   }
 
-  // Products
+  // ─── Products ────────────────────────────────────────────────────────────
   createProduct(payload: ProductRequest, token: string): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(`${this.baseUrl}/api/products`, payload, {
       headers: new HttpHeaders({ 'X-Auth-Token': token })
@@ -70,13 +157,16 @@ export class ApiService {
     });
   }
 
-  listProducts(communityId?: string): Observable<ProductResponse[]> {
+  listProducts(communityId?: string, category?: string): Observable<ProductResponse[]> {
+    const params: Record<string, string> = {};
+    if (communityId) params['communityId'] = communityId;
+    if (category) params['category'] = category;
     return this.http.get<ProductResponse[]>(`${this.baseUrl}/api/products`, {
-      params: communityId ? { communityId } : undefined
+      params: Object.keys(params).length ? params : undefined
     });
   }
 
-  // Income
+  // ─── Income ──────────────────────────────────────────────────────────────
   logIncome(payload: IncomeEntryRequest, token: string): Observable<IncomeEntryResponse> {
     return this.http.post<IncomeEntryResponse>(`${this.baseUrl}/api/income`, payload, {
       headers: new HttpHeaders({ 'X-Auth-Token': token })
@@ -107,7 +197,7 @@ export class ApiService {
     });
   }
 
-  // Image upload
+  // ─── Image Upload ─────────────────────────────────────────────────────────
   uploadImage(file: File, token: string): Observable<{ url: string }> {
     const form = new FormData();
     form.append('file', file);
@@ -116,7 +206,7 @@ export class ApiService {
     });
   }
 
-  // Communities
+  // ─── Communities ──────────────────────────────────────────────────────────
   listCommunities(): Observable<Community[]> {
     return this.http.get<Community[]>(`${this.baseUrl}/api/communities`);
   }
@@ -125,7 +215,7 @@ export class ApiService {
     return this.http.get<BusinessProfile[]>(`${this.baseUrl}/api/communities/${communityId}/hustlers`);
   }
 
-  // Facilitator
+  // ─── Facilitator ──────────────────────────────────────────────────────────
   listFacilitatorHustlers(): Observable<FacilitatorHustler[]> {
     return this.http.get<FacilitatorHustler[]>(`${this.baseUrl}/api/facilitator/hustlers`);
   }
@@ -135,12 +225,127 @@ export class ApiService {
   }
 }
 
+// ─── Interfaces ──────────────────────────────────────────────────────────────
+
 export interface AuthResponse {
   token: string;
   businessProfileId: string;
   businessName: string;
   firstName: string;
   lastName: string;
+}
+
+export interface CustomerRegisterRequest {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string;
+  password: string;
+}
+
+export interface CustomerAuthResponse {
+  token: string;
+  customerId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
+export interface DriverRegisterRequest {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  idNumber: string;
+  password: string;
+  vehicleType: string;
+  communityId: string;
+}
+
+export interface DriverAuthResponse {
+  token: string;
+  driverId: string;
+  firstName: string;
+  lastName: string;
+  vehicleType: string;
+  communityName: string;
+}
+
+export interface DriverResponse {
+  driverId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  vehicleType: string;
+  communityName: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface OrderItemRequest {
+  productId: string;
+  quantity: number;
+}
+
+export interface OrderItemResponse {
+  id: string;
+  productId: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+}
+
+export interface OrderRequest {
+  items: OrderItemRequest[];
+  transactionType: 'B2C' | 'B2B';
+  fulfillmentType: 'DELIVERY' | 'COLLECTION';
+  deliveryAddress?: string;
+  deliveryLat?: number;
+  deliveryLng?: number;
+  businessPurchaseOrderRef?: string;
+}
+
+export interface OrderResponse {
+  id: string;
+  customerId: string;
+  customerName: string;
+  hustlerName: string;
+  businessProfileId: string;
+  transactionType: string;
+  fulfillmentType: string;
+  status: string;
+  deliveryAddress?: string;
+  deliveryLat?: number;
+  deliveryLng?: number;
+  items: OrderItemResponse[];
+  totalAmount: number;
+  createdAt: string;
+}
+
+export interface DistanceCheckResponse {
+  distanceKm: number;
+  withinLimit: boolean;
+  message: string;
+}
+
+export interface DeliveryJobResponse {
+  jobId: string;
+  orderId: string;
+  driverId?: string;
+  status: string;
+  sellerName: string;
+  sellerAddress: string;
+  sellerLat?: number;
+  sellerLng?: number;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string;
+  deliveryLat?: number;
+  deliveryLng?: number;
+  items: OrderItemResponse[];
+  totalAmount: number;
+  payoutAmount: number;
+  createdAt: string;
+  acceptedAt?: string;
 }
 
 export interface HustlerApplication {
@@ -183,6 +388,7 @@ export interface ProductRequest {
   description: string;
   price: number;
   mediaUrl?: string;
+  category?: string;
 }
 
 export interface ProductResponse {
@@ -194,6 +400,7 @@ export interface ProductResponse {
   businessId: string;
   businessName: string;
   createdAt: string;
+  category?: string;
 }
 
 // Keep backwards compat alias

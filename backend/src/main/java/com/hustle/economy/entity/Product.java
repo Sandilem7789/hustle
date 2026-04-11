@@ -38,6 +38,10 @@ public class Product {
 
     private String mediaUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductCategory category;
+
     @Column(nullable = false)
     private OffsetDateTime createdAt;
 

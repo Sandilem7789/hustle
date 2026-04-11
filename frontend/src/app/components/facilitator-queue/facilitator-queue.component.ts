@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler } from '../../services/api.service';
+import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler, DriverResponse } from '../../services/api.service';
 
 @Component({
   selector: 'app-facilitator-queue',
@@ -13,6 +13,7 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
       <div class="top-tabs">
         <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Hustlers</button>
         <button [class.active]="fTab() === 'applications'" (click)="fTab.set('applications')">Applications</button>
+        <button [class.active]="fTab() === 'drivers'" (click)="loadDrivers(); fTab.set('drivers')">Drivers</button>
       </div>
 
       <!-- ===== HUSTLERS TAB ===== -->
@@ -286,6 +287,45 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
           <p class="muted empty-msg">No applications found.</p>
         </ng-template>
       </ng-container>
+
+      <!-- ===== DRIVERS TAB ===== -->
+      <ng-container *ngIf="fTab() === 'drivers'">
+        <p class="muted sub-heading">All registered drivers — approve, suspend, or reinstate.</p>
+
+        <div *ngIf="driversLoading()" class="muted">Loading drivers…</div>
+
+        <div class="driver-list" *ngIf="!driversLoading()">
+          <article *ngFor="let d of drivers()" class="driver-card">
+            <div class="driver-row">
+              <div class="driver-main">
+                <h3>{{ d.firstName }} {{ d.lastName }}</h3>
+                <p class="muted small">{{ d.phone }} &middot; {{ d.vehicleType }}</p>
+                <p class="muted small">{{ d.communityName }}</p>
+              </div>
+              <div class="driver-right">
+                <span class="status-badge"
+                  [class.status-pending]="d.status === 'PENDING'"
+                  [class.status-approved]="d.status === 'ACTIVE'"
+                  [class.status-rejected]="d.status === 'SUSPENDED'">
+                  {{ d.status }}
+                </span>
+              </div>
+            </div>
+            <div class="driver-actions">
+              <button *ngIf="d.status === 'PENDING'" class="btn approve" (click)="approveDriver(d)" [disabled]="driverActionId() === d.driverId">
+                {{ driverActionId() === d.driverId ? 'Saving…' : '✓ Approve' }}
+              </button>
+              <button *ngIf="d.status === 'ACTIVE'" class="btn reject" (click)="suspendDriver(d)" [disabled]="driverActionId() === d.driverId">
+                {{ driverActionId() === d.driverId ? 'Saving…' : '⏸ Suspend' }}
+              </button>
+              <button *ngIf="d.status === 'SUSPENDED'" class="btn approve" (click)="reinstateDriver(d)" [disabled]="driverActionId() === d.driverId">
+                {{ driverActionId() === d.driverId ? 'Saving…' : '▶ Reinstate' }}
+              </button>
+            </div>
+          </article>
+          <p *ngIf="drivers().length === 0" class="muted empty-msg">No drivers registered yet.</p>
+        </div>
+      </ng-container>
     </section>
   `,
   styles: `
@@ -386,13 +426,26 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
     .confirm-title { font-weight: 700; font-size: 1rem; margin: 0 0 0.4rem; color: #9a3412; }
     .confirm-msg { font-size: 0.9rem; color: #334155; margin: 0 0 0.75rem; }
     .confirm-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Drivers tab */
+    .driver-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .driver-card { border: 1px solid #e2e8f0; border-radius: 1rem; background: #f8fafc; padding: 1rem 1.25rem; }
+    .driver-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .driver-main h3 { margin: 0 0 0.2rem; font-size: 1rem; }
+    .driver-right { flex-shrink: 0; }
+    .driver-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   `
 })
 export class FacilitatorQueueComponent implements OnInit {
   private readonly api = inject(ApiService);
 
   // Top-level tab
-  fTab = signal<'hustlers' | 'applications'>('hustlers');
+  fTab = signal<'hustlers' | 'applications' | 'drivers'>('hustlers');
+
+  // Drivers tab state
+  drivers = signal<DriverResponse[]>([]);
+  driversLoading = signal(false);
+  driverActionId = signal<string | null>(null);
 
   // Hustlers tab state
   hustlers = signal<FacilitatorHustler[]>([]);
@@ -567,6 +620,47 @@ export class FacilitatorQueueComponent implements OnInit {
         this.editSaving.set(false);
         this.editError.set(err?.error?.message || 'Failed to save changes.');
       }
+    });
+  }
+
+  loadDrivers(): void {
+    this.driversLoading.set(true);
+    this.api.listFacilitatorDrivers().subscribe({
+      next: (list) => { this.drivers.set(list); this.driversLoading.set(false); },
+      error: () => this.driversLoading.set(false)
+    });
+  }
+
+  approveDriver(d: DriverResponse): void {
+    this.driverActionId.set(d.driverId);
+    this.api.setDriverStatus(d.driverId, 'ACTIVE').subscribe({
+      next: (updated) => {
+        this.drivers.update(list => list.map(x => x.driverId === updated.driverId ? updated : x));
+        this.driverActionId.set(null);
+      },
+      error: () => this.driverActionId.set(null)
+    });
+  }
+
+  suspendDriver(d: DriverResponse): void {
+    this.driverActionId.set(d.driverId);
+    this.api.setDriverStatus(d.driverId, 'SUSPENDED').subscribe({
+      next: (updated) => {
+        this.drivers.update(list => list.map(x => x.driverId === updated.driverId ? updated : x));
+        this.driverActionId.set(null);
+      },
+      error: () => this.driverActionId.set(null)
+    });
+  }
+
+  reinstateDriver(d: DriverResponse): void {
+    this.driverActionId.set(d.driverId);
+    this.api.setDriverStatus(d.driverId, 'ACTIVE').subscribe({
+      next: (updated) => {
+        this.drivers.update(list => list.map(x => x.driverId === updated.driverId ? updated : x));
+        this.driverActionId.set(null);
+      },
+      error: () => this.driverActionId.set(null)
     });
   }
 }

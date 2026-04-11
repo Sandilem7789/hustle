@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Custom Properties ─────────────────────────────────────────────────── */
+:root {
+  --color-primary: #0ea5e9;
+  --color-success: #22c55e;
+  --color-danger: #dc2626;
+  --color-amber: #f59e0b;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-400: #94a3b8;
+  --color-slate-600: #475569;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  --touch-target: 48px;
+  --bottom-nav-height: 64px;
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
 body {
   margin: 0;
   font-family: 'Space Grotesk', system-ui, sans-serif;
@@ -13,6 +38,7 @@ p {
   margin: 0;
 }
 
+/* ─── Typography Utilities ───────────────────────────────────────────────── */
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.2em;
@@ -24,24 +50,89 @@ p {
   color: #475569;
 }
 
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
 .layout {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 1rem 1rem 5rem;   /* mobile: extra bottom for bottom nav */
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
+@media (min-width: 768px) {
+  .layout {
+    padding: 2rem 1.5rem 4rem;
+    gap: 2rem;
+  }
+}
+
+/* ─── Bottom Nav Spacer ──────────────────────────────────────────────────── */
+.bottom-nav-spacer {
+  height: 72px;
+}
+
+/* ─── Hero ───────────────────────────────────────────────────────────────── */
 .hero {
   background: #0f172a;
   color: white;
   border-radius: 1.5rem;
-  padding: 2rem;
+  padding: 1.5rem;
   box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
 }
 
-main.page-shell {
-  padding: 2rem 0 4rem;
+@media (min-width: 768px) {
+  .hero {
+    padding: 2rem;
+  }
 }
 
+/* ─── Page Shell ─────────────────────────────────────────────────────────── */
+main.page-shell {
+  padding: 0 0 var(--bottom-nav-height);
+}
+
+@media (min-width: 768px) {
+  main.page-shell {
+    padding: 2rem 0 4rem;
+  }
+}
+
+/* ─── Global Button Rules ────────────────────────────────────────────────── */
+button {
+  min-height: var(--touch-target);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ─── Global Input Rules ─────────────────────────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+select {
+  min-height: var(--touch-target);
+  box-sizing: border-box;
+}
+
+/* ─── Offline Bar ────────────────────────────────────────────────────────── */
+.offline-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: #fef3c7;
+  border-bottom: 1px solid #fbbf24;
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}

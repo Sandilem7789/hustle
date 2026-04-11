@@ -1,5 +1,6 @@
 package com.hustle.economy.dto;
 
+import com.hustle.economy.entity.ProductCategory;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,5 +18,6 @@ public class ProductResponse {
     private String mediaUrl;
     private String businessId;
     private String businessName;
+    private ProductCategory category;
     private OffsetDateTime createdAt;
 }

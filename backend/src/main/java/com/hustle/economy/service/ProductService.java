@@ -4,6 +4,7 @@ import com.hustle.economy.dto.ProductRequest;
 import com.hustle.economy.dto.ProductResponse;
 import com.hustle.economy.entity.BusinessProfile;
 import com.hustle.economy.entity.Product;
+import com.hustle.economy.entity.ProductCategory;
 import com.hustle.economy.repository.BusinessProfileRepository;
 import com.hustle.economy.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -43,6 +44,7 @@ public class ProductService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .mediaUrl(request.getMediaUrl())
+                .category(request.getCategory() != null ? request.getCategory() : ProductCategory.OTHER)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
@@ -57,10 +59,14 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> listProducts(String communityId) {
+    public List<ProductResponse> listProducts(String communityId, String category) {
         List<Product> products = communityId != null && !communityId.isBlank()
                 ? productRepository.findByCommunityIdFetched(UUID.fromString(communityId))
                 : productRepository.findAllFetched();
+        if (category != null && !category.isBlank()) {
+            ProductCategory cat = ProductCategory.valueOf(category.toUpperCase());
+            products = products.stream().filter(p -> cat.equals(p.getCategory())).toList();
+        }
         return products.stream().map(this::toResponse).toList();
     }
 
@@ -76,6 +82,9 @@ public class ProductService {
         product.setPrice(request.getPrice());
         if (request.getMediaUrl() != null) {
             product.setMediaUrl(request.getMediaUrl());
+        }
+        if (request.getCategory() != null) {
+            product.setCategory(request.getCategory());
         }
         product.setUpdatedAt(OffsetDateTime.now());
         return toResponse(productRepository.save(product));
@@ -100,6 +109,7 @@ public class ProductService {
                 .mediaUrl(p.getMediaUrl())
                 .businessId(p.getBusiness().getId().toString())
                 .businessName(p.getBusiness().getBusinessName())
+                .category(p.getCategory())
                 .createdAt(p.getCreatedAt())
                 .build();
     }

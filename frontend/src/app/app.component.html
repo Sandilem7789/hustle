@@ -1,25 +1,77 @@
+<!-- Slim Top Header -->
 <header class="site-header">
   <div class="brand">
     <span class="logo">🎛️</span>
-    <div>
-      <p class="eyebrow">Hustle Economy</p>
-      <strong>KwaZulu-Natal</strong>
+    <div class="brand-text">
+      <p class="eyebrow-sm">Hustle Economy</p>
+      <strong class="brand-name">KwaZulu-Natal</strong>
     </div>
   </div>
-  <nav>
-    <ng-container *ngIf="!auth.isLoggedIn()">
+
+  <!-- Desktop-only nav links -->
+  <nav class="desktop-nav">
+    <a routerLink="/marketplace" routerLinkActive="active">🛒 Marketplace</a>
+    <ng-container *ngIf="showDashboardNav()">
+      <a routerLink="/dashboard" routerLinkActive="active">📊 Dashboard</a>
+    </ng-container>
+    <ng-container *ngIf="!showDashboardNav()">
       <a routerLink="/register" routerLinkActive="active">Register</a>
     </ng-container>
-    <ng-container *ngIf="auth.isLoggedIn()">
-      <a routerLink="/dashboard" routerLinkActive="active">My Dashboard</a>
-      <span class="user-name">{{ auth.state()?.firstName }}</span>
-      <button class="logout-btn" (click)="logout()">Logout</button>
+    <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
+    <a routerLink="/driver" routerLinkActive="active">🚗 Driver</a>
+    <ng-container *ngIf="customerAuth.isLoggedIn()">
+      <a routerLink="/orders" routerLinkActive="active">📦 Orders</a>
     </ng-container>
-    <a routerLink="/facilitator" routerLinkActive="active">Facilitator</a>
-    <a routerLink="/marketplace" routerLinkActive="active">Marketplace</a>
+    <ng-container *ngIf="!customerAuth.isLoggedIn()">
+      <a routerLink="/customer/login" routerLinkActive="active">Login</a>
+    </ng-container>
   </nav>
 </header>
 
+<!-- Offline Banner -->
+<app-offline-banner></app-offline-banner>
+
+<!-- Main Content -->
 <main class="page-shell">
   <router-outlet></router-outlet>
 </main>
+
+<!-- Bottom Navigation (mobile only) -->
+<nav class="bottom-nav">
+  <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">🛒</span>
+    <span>Market</span>
+  </a>
+
+  <a *ngIf="showDashboardNav()" routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">📊</span>
+    <span>Dashboard</span>
+  </a>
+  <a *ngIf="!showDashboardNav()" routerLink="/register" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">📝</span>
+    <span>Register</span>
+  </a>
+
+  <a routerLink="/facilitator" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">🏛️</span>
+    <span>Facilitator</span>
+  </a>
+
+  <a routerLink="/driver" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">🚗</span>
+    <span>Driver</span>
+  </a>
+
+  <ng-container *ngIf="customerAuth.isLoggedIn()">
+    <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
+      <span class="bottom-nav-icon">👤</span>
+      <span>Account</span>
+    </a>
+  </ng-container>
+  <ng-container *ngIf="!customerAuth.isLoggedIn()">
+    <a routerLink="/customer/login" routerLinkActive="active" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🔑</span>
+      <span>Login</span>
+    </a>
+  </ng-container>
+</nav>
