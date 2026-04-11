@@ -122,7 +122,8 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       background: white;
       border-radius: 1.5rem;
       padding: 2rem;
-      box-shadow: 0 25px 60px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 4px 24px rgba(28,25,23,0.08);
+      border: 1px solid #E7E5E4;
     }
     .grid {
       display: grid;
@@ -138,63 +139,72 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     label {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
-      font-size: 0.9rem;
-      color: #475569;
+      gap: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #1C1917;
     }
     label.span-2 { grid-column: span 2; }
     @media (max-width: 600px) { label.span-2 { grid-column: span 1; } }
     input, textarea, select {
-      border-radius: 0.8rem;
-      border: 1px solid #cbd5e1;
+      border-radius: 0.75rem;
+      border: 2px solid #E7E5E4;
       padding: 0.65rem 0.9rem;
       font-size: 1rem;
       font-family: inherit;
+      font-weight: 600;
       width: 100%;
       box-sizing: border-box;
       background: white;
+      color: #1C1917;
+      outline: none;
+      transition: border-color 0.15s;
+      min-height: 48px;
     }
     input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: #0ea5e9;
-      box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+      border-color: #F5B800;
+      box-shadow: 0 0 0 3px rgba(245,184,0,0.2);
     }
     .divider {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      font-size: 0.8rem;
-      font-weight: 700;
+      font-size: 0.75rem;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: #94a3b8;
+      color: #A8A29E;
       margin-top: 0.5rem;
     }
     .divider::before, .divider::after {
       content: '';
       flex: 1;
       height: 1px;
-      background: #e2e8f0;
+      background: #E7E5E4;
     }
     .primary {
       border: none;
       border-radius: 999px;
       padding: 0.9rem 1.5rem;
       font-size: 1rem;
-      font-weight: 700;
-      background: linear-gradient(120deg, #0ea5e9, #22c55e);
-      color: white;
+      font-weight: 800;
+      background: #F5B800;
+      color: #1C1917;
       cursor: pointer;
-      transition: opacity 0.2s;
+      font-family: inherit;
+      min-height: 48px;
+      box-shadow: 0 4px 12px rgba(245,184,0,0.35);
+      transition: box-shadow 0.2s;
     }
-    .primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
     .primary.span-2 { grid-column: span 2; }
     @media (max-width: 600px) { .primary.span-2 { grid-column: span 1; } }
-    .err { color: #dc2626; font-size: 0.8rem; }
-    .status-msg { margin-top: 1rem; font-weight: 600; }
-    .success { color: #16a34a; }
-    .error { color: #dc2626; }
-    small { color: #94a3b8; }
+    .err { color: #E53935; font-size: 0.8rem; font-weight: 700; }
+    .status-msg { margin-top: 1rem; font-weight: 700; }
+    .success { color: #2DB344; }
+    .error { color: #E53935; }
+    small { color: #A8A29E; font-weight: 600; }
   `
 })
 export class RegistrationFormComponent implements OnInit {

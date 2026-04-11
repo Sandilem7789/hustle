@@ -51,7 +51,8 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
     .tab-card {
       background: white;
       border-radius: 1.5rem;
-      box-shadow: 0 25px 60px rgba(15,23,42,0.12);
+      box-shadow: 0 4px 24px rgba(28,25,23,0.08);
+      border: 1px solid #E7E5E4;
       overflow: hidden;
       width: 100%;
       margin: 0 auto;
@@ -61,7 +62,7 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
     .tab-card.register-mode { max-width: 100%; }
     .tabs {
       display: flex;
-      border-bottom: 2px solid #e2e8f0;
+      border-bottom: 2px solid #E7E5E4;
     }
     .tabs button {
       flex: 1;
@@ -69,14 +70,16 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
       border: none;
       background: none;
       font-size: 1rem;
-      font-weight: 600;
-      color: #94a3b8;
+      font-weight: 700;
+      color: #A8A29E;
       cursor: pointer;
       transition: all 0.2s;
+      font-family: inherit;
+      min-height: 48px;
     }
     .tabs button.active {
-      color: #0ea5e9;
-      border-bottom: 2px solid #0ea5e9;
+      color: #1C1917;
+      border-bottom: 2px solid #F5B800;
       margin-bottom: -2px;
     }
     .form-section { padding: 2rem; }
@@ -88,8 +91,8 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
       text-align: center;
       padding: 2.5rem 2rem;
     }
-    .login-section h2 { margin: 0 0 0.4rem; }
-    .login-section .muted { margin: 0; }
+    .login-section h2 { margin: 0 0 0.4rem; color: #1C1917; }
+    .login-section .muted { margin: 0; color: #78716C; }
     .login-grid {
       display: flex;
       flex-direction: column;
@@ -102,33 +105,46 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
-      font-size: 0.9rem;
-      color: #475569;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #1C1917;
     }
     input {
-      border-radius: 0.8rem;
-      border: 1px solid #cbd5e1;
+      border-radius: 0.75rem;
+      border: 2px solid #E7E5E4;
       padding: 0.75rem 1rem;
       font-size: 1rem;
       font-family: inherit;
+      font-weight: 600;
       width: 100%;
       box-sizing: border-box;
+      min-height: 48px;
+      background: white;
+      color: #1C1917;
+      outline: none;
+      transition: border-color 0.15s;
     }
-    input:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
+    input:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
     .primary {
       border: none;
       border-radius: 999px;
       padding: 0.9rem;
       font-size: 1rem;
-      font-weight: 700;
-      background: linear-gradient(120deg, #0ea5e9, #22c55e);
-      color: white;
+      font-weight: 800;
+      background: #F5B800;
+      color: #1C1917;
       cursor: pointer;
+      font-family: inherit;
+      min-height: 48px;
+      box-shadow: 0 4px 12px rgba(245,184,0,0.35);
+      transition: box-shadow 0.15s;
     }
-    .primary:disabled { opacity: 0.6; cursor: not-allowed; }
-    .error { color: #dc2626; font-weight: 600; margin-top: 0.75rem; }
-    .switch-hint { margin-top: 1.5rem; color: #64748b; font-size: 0.9rem; }
-    .link-btn { background: none; border: none; color: #0ea5e9; font-weight: 700; cursor: pointer; font-size: inherit; padding: 0; }
+    .primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+    .error { color: #E53935; font-weight: 700; margin-top: 0.75rem; }
+    .switch-hint { margin-top: 1.5rem; color: #78716C; font-size: 0.9rem; }
+    .link-btn { background: none; border: none; color: #00A896; font-weight: 800; cursor: pointer; font-size: inherit; padding: 0; font-family: inherit; }
+    .link-btn:hover { text-decoration: underline; }
   `
 })
 export class RegisterPageComponent {
