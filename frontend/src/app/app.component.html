@@ -1,20 +1,21 @@
-<!-- Slim Top Header -->
+<!-- Site Header -->
 <header class="site-header">
-  <div class="brand">
-    <span class="logo">🎛️</span>
-    <div class="brand-text">
-      <p class="eyebrow-sm">Hustle Economy</p>
-      <strong class="brand-name">KwaZulu-Natal</strong>
-    </div>
-  </div>
+  <!-- Logo — links back to marketplace (home) -->
+  <a routerLink="/marketplace" class="site-logo-link" aria-label="Hustle Economy — home">
+    <img
+      src="assets/hustle-logo.png"
+      alt="Hustle Economy — SizoPopa Sonke One Dy!"
+      class="site-logo"
+    />
+  </a>
 
   <!-- Desktop-only nav links -->
   <nav class="desktop-nav">
     <a routerLink="/marketplace" routerLinkActive="active">🛒 Marketplace</a>
     <ng-container *ngIf="showDashboardNav()">
-      <a routerLink="/dashboard" routerLinkActive="active">📊 My Dashboard</a>
+      <a routerLink="/dashboard" routerLinkActive="active">📊 Dashboard</a>
       <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
-      <button class="nav-logout-btn" (click)="logout()">Logout</button>
+      <button type="button" class="nav-logout-btn" (click)="logout()">Logout</button>
     </ng-container>
     <ng-container *ngIf="!showDashboardNav()">
       <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
