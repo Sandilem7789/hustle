@@ -1,9 +1,10 @@
 package com.hustle.economy.controller;
 
-import com.hustle.economy.dto.DriverResponse;
 import com.hustle.economy.dto.FacilitatorHustlerResponse;
-import com.hustle.economy.entity.DriverStatus;
+import com.hustle.economy.dto.MonthlyCheckInRequest;
+import com.hustle.economy.dto.MonthlyCheckInResponse;
 import com.hustle.economy.service.FacilitatorService;
+import com.hustle.economy.service.MonthlyCheckInService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class FacilitatorController {
 
     private final FacilitatorService facilitatorService;
+    private final MonthlyCheckInService monthlyCheckInService;
 
     @GetMapping("/hustlers")
     public ResponseEntity<List<FacilitatorHustlerResponse>> listHustlers() {
@@ -32,16 +34,17 @@ public class FacilitatorController {
         return ResponseEntity.ok(facilitatorService.setActive(id, active));
     }
 
-    @GetMapping("/drivers")
-    public ResponseEntity<List<DriverResponse>> listDrivers() {
-        return ResponseEntity.ok(facilitatorService.listAllDrivers());
+    // ── Monthly check-ins ─────────────────────────────────────────────────
+
+    @GetMapping("/hustlers/{id}/checkins")
+    public ResponseEntity<List<MonthlyCheckInResponse>> listCheckIns(@PathVariable UUID id) {
+        return ResponseEntity.ok(monthlyCheckInService.list(id));
     }
 
-    @PatchMapping("/drivers/{id}/status")
-    public ResponseEntity<DriverResponse> updateDriverStatus(
+    @PostMapping("/hustlers/{id}/checkins")
+    public ResponseEntity<MonthlyCheckInResponse> recordCheckIn(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body) {
-        DriverStatus newStatus = DriverStatus.valueOf(body.get("status"));
-        return ResponseEntity.ok(facilitatorService.updateDriverStatus(id, newStatus));
+            @RequestBody MonthlyCheckInRequest request) {
+        return ResponseEntity.ok(monthlyCheckInService.record(id, request));
     }
 }

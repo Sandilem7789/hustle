@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { RegisterPageComponent } from './pages/register/register-page.component';
 import { FacilitatorPageComponent } from './pages/facilitator/facilitator-page.component';
+import { CoordinatorPageComponent } from './pages/coordinator/coordinator-page.component';
 import { MarketplacePageComponent } from './pages/marketplace/marketplace-page.component';
 import { HustlerDashboardPageComponent } from './pages/hustler-dashboard/hustler-dashboard-page.component';
 import { CustomerRegisterPageComponent } from './pages/customer-register/customer-register-page.component';
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: 'register', component: RegisterPageComponent },
   { path: 'dashboard', component: HustlerDashboardPageComponent },
   { path: 'facilitator', component: FacilitatorPageComponent },
+  { path: 'coordinator', component: CoordinatorPageComponent },
   { path: 'marketplace', component: MarketplacePageComponent },
   { path: 'customer/register', component: CustomerRegisterPageComponent },
   { path: 'customer/login', component: CustomerLoginPageComponent },

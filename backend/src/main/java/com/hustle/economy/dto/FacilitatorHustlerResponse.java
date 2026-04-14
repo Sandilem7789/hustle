@@ -26,4 +26,5 @@ public class FacilitatorHustlerResponse {
     private BigDecimal monthExpenses;
     private BigDecimal monthProfit;
     private boolean active;
+    private boolean missedCheckIn;
 }

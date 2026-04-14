@@ -206,6 +206,71 @@ export class ApiService {
     });
   }
 
+  // ─── Monthly Check-ins ────────────────────────────────────────────────────
+  listCheckIns(businessProfileId: string): Observable<MonthlyCheckInResponse[]> {
+    return this.http.get<MonthlyCheckInResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/checkins`);
+  }
+
+  recordCheckIn(businessProfileId: string, payload: MonthlyCheckInRequest): Observable<MonthlyCheckInResponse> {
+    return this.http.post<MonthlyCheckInResponse>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/checkins`, payload);
+  }
+
+  // ─── Account Activation ───────────────────────────────────────────────────
+  activateApplicant(id: string): Observable<ActivateApplicantResponse> {
+    return this.http.post<ActivateApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/activate`, {});
+  }
+
+  // ─── Interview ────────────────────────────────────────────────────────────
+  getInterview(applicantId: string): Observable<InterviewResponse> {
+    return this.http.get<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview`);
+  }
+
+  scheduleInterview(applicantId: string, scheduledDate: string): Observable<InterviewResponse> {
+    return this.http.patch<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview/schedule`, { scheduledDate });
+  }
+
+  recordInterview(applicantId: string, payload: InterviewRequest): Observable<InterviewResponse> {
+    return this.http.post<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview`, payload);
+  }
+
+  // ─── Business Verification ────────────────────────────────────────────────
+  getVerification(applicantId: string): Observable<BusinessVerificationResponse> {
+    return this.http.get<BusinessVerificationResponse>(`${this.baseUrl}/api/applicants/${applicantId}/verification`);
+  }
+
+  recordVerification(applicantId: string, payload: BusinessVerificationRequest): Observable<BusinessVerificationResponse> {
+    return this.http.post<BusinessVerificationResponse>(`${this.baseUrl}/api/applicants/${applicantId}/verification`, payload);
+  }
+
+  // ─── Applicants (Pipeline) ────────────────────────────────────────────────
+  createApplicant(payload: ApplicantRequest): Observable<ApplicantResponse> {
+    return this.http.post<ApplicantResponse>(`${this.baseUrl}/api/applicants`, payload);
+  }
+
+  listApplicants(communityId?: string, stage?: string, callStatus?: string): Observable<ApplicantResponse[]> {
+    const params: Record<string, string> = {};
+    if (communityId) params['communityId'] = communityId;
+    if (stage) params['stage'] = stage;
+    if (callStatus) params['callStatus'] = callStatus;
+    return this.http.get<ApplicantResponse[]>(`${this.baseUrl}/api/applicants`, {
+      params: Object.keys(params).length ? params : undefined
+    });
+  }
+
+  updateApplicantCallStatus(id: string, callStatus: string): Observable<ApplicantResponse> {
+    return this.http.patch<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/call`, { callStatus });
+  }
+
+  updateApplicantStage(id: string, stage: string, reason?: string): Observable<ApplicantResponse> {
+    return this.http.patch<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/stage`, { stage, reason });
+  }
+
+  getCapStatus(communityId: string, cohortNumber: number): Observable<CohortCapResponse> {
+    return this.http.get<CohortCapResponse>(`${this.baseUrl}/api/applicants/cap-status`, {
+      params: { communityId, cohortNumber: cohortNumber.toString() }
+    });
+  }
+
   // ─── Communities ──────────────────────────────────────────────────────────
   listCommunities(): Observable<Community[]> {
     return this.http.get<Community[]>(`${this.baseUrl}/api/communities`);
@@ -452,6 +517,129 @@ export interface FacilitatorHustler {
   monthExpenses: number;
   monthProfit: number;
   active: boolean;
+  missedCheckIn: boolean;
+}
+
+export interface MonthlyCheckInRequest {
+  notes?: string;
+  photoUrls?: string[];
+  visitedBy?: string;
+}
+
+export interface MonthlyCheckInResponse {
+  id: string;
+  businessProfileId: string;
+  visitMonth: string;
+  photoUrls?: string[];
+  notes?: string;
+  visitedBy?: string;
+  createdAt: string;
+}
+
+export interface ActivateApplicantResponse {
+  applicantId: string;
+  applicationId: string;
+  businessProfileId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  generatedPassword: string;
+}
+
+export interface InterviewRequest {
+  conductedDate: string;
+  canDescribeBusiness: boolean;
+  appearsGenuine: boolean;
+  hasRunningBusiness: boolean;
+  notes?: string;
+  outcome: 'PASS' | 'FAIL' | 'NO_SHOW';
+  conductedBy?: string;
+}
+
+export interface InterviewResponse {
+  id: string;
+  applicantId: string;
+  scheduledDate?: string;
+  conductedDate?: string;
+  canDescribeBusiness?: boolean;
+  appearsGenuine?: boolean;
+  hasRunningBusiness?: boolean;
+  notes?: string;
+  outcome?: string;
+  conductedBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface BusinessVerificationRequest {
+  visitDate: string;
+  latitude?: number;
+  longitude?: number;
+  photoUrls?: string[];
+  notes?: string;
+  outcome: 'VERIFIED' | 'FAILED';
+  verifiedBy?: string;
+}
+
+export interface BusinessVerificationResponse {
+  id: string;
+  applicantId: string;
+  visitDate?: string;
+  latitude?: number;
+  longitude?: number;
+  photoUrls?: string[];
+  notes?: string;
+  outcome?: string;
+  verifiedBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ApplicantRequest {
+  communityId: string;
+  cohortNumber?: number;
+  firstName: string;
+  lastName: string;
+  gender?: string;
+  age?: number;
+  phone: string;
+  email?: string;
+  typeOfHustle: string;
+  districtSection?: string;
+  capturedBy?: string;
+}
+
+export interface ApplicantResponse {
+  id: string;
+  communityId: string;
+  communityName: string;
+  cohortNumber: number;
+  firstName: string;
+  lastName: string;
+  gender?: string;
+  age?: number;
+  phone: string;
+  email?: string;
+  typeOfHustle: string;
+  districtSection?: string;
+  pipelineStage: string;
+  callStatus: string;
+  ageFlag: boolean;
+  capturedBy?: string;
+  rejectionReason?: string;
+  approvedCountInCohort: number;
+  createdAt: string;
+  updatedAt: string;
+  activatedAt?: string;
+}
+
+export interface CohortCapResponse {
+  communityId: string;
+  communityName: string;
+  cohortNumber: number;
+  approvedCount: number;
+  cap: number;
+  atCap: boolean;
 }
 
 export interface IncomeSummary {
