@@ -108,6 +108,18 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
           </div>
         </div>
 
+        <!-- Search -->
+        <div class="pipeline-search-row">
+          <input
+            class="pipeline-search"
+            type="search"
+            [ngModel]="pipelineSearch()"
+            (ngModelChange)="pipelineSearch.set($event)"
+            placeholder="Search by name, phone, hustle, district, community…"
+            autocomplete="off" />
+          <button *ngIf="pipelineSearch()" class="btn-search-clear" (click)="pipelineSearch.set('')">✕</button>
+        </div>
+
         <!-- Filters -->
         <div class="filters">
           <label>
@@ -446,7 +458,7 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
           </article>
 
           <p *ngIf="filteredApplicants().length === 0" class="muted empty-msg">
-            No applicants found{{ pipelineStage() ? ' at this stage' : '' }}.
+            No applicants found{{ pipelineSearch() ? ' matching "' + pipelineSearch() + '"' : (pipelineStage() ? ' at this stage' : '') }}.
           </p>
         </div>
       </ng-container>
@@ -895,6 +907,13 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
     .ph-text h2 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #1C1917; }
     .btn-add { background: #F5B800; color: #1C1917; font-weight: 800; padding: 0.6rem 1.25rem; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; min-height: 44px; font-size: 0.9rem; }
 
+    /* Search */
+    .pipeline-search-row { position: relative; margin-bottom: 0.85rem; }
+    .pipeline-search { width: 100%; box-sizing: border-box; padding: 0.65rem 2.5rem 0.65rem 1rem; border: 1.5px solid #E7E5E4; border-radius: 999px; font-size: 0.9rem; font-family: inherit; background: #FAFAF9; color: #1C1917; outline: none; min-height: 44px; }
+    .pipeline-search:focus { border-color: #F5B800; background: white; }
+    .pipeline-search::placeholder { color: #A8A29E; }
+    .btn-search-clear { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #A8A29E; font-size: 1rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
+
     .add-form-section { background: rgba(245,184,0,0.04); border: 1px solid rgba(245,184,0,0.25); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem; }
 
     /* Cap bar */
@@ -1167,6 +1186,7 @@ export class FacilitatorQueueComponent implements OnInit {
   pipelineLoading = signal(false);
   pipelineCommunityId = '';
   pipelineCohort = '8';
+  pipelineSearch = signal('');
   pipelineStage = signal('');
   expandedApplicant = signal<string | null>(null);
   capStatus = signal<CohortCapResponse | null>(null);
@@ -1201,8 +1221,19 @@ export class FacilitatorQueueComponent implements OnInit {
 
   filteredApplicants = computed(() => {
     const stage = this.pipelineStage();
-    const list = this.applicants();
-    return stage ? list.filter(a => a.pipelineStage === stage) : list;
+    const q = this.pipelineSearch().trim().toLowerCase();
+    let list = this.applicants();
+    if (stage) list = list.filter(a => a.pipelineStage === stage);
+    if (!q) return list;
+    return list.filter(a =>
+      [
+        a.firstName, a.lastName, a.phone, a.email,
+        a.typeOfHustle, a.districtSection, a.communityName,
+        a.capturedBy, String(a.cohortNumber), String(a.age ?? ''),
+        a.gender, this.stageLabel(a.pipelineStage), this.callLabel(a.callStatus),
+        a.rejectionReason,
+      ].some(v => v?.toLowerCase().includes(q))
+    );
   });
 
   stageCount(stage: string): number {
