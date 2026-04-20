@@ -190,11 +190,20 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 | **Marketplace purchase flow** | Add buyer-side actions: start with CTA or guest checkout (collect name/phone/address per order), then graduate to full customer accounts with carts/order history once logistics + payments are ready. |
 | **PWA / offline hustler mode** | Convert the Angular app to a PWA (`ng add @angular/pwa`), cache the hustler dashboard, store offline income entries/products in IndexedDB, and sync via background tasks so logging works without connectivity. |
 | **Barcode / marketplace scanner** | Marketplace channel income (products sold via the platform) will be tracked automatically once a barcode/QR scan flow is built. Currently all income is captured as cash. |
-| **Unit / integration tests** | 0 tests currently. Should be added post-MVP. |
+| **Automated tests & CI** | Backend integration tests + Playwright e2e specs exist in the repo, but they aren’t being run anywhere. Execute them locally, capture the results in `tests/TEST_RESULTS.md`, and add a GitHub Action so every PR runs both suites. |
+| **Role-aware auth** | Coordinator-only actions (interview scheduling, applicant reinstatement, sensitive edits) currently sit behind shared facilitator auth. Introduce coordinator accounts + JWT/session claims and gate the Angular routes/components accordingly. |
 | **Pagination** | All list endpoints return full result sets. Add if dataset grows large. |
 | **VPS deployment** | Currently running on localhost only. Docker Compose is production-ready once pointed at a server. |
 
 ---
+
+## Next Sprint Focus — 2026-04-20 13:00 SAST
+
+1. **Testing & CI pass** — run `mvn test -Dtest=IncomeServiceIntegrationTest,FacilitatorServiceIntegrationTest` and `npm run test:e2e`, capture the output in `tests/TEST_RESULTS.md`, and wire a GitHub Action so regressions are caught automatically.
+2. **Role-aware auth** — add coordinator roles/claims and lock privileged facilitator/coordinator UI controls behind those roles so public routes don’t expose scheduling or applicant reinstatement.
+3. **Customer purchase MVP** — ship the guest-checkout CTA flow on the marketplace so hustlers/facilitators receive structured orders (name, phone, drop-off notes) even before payments land.
+4. **PWA/offline sprint** — finish `@angular/pwa`, cache the hustler dashboard shell, and pipe income/product mutations through `offline-queue.service.ts` so hustlers can log data while offline.
+5. **Docs + onboarding sync** — update README + PROGRESS with the new facilitator pipeline, brand system, and testing story so new contributors land on accurate instructions.
 
 ## Recent Commits (April 2026)
 
@@ -209,6 +218,6 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 
 ---
 
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-04-20
 **Branch**: `main`
 **Repo**: https://github.com/Sandilem7789/hustle
