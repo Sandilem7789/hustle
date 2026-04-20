@@ -1,0 +1,61 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app-shell",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/icons/**",
+          "/*.png",
+          "/*.jpg",
+          "/*.jpeg",
+          "/*.svg",
+          "/*.woff",
+          "/*.woff2"
+        ],
+        "urls": [
+          "https://fonts.googleapis.com/**",
+          "https://fonts.gstatic.com/**"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-marketplace",
+      "urls": ["/api/products**", "/api/communities**", "/api/categories**"],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "1h",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "api-profile",
+      "urls": ["/api/hustlers/**", "/api/auth/**"],
+      "cacheConfig": {
+        "maxSize": 20,
+        "maxAge": "30m",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    }
+  ]
+}

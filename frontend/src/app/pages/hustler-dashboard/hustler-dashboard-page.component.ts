@@ -55,29 +55,19 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </div>
 
-      <!-- ── LOG ACTION BUTTONS ── -->
-      <div class="log-actions">
-        <button class="log-btn log-income-btn" (click)="openLogIncome()">
-          <span class="log-sign">+</span> Log Income
-        </button>
-        <button class="log-btn log-expense-btn" (click)="openLogExpense()">
-          <span class="log-sign">−</span> Log Expense
-        </button>
-      </div>
-
       <!-- ── TAB BAR ── -->
       <div class="tab-bar">
-        <button [class.active]="tab() === 'income'" (click)="tab.set('income')">Finances</button>
-        <button [class.active]="tab() === 'products'" (click)="tab.set('products')">Products</button>
-        <button [class.active]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')">Orders</button>
+        <button [class.tab-active-finances]="tab() === 'income'" (click)="tab.set('income')">Finances</button>
+        <button [class.tab-active-products]="tab() === 'products'" (click)="tab.set('products')">Products</button>
+        <button [class.tab-active-orders]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')">Orders</button>
       </div>
 
       <!-- ── FINANCES TAB ── -->
       <ng-container *ngIf="tab() === 'income'">
         <div class="card">
           <div class="log-tabs">
-            <button [class.active]="logTab() === 'income'" (click)="logTab.set('income')">Log Income</button>
-            <button [class.active]="logTab() === 'expense'" (click)="logTab.set('expense')">Log Expense</button>
+            <button [class.logtab-active-income]="logTab() === 'income'" (click)="logTab.set('income')">Log Income</button>
+            <button [class.logtab-active-expense]="logTab() === 'expense'" (click)="logTab.set('expense')">Log Expense</button>
           </div>
           <form [formGroup]="incomeForm" (ngSubmit)="submitIncome()" class="income-grid">
             <label>
@@ -93,12 +83,12 @@ import { AuthService } from '../../services/auth.service';
               <input formControlName="notes" placeholder="e.g. sold beaded necklace, market day" />
             </label>
 
-            <label class="checkbox-row span-2">
+            <label class="checkbox-row span-2" *ngIf="logTab() === 'income'">
               <input type="checkbox" [(ngModel)]="isServiceIncome" [ngModelOptions]="{standalone: true}" />
               <span>This is for a service (generate invoice)</span>
             </label>
 
-            <ng-container *ngIf="isServiceIncome">
+            <ng-container *ngIf="isServiceIncome && logTab() === 'income'">
               <div class="service-section span-2">
                 <p class="service-heading">📋 Invoice details</p>
                 <label>
@@ -136,6 +126,7 @@ import { AuthService } from '../../services/auth.service';
               </select>
               <button class="outline-btn" (click)="exportCsv('weekly')">↓ Weekly CSV</button>
               <button class="outline-btn" (click)="exportCsv('monthly')">↓ Monthly CSV</button>
+              <button class="report-btn">📊 Monthly Report</button>
             </div>
           </div>
 
@@ -199,6 +190,8 @@ import { AuthService } from '../../services/auth.service';
             </p>
           </ng-container>
         </div>
+
+        <button class="logout-btn" (click)="logout()">Sign Out</button>
       </ng-container>
 
       <!-- ── PRODUCTS TAB ── -->
@@ -439,33 +432,12 @@ import { AuthService } from '../../services/auth.service';
     .fin-val.neg { color: #E53935; }
     .fin-period { font-size: 0.66rem; color: #A8A29E; margin: 0; }
 
-    /* ── Log Buttons ── */
-    .log-actions { display: flex; gap: 0.75rem; }
-    .log-btn {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.4rem;
-      border: none;
-      border-radius: 1rem;
-      padding: 1rem 1.25rem;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      min-height: 56px;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-    .log-btn:active { transform: scale(0.97); }
-    .log-income-btn { background: linear-gradient(120deg, #16a34a, #22c55e); color: white; box-shadow: 0 4px 16px rgba(34,197,94,0.35); }
-    .log-expense-btn { background: linear-gradient(120deg, #b91c1c, #ef4444); color: white; box-shadow: 0 4px 16px rgba(220,38,38,0.3); }
-    .log-sign { font-size: 1.5rem; font-weight: 900; line-height: 1; }
-
     /* ── Tab Bar ── */
     .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; min-height: 48px; font-family: inherit; }
-    .tab-bar button.active { color: #1C1917; border-bottom: 3px solid #F5B800; background: rgba(245,184,0,0.05); }
+    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; min-height: 48px; font-family: inherit; border-bottom: 3px solid transparent; }
+    .tab-active-finances { color: #92400e !important; border-bottom: 3px solid #F5B800 !important; background: rgba(245,184,0,0.12) !important; }
+    .tab-active-products { color: #166534 !important; border-bottom: 3px solid #2DB344 !important; background: rgba(45,179,68,0.09) !important; }
+    .tab-active-orders   { color: #1e3a8a !important; border-bottom: 3px solid #1B6FD4 !important; background: rgba(27,111,212,0.09) !important; }
 
     /* ── Cards ── */
     .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
@@ -474,8 +446,9 @@ import { AuthService } from '../../services/auth.service';
 
     /* ── Log Form ── */
     .log-tabs { display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 1.25rem; }
-    .log-tabs button { flex: 1; padding: 0.65rem; border: none; background: none; font-size: 0.95rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; min-height: 44px; font-family: inherit; }
-    .log-tabs button.active { color: #1C1917; border-bottom: 2px solid #F5B800; margin-bottom: -2px; }
+    .log-tabs button { flex: 1; padding: 0.65rem; border: none; background: none; font-size: 0.95rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; min-height: 44px; font-family: inherit; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .logtab-active-income  { color: #166534 !important; border-bottom: 2px solid #2DB344 !important; background: rgba(45,179,68,0.06) !important; }
+    .logtab-active-expense { color: #991b1b !important; border-bottom: 2px solid #E53935 !important; background: rgba(229,57,53,0.05) !important; }
     .income-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }
     @media (max-width: 600px) { .income-grid { grid-template-columns: 1fr; } }
     label { display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.875rem; font-weight: 700; color: #1C1917; }
@@ -613,6 +586,39 @@ import { AuthService } from '../../services/auth.service';
     .order-status-confirmed { background: rgba(27,111,212,0.1); color: #1B6FD4; }
     .order-status-cancelled { background: rgba(229,57,53,0.1); color: #E53935; }
     .order-status-delivered { background: rgba(45,179,68,0.12); color: #2DB344; }
+
+    /* ── Report & Logout buttons ── */
+    .report-btn {
+      border: 1.5px solid #1B6FD4;
+      background: rgba(27,111,212,0.06);
+      color: #1B6FD4;
+      border-radius: 999px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      min-height: 36px;
+      transition: background 0.15s;
+    }
+    .report-btn:hover { background: rgba(27,111,212,0.12); }
+
+    .logout-btn {
+      display: block;
+      width: 100%;
+      padding: 0.9rem;
+      border: 2px solid #E7E5E4;
+      border-radius: 999px;
+      background: white;
+      color: #78716C;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      min-height: 52px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .logout-btn:hover { border-color: #E53935; color: #E53935; }
   `
 })
 export class HustlerDashboardPageComponent implements OnInit {
@@ -751,9 +757,10 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.loadSummary();
   }
 
-  // ── Navigation helpers ───────────────────────────────────────────────────────
-  openLogIncome(): void { this.tab.set('income'); this.logTab.set('income'); }
-  openLogExpense(): void { this.tab.set('income'); this.logTab.set('expense'); }
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/register']);
+  }
 
   onOverlayClick(e: MouseEvent): void {
     if ((e.target as HTMLElement).classList.contains('modal-overlay')) {
