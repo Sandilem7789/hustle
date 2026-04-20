@@ -14,8 +14,7 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
       <!-- TOP TABS -->
       <div class="top-tabs">
         <button [class.active]="fTab() === 'pipeline'" (click)="fTab.set('pipeline')">Pipeline</button>
-        <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Hustlers</button>
-        <button [class.active]="fTab() === 'applications'" (click)="fTab.set('applications')">Applications</button>
+        <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Active Hustlers</button>
         <button [class.active]="fTab() === 'exports'" (click)="fTab.set('exports')">Exports</button>
       </div>
 
@@ -451,7 +450,13 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
                   </button>
                   <p *ngIf="activateErrors[a.id]" class="edit-error">{{ activateErrors[a.id] }}</p>
                 </ng-container>
-                <p *ngIf="a.activatedAt" class="approved-msg">✓ Account active — created {{ a.activatedAt | date:'mediumDate' }}</p>
+                <div *ngIf="a.activatedAt" class="cred-row">
+                  <p class="approved-msg">✓ Account active — created {{ a.activatedAt | date:'mediumDate' }}</p>
+                  <button class="btn btn-cred" (click)="resendCredentials(a)" [disabled]="resendingCredId() === a.id">
+                    {{ resendingCredId() === a.id ? 'Generating…' : '🔑 Resend Credentials' }}
+                  </button>
+                  <p *ngIf="resendCredErrors[a.id]" class="edit-error">{{ resendCredErrors[a.id] }}</p>
+                </div>
               </div>
               <p class="muted small added-at">Added {{ a.createdAt | date:'mediumDate' }}</p>
             </div>
@@ -672,138 +677,6 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
         </div>
       </ng-container>
 
-      <!-- ===== APPLICATIONS TAB ===== -->
-      <ng-container *ngIf="fTab() === 'applications'">
-        <header>
-          <p class="eyebrow">Facilitator Queue</p>
-          <h2>Review applications</h2>
-          <p class="muted">Filter by community and status, then approve, reject, or reconsider.</p>
-        </header>
-
-        <div class="filters">
-          <label>
-            <span>Status</span>
-            <select [(ngModel)]="selectedStatus" (change)="load()">
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
-          </label>
-          <label>
-            <span>Community</span>
-            <select [(ngModel)]="selectedCommunity" (change)="load()">
-              <option value="">All communities</option>
-              <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-            </select>
-          </label>
-        </div>
-
-        <p class="muted count" *ngIf="applications().length > 0">{{ applications().length }} application(s) found</p>
-
-        <div class="queue" *ngIf="applications().length; else empty">
-          <article *ngFor="let app of applications()" class="queue-card" [class.expanded]="expanded() === app.id">
-            <!-- SUMMARY ROW -->
-            <div class="card-summary" (click)="toggle(app.id)">
-              <div class="card-main">
-                <h3>{{ app.businessName }}</h3>
-                <p class="muted">{{ app.firstName }} {{ app.lastName }} &middot; {{ app.businessType }}</p>
-                <p class="muted small">{{ app.community?.name || 'No community' }} &middot; Submitted {{ app.submittedAt | date:'mediumDate' }}</p>
-              </div>
-              <div class="card-right">
-                <span class="status-badge" [class]="'status-' + app.status.toLowerCase()">{{ app.status }}</span>
-                <span class="chevron">{{ expanded() === app.id ? '&#9650;' : '&#9660;' }}</span>
-              </div>
-            </div>
-
-            <!-- EXPANDED DETAIL -->
-            <div class="card-detail" *ngIf="expanded() === app.id">
-              <div class="detail-grid">
-                <div class="detail-field"><span class="field-label">Phone</span><span>{{ app.phone || '—' }}</span></div>
-                <div class="detail-field"><span class="field-label">Email</span><span>{{ app.email || '—' }}</span></div>
-                <div class="detail-field"><span class="field-label">ID No.</span><span>{{ app.idNumber || '—' }}</span></div>
-                <div class="detail-field"><span class="field-label">Community</span><span>{{ app.community?.name || '—' }}</span></div>
-                <div class="detail-field span-2"><span class="field-label">Operating area</span><span>{{ app.operatingArea || '—' }}</span></div>
-                <div class="detail-field span-2"><span class="field-label">Description</span><p>{{ app.description }}</p></div>
-                <div class="detail-field span-2"><span class="field-label">Target Customers</span><p>{{ app.targetCustomers }}</p></div>
-                <div class="detail-field span-2"><span class="field-label">Vision</span><p>{{ app.vision }}</p></div>
-                <div class="detail-field span-2"><span class="field-label">Mission / Support needed</span><p>{{ app.mission }}</p></div>
-              </div>
-
-              <label class="notes-label">
-                <span>Facilitator notes</span>
-                <textarea rows="3" [(ngModel)]="notes[app.id]" placeholder="Leave a note…"></textarea>
-              </label>
-
-              <div class="actions">
-                <ng-container *ngIf="app.status === 'PENDING'">
-                  <button class="btn approve" (click)="decide(app, 'APPROVED')">&#10003; Approve</button>
-                  <button class="btn reject" (click)="decide(app, 'REJECTED')">&#10005; Reject</button>
-                </ng-container>
-                <ng-container *ngIf="app.status === 'REJECTED'">
-                  <span class="status-badge status-rejected">Rejected</span>
-                  <button class="btn approve" (click)="decide(app, 'APPROVED')">&#8629; Reconsider &amp; Approve</button>
-                </ng-container>
-                <ng-container *ngIf="app.status === 'APPROVED'">
-                  <span class="status-badge status-approved">Approved</span>
-                  <button class="btn reject" (click)="decide(app, 'REJECTED')">Revoke</button>
-                </ng-container>
-              </div>
-
-              <!-- EDIT SECTION — footer, toggled -->
-              <ng-container *ngIf="app.status === 'APPROVED'">
-                <div class="edit-footer">
-                  <button *ngIf="editingId() !== app.id" class="btn edit" (click)="startEdit(app)">&#x270E; Edit business details</button>
-                </div>
-
-                <div class="edit-section" *ngIf="editingId() === app.id">
-                  <p class="edit-heading">Edit business details</p>
-                  <div class="edit-grid">
-                    <label class="span-2">
-                      <span class="field-label">Community</span>
-                      <select [(ngModel)]="editData.communityId" [ngModelOptions]="{standalone: true}">
-                        <option value="">— keep current —</option>
-                        <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-                      </select>
-                    </label>
-                    <label class="span-2">
-                      <span class="field-label">Operating area</span>
-                      <input [(ngModel)]="editData.operatingArea" [ngModelOptions]="{standalone: true}" />
-                    </label>
-                    <label class="span-2">
-                      <span class="field-label">Description</span>
-                      <textarea rows="3" [(ngModel)]="editData.description" [ngModelOptions]="{standalone: true}"></textarea>
-                    </label>
-                    <label class="span-2">
-                      <span class="field-label">Target Customers</span>
-                      <textarea rows="2" [(ngModel)]="editData.targetCustomers" [ngModelOptions]="{standalone: true}"></textarea>
-                    </label>
-                    <label class="span-2">
-                      <span class="field-label">Vision</span>
-                      <textarea rows="2" [(ngModel)]="editData.vision" [ngModelOptions]="{standalone: true}"></textarea>
-                    </label>
-                    <label class="span-2">
-                      <span class="field-label">Mission / Support needed</span>
-                      <textarea rows="2" [(ngModel)]="editData.mission" [ngModelOptions]="{standalone: true}"></textarea>
-                    </label>
-                  </div>
-                  <p *ngIf="editError()" class="edit-error">{{ editError() }}</p>
-                  <div class="edit-actions">
-                    <button class="btn approve" (click)="saveEdit(app)" [disabled]="editSaving()">
-                      {{ editSaving() ? 'Saving…' : '&#10003; Save changes' }}
-                    </button>
-                    <button class="btn neutral" (click)="cancelEdit()">Cancel</button>
-                  </div>
-                </div>
-              </ng-container>
-            </div>
-          </article>
-        </div>
-
-        <ng-template #empty>
-          <p class="muted empty-msg">No applications found.</p>
-        </ng-template>
-      </ng-container>
-
       <!-- ===== EXPORTS TAB ===== -->
       <ng-container *ngIf="fTab() === 'exports'">
         <div class="exports-header">
@@ -876,15 +749,18 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
       <!-- ── Password modal (shown once after activation) ── -->
       <div class="pwd-overlay" *ngIf="generatedPassword()">
         <div class="pwd-modal">
-          <p class="pwd-title">Account Created</p>
+          <p class="pwd-title">Login Credentials</p>
           <p class="pwd-name">{{ generatedPasswordMeta().firstName }} {{ generatedPasswordMeta().lastName }}</p>
-          <p class="pwd-phone">{{ generatedPasswordMeta().phone }}</p>
-          <p class="pwd-label">Temporary password — shown once only:</p>
+          <p class="pwd-label">Login username (phone):</p>
+          <div class="pwd-box">
+            <span class="pwd-value">{{ generatedPasswordMeta().phone }}</span>
+          </div>
+          <p class="pwd-label" style="margin-top:0.75rem">Temporary password — shown once only:</p>
           <div class="pwd-box">
             <span class="pwd-value">{{ generatedPassword() }}</span>
             <button class="btn btn-copy" (click)="copyPassword()">{{ copied() ? '✓ Copied' : 'Copy' }}</button>
           </div>
-          <p class="pwd-warn">Send this password to the hustler directly. It cannot be retrieved after this screen is closed.</p>
+          <p class="pwd-warn">Give these credentials to the hustler directly. The password cannot be retrieved after this screen is closed.</p>
           <button class="btn approve pwd-close" (click)="generatedPassword.set('')">✓ Done — I've sent the password</button>
         </div>
       </div>
@@ -975,7 +851,11 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
     .btn-call:disabled { opacity: 0.5; cursor: not-allowed; }
     .stage-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #E7E5E4; }
     .btn-advance { background: #F5B800; color: #1C1917; }
-    .approved-msg { color: #2DB344; font-weight: 700; font-size: 0.9rem; margin: 0.5rem 0 0; }
+    .approved-msg { color: #2DB344; font-weight: 700; font-size: 0.9rem; margin: 0; }
+    .cred-row { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+    .btn-cred { background: #F5F0E8; color: #1C1917; border: 2px solid #E7E5E4; border-radius: 999px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; align-self: flex-start; transition: all 0.15s; }
+    .btn-cred:hover { border-color: #F5B800; background: rgba(245,184,0,0.08); }
+    .btn-cred:disabled { opacity: 0.5; cursor: not-allowed; }
     .rejected-msg { color: #E53935; font-weight: 700; font-size: 0.9rem; margin: 0.5rem 0 0; }
     .age-warn { color: #E53935; font-weight: 700; }
     .added-at { margin: 0.75rem 0 0; color: #A8A29E; font-size: 0.75rem; }
@@ -1178,7 +1058,7 @@ export class FacilitatorQueueComponent implements OnInit {
   @Input() coordinatorMode = false;
 
   // Top-level tab
-  fTab = signal<'pipeline' | 'hustlers' | 'applications' | 'exports'>('pipeline');
+  fTab = signal<'pipeline' | 'hustlers' | 'exports'>('pipeline');
 
   // ── Pipeline state ──────────────────────────────────────────────────────
   showAddForm = signal(false);
@@ -1281,6 +1161,23 @@ export class FacilitatorQueueComponent implements OnInit {
       error: (err) => {
         this.activateErrors[a.id] = err?.error?.message || 'Failed to create account.';
         this.activatingId.set(null);
+      }
+    });
+  }
+
+  resendCredentials(a: ApplicantResponse): void {
+    this.resendingCredId.set(a.id);
+    this.resendCredErrors[a.id] = '';
+    this.api.resetApplicantPassword(a.id).subscribe({
+      next: (result: ActivateApplicantResponse) => {
+        this.resendingCredId.set(null);
+        this.generatedPasswordMeta.set({ firstName: result.firstName, lastName: result.lastName, phone: result.phone });
+        this.generatedPassword.set(result.generatedPassword);
+        this.copied.set(false);
+      },
+      error: (err) => {
+        this.resendCredErrors[a.id] = err?.error?.message || 'Failed to reset credentials.';
+        this.resendingCredId.set(null);
       }
     });
   }
@@ -1628,6 +1525,10 @@ export class FacilitatorQueueComponent implements OnInit {
   generatedPasswordMeta = signal<{ firstName: string; lastName: string; phone: string }>({ firstName: '', lastName: '', phone: '' });
   copied = signal(false);
 
+  // ── Resend credentials state ─────────────────────────────────────────────
+  resendingCredId = signal<string | null>(null);
+  resendCredErrors: Record<string, string> = {};
+
   // ── Interview state ─────────────────────────────────────────────────────
   interviewData: Record<string, InterviewResponse> = {};
   interviewForms: Record<string, Partial<InterviewRequest>> = {};
@@ -1669,7 +1570,6 @@ export class FacilitatorQueueComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.listCommunities().subscribe(c => this.communities.set(c));
-    this.load();
     this.loadHustlers();
     this.loadApplicants();
   }

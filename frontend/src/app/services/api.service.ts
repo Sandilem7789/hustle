@@ -220,6 +220,10 @@ export class ApiService {
     return this.http.post<ActivateApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/activate`, {});
   }
 
+  resetApplicantPassword(id: string): Observable<ActivateApplicantResponse> {
+    return this.http.post<ActivateApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/reset-password`, {});
+  }
+
   // ─── Interview ────────────────────────────────────────────────────────────
   getInterview(applicantId: string): Observable<InterviewResponse> {
     return this.http.get<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview`);

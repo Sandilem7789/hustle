@@ -68,6 +68,11 @@ public class ApplicantController {
         return ResponseEntity.ok(applicantService.activate(id));
     }
 
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<ActivateApplicantResponse> resetPassword(@PathVariable UUID id) {
+        return ResponseEntity.ok(applicantService.resetPassword(id));
+    }
+
     // ── Interview endpoints ──────────────────────────────────────────────────
 
     @GetMapping("/{id}/interview")

@@ -222,6 +222,37 @@ public class ApplicantService {
                 .build();
     }
 
+    @Transactional
+    public ActivateApplicantResponse resetPassword(UUID applicantId) {
+        Applicant applicant = applicantRepository.findByIdFetched(applicantId)
+                .orElseThrow(() -> new EntityNotFoundException("Applicant not found"));
+
+        if (applicant.getActivatedAt() == null) {
+            throw new IllegalStateException("This applicant does not have an account yet.");
+        }
+
+        HustlerApplication application = applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(applicant.getPhone())
+                .orElseThrow(() -> new EntityNotFoundException("Hustler account not found."));
+
+        StringBuilder pwd = new StringBuilder(PASSWORD_LENGTH);
+        for (int i = 0; i < PASSWORD_LENGTH; i++) {
+            pwd.append(PASSWORD_CHARS.charAt(secureRandom.nextInt(PASSWORD_CHARS.length())));
+        }
+        String plainPassword = pwd.toString();
+        application.setPasswordHash(passwordEncoder.encode(plainPassword));
+        applicationRepository.save(application);
+
+        return ActivateApplicantResponse.builder()
+                .applicantId(applicant.getId())
+                .applicationId(application.getId())
+                .businessProfileId(null)
+                .firstName(applicant.getFirstName())
+                .lastName(applicant.getLastName())
+                .phone(applicant.getPhone())
+                .generatedPassword(plainPassword)
+                .build();
+    }
+
     private ApplicantResponse toResponse(Applicant a) {
         long approvedCount = applicantRepository.countApproved(
                 a.getCommunity().getId(), a.getCohortNumber());
