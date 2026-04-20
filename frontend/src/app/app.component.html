@@ -3,7 +3,7 @@
   <!-- Logo — links back to marketplace (home) -->
   <a routerLink="/marketplace" class="site-logo-link" aria-label="Hustle Economy — home">
     <img
-      src="assets/hustle-logo.png"
+      src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
       alt="Hustle Economy — SizoPopa Sonke One Dy!"
       class="site-logo"
     />
@@ -19,7 +19,7 @@
     </ng-container>
     <ng-container *ngIf="!showDashboardNav()">
       <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
-      <a routerLink="/driver" routerLinkActive="active">🚗 Driver</a>
+      <a routerLink="/coordinator" routerLinkActive="active">🗂️ Coordinator</a>
       <a routerLink="/register" routerLinkActive="active">Register / Login</a>
       <ng-container *ngIf="customerAuth.isLoggedIn()">
         <a routerLink="/orders" routerLinkActive="active">📦 Orders</a>
@@ -60,9 +60,9 @@
     <span>Facilitator</span>
   </a>
 
-  <a routerLink="/driver" routerLinkActive="active" class="bottom-nav-item">
-    <span class="bottom-nav-icon">🚗</span>
-    <span>Driver</span>
+  <a routerLink="/coordinator" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">🗂️</span>
+    <span>Coordinator</span>
   </a>
 
   <ng-container *ngIf="customerAuth.isLoggedIn()">

@@ -6,7 +6,7 @@
 /* ─── Site Header ────────────────────────────────────────────────────────── */
 .site-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   height: 68px;
   padding: 0 1rem;
@@ -171,6 +171,7 @@
   .site-header {
     height: 72px;
     padding: 0 2rem;
+    justify-content: space-between;
   }
 
   .site-logo {
