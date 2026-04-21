@@ -709,6 +709,26 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
             </div>
             <div class="export-card">
               <div class="export-info">
+                <p class="export-name">Evaluated Applicants</p>
+                <p class="muted small">Applicants who have completed their interview</p>
+              </div>
+              <div class="export-actions">
+                <button class="btn btn-export btn-export-csv" (click)="exportEvaluatedApplicants('csv')">↓ CSV</button>
+                <button class="btn btn-export" (click)="exportEvaluatedApplicants('xlsx')">↓ Excel</button>
+              </div>
+            </div>
+            <div class="export-card">
+              <div class="export-info">
+                <p class="export-name">Verification</p>
+                <p class="muted small">Applicants currently in business verification</p>
+              </div>
+              <div class="export-actions">
+                <button class="btn btn-export btn-export-csv" (click)="exportVerificationApplicants('csv')">↓ CSV</button>
+                <button class="btn btn-export" (click)="exportVerificationApplicants('xlsx')">↓ Excel</button>
+              </div>
+            </div>
+            <div class="export-card">
+              <div class="export-info">
                 <p class="export-name">Full Pipeline</p>
                 <p class="muted small">All applicants across every stage</p>
               </div>
@@ -1824,5 +1844,39 @@ export class FacilitatorQueueComponent implements OnInit {
     format === 'csv'
       ? this.downloadCsv(`${base}.csv`, rows)
       : this.downloadExcel(`${base}.xlsx`, 'Active Hustlers', rows);
+  }
+
+  exportEvaluatedApplicants(format: 'csv' | 'xlsx' = 'xlsx'): void {
+    const rows = this.applicants()
+      .filter(a => a.pipelineStage === 'INTERVIEWED')
+      .map(a => ({
+        'First Name': a.firstName, 'Last Name': a.lastName,
+        'Phone': a.phone, 'Email': a.email ?? '',
+        'Type of Hustle': a.typeOfHustle, 'District/Section': a.districtSection ?? '',
+        'Community': a.communityName, 'Cohort': a.cohortNumber,
+        'Age': a.age ?? '', 'Gender': a.gender ?? '',
+        'Call Status': this.callLabel(a.callStatus), 'Age Flag': a.ageFlag ? 'Yes' : 'No',
+      }));
+    const base = `evaluated-applicants-cohort${this.pipelineCohort}-${this.currentMonth()}`;
+    format === 'csv'
+      ? this.downloadCsv(`${base}.csv`, rows)
+      : this.downloadExcel(`${base}.xlsx`, 'Evaluated Applicants', rows);
+  }
+
+  exportVerificationApplicants(format: 'csv' | 'xlsx' = 'xlsx'): void {
+    const rows = this.applicants()
+      .filter(a => a.pipelineStage === 'BUSINESS_VERIFICATION')
+      .map(a => ({
+        'First Name': a.firstName, 'Last Name': a.lastName,
+        'Phone': a.phone, 'Email': a.email ?? '',
+        'Type of Hustle': a.typeOfHustle, 'District/Section': a.districtSection ?? '',
+        'Community': a.communityName, 'Cohort': a.cohortNumber,
+        'Age': a.age ?? '', 'Gender': a.gender ?? '',
+        'Call Status': this.callLabel(a.callStatus), 'Age Flag': a.ageFlag ? 'Yes' : 'No',
+      }));
+    const base = `verification-applicants-cohort${this.pipelineCohort}-${this.currentMonth()}`;
+    format === 'csv'
+      ? this.downloadCsv(`${base}.csv`, rows)
+      : this.downloadExcel(`${base}.xlsx`, 'Verification', rows);
   }
 }
