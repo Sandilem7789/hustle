@@ -221,3 +221,10 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 **Last Updated**: 2026-04-20
 **Branch**: `main`
 **Repo**: https://github.com/Sandilem7789/hustle
+
+## MVP Launch Plan — KwaZulu-Natal Pilot
+
+1. **Target audience lock-in** — limit the initial release to the five seeded KZN communities (KwaNgwenya, KwaNibela, KwaMakhasa, KwaJobe, KwaMnqobokazi) and issue invite-only facilitator links so only verified hustlers access the dashboard during the MVP window.
+2. **Crash & analytics instrumentation** — prep Sentry/Firebase Crashlytics for both Angular (client) and Spring Boot (API) with community/role context plus sampling tuned for a small cohort. Wire alerts to a private Discord/Telegram channel so critical errors page us immediately.
+3. **Feedback loop** — add an in-app “Report an issue” button that posts to a triage inbox (Notion, Firestore, etc.), and back it up with facilitator-managed WhatsApp/phone channels so hustlers can send voice notes or photos when connectivity is weak.
+4. **Expansion runway** — define MVP success metrics in KZN (DAU, crash-free sessions, income logs) and document the onboarding data that must change per region so we can replicate the rollout in Mpumalanga once KPIs are hit.
