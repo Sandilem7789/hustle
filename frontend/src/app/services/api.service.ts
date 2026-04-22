@@ -292,6 +292,13 @@ export class ApiService {
   setHustlerActive(id: string, active: boolean): Observable<FacilitatorHustler> {
     return this.http.patch<FacilitatorHustler>(`${this.baseUrl}/api/facilitator/hustlers/${id}/active`, { active });
   }
+
+  // ─── Operations ───────────────────────────────────────────────────────────
+  getOperationsStats(token: string): Observable<CommunityStats[]> {
+    return this.http.get<CommunityStats[]>(`${this.baseUrl}/api/operations/stats`, {
+      headers: { 'X-Auth-Token': token }
+    });
+  }
 }
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
@@ -501,6 +508,17 @@ export interface HustlerProfileUpdate {
   mission?: string;
   operatingArea?: string;
   communityId?: string;
+}
+
+export interface CommunityStats {
+  communityId: string;
+  communityName: string;
+  region: string;
+  latitude: number | null;
+  longitude: number | null;
+  totalApplicants: number;
+  activeHustlers: number;
+  stageBreakdown: Record<string, number>;
 }
 
 export interface FacilitatorHustler {

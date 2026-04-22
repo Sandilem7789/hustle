@@ -14,6 +14,7 @@ import { DriverDashboardPageComponent } from './pages/driver-dashboard/driver-da
 import { hustlerGuard } from './guards/hustler.guard';
 import { facilitatorGuard } from './guards/facilitator.guard';
 import { coordinatorGuard } from './guards/coordinator.guard';
+import { OperationsPageComponent } from './pages/operations/operations-page.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'marketplace', pathMatch: 'full' },
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: 'dashboard', component: HustlerDashboardPageComponent, canActivate: [hustlerGuard] },
   { path: 'facilitator', component: FacilitatorPageComponent, canActivate: [facilitatorGuard] },
   { path: 'coordinator', component: CoordinatorPageComponent, canActivate: [coordinatorGuard] },
+  { path: 'operations', component: OperationsPageComponent, canActivate: [facilitatorGuard] },
   { path: 'marketplace', component: MarketplacePageComponent },
   { path: 'customer/register', component: CustomerRegisterPageComponent },
   { path: 'customer/login', component: CustomerLoginPageComponent },

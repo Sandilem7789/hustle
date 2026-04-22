@@ -39,20 +39,16 @@
   <router-outlet></router-outlet>
 </main>
 
-<!-- Bottom Navigation (mobile only) -->
+<!-- Bottom Navigation (mobile only) — 5 fixed tabs -->
 <nav class="bottom-nav">
   <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
     <span class="bottom-nav-icon">🛒</span>
     <span>Market</span>
   </a>
 
-  <a *ngIf="showDashboardNav()" routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
-    <span class="bottom-nav-icon">📊</span>
-    <span>Dashboard</span>
-  </a>
-  <a *ngIf="!showDashboardNav()" routerLink="/register" routerLinkActive="active" class="bottom-nav-item">
-    <span class="bottom-nav-icon">📝</span>
-    <span>Register</span>
+  <a routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">👤</span>
+    <span>Hustler</span>
   </a>
 
   <a routerLink="/facilitator" routerLinkActive="active" class="bottom-nav-item">
@@ -65,16 +61,8 @@
     <span>Coordinator</span>
   </a>
 
-  <ng-container *ngIf="customerAuth.isLoggedIn()">
-    <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
-      <span class="bottom-nav-icon">👤</span>
-      <span>Account</span>
-    </a>
-  </ng-container>
-  <ng-container *ngIf="!customerAuth.isLoggedIn()">
-    <a routerLink="/customer/login" routerLinkActive="active" class="bottom-nav-item">
-      <span class="bottom-nav-icon">🔑</span>
-      <span>Login</span>
-    </a>
-  </ng-container>
+  <a routerLink="/operations" routerLinkActive="active" class="bottom-nav-item">
+    <span class="bottom-nav-icon">🗺️</span>
+    <span>Operations</span>
+  </a>
 </nav>

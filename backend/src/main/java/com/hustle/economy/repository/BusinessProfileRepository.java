@@ -15,4 +15,7 @@ public interface BusinessProfileRepository extends JpaRepository<BusinessProfile
 
     @Query("SELECT bp FROM BusinessProfile bp JOIN FETCH bp.application a JOIN FETCH bp.community c WHERE bp.status = 'APPROVED'")
     List<BusinessProfile> findAllApprovedFetched();
+
+    @Query("SELECT bp.community.id, COUNT(bp) FROM BusinessProfile bp WHERE bp.status = 'APPROVED' AND bp.active = true GROUP BY bp.community.id")
+    List<Object[]> countActiveHustlersByCommunity();
 }

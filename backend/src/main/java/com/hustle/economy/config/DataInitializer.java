@@ -31,17 +31,25 @@ public class DataInitializer implements ApplicationRunner {
     @Value("${FACILITATOR_PASSWORD:Hustle@2026}")
     private String facilitatorPassword;
 
-    private static final List<String> COMMUNITIES = List.of(
-            "KwaNgwenya", "KwaNibela", "KwaMakhasa", "KwaJobe", "KwaMnqobokazi"
-    );
+    // name, latitude, longitude  (approx. coords for northern KZN / Phinda–Mkuze area)
+    private static final Object[][] COMMUNITIES = {
+            {"KwaNgwenya",    -27.75, 32.13},
+            {"KwaNibela",     -27.88, 32.18},
+            {"KwaMakhasa",    -27.82, 32.08},
+            {"KwaJobe",       -27.93, 32.12},
+            {"KwaMnqobokazi", -27.97, 32.07},
+    };
 
     @Override
     public void run(ApplicationArguments args) {
-        for (String name : COMMUNITIES) {
+        for (Object[] row : COMMUNITIES) {
+            String name = (String) row[0];
             if (communityRepository.findByNameIgnoreCase(name).isEmpty()) {
                 communityRepository.save(Community.builder()
                         .name(name)
                         .region("KwaZulu-Natal")
+                        .latitude((Double) row[1])
+                        .longitude((Double) row[2])
                         .build());
             }
         }

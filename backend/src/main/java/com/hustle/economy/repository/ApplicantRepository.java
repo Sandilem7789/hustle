@@ -32,4 +32,10 @@ public interface ApplicantRepository extends JpaRepository<Applicant, UUID> {
 
     @Query("SELECT a FROM Applicant a LEFT JOIN FETCH a.community WHERE a.id = :id")
     java.util.Optional<Applicant> findByIdFetched(@Param("id") UUID id);
+
+    @Query("SELECT a.community.id, a.pipelineStage, COUNT(a) FROM Applicant a GROUP BY a.community.id, a.pipelineStage")
+    List<Object[]> countByStageAndCommunity();
+
+    @Query("SELECT COUNT(a) FROM Applicant a WHERE a.community.id = :communityId")
+    long countByCommunityId(@Param("communityId") UUID communityId);
 }
