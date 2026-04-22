@@ -11,7 +11,9 @@ public class WebConfig implements WebMvcConfigurer {
             "http://localhost:4200",
             "http://localhost:4173",
             "http://148.230.79.29:4173",
-            "http://148.230.79.29"
+            "http://148.230.79.29",
+            "https://148.230.79.29",
+            // Add your domain here once DNS is pointed: "https://yourdomain.co.za"
     };
 
     @Override

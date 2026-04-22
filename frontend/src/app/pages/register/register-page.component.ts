@@ -171,7 +171,14 @@ export class RegisterPageComponent {
       next: (res) => {
         this.loginLoading.set(false);
         this.auth.login(res);
-        this.router.navigate(['/dashboard']);
+        const role = res.role;
+        if (role === 'COORDINATOR') {
+          this.router.navigate(['/coordinator']);
+        } else if (role === 'FACILITATOR') {
+          this.router.navigate(['/facilitator']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         this.loginLoading.set(false);

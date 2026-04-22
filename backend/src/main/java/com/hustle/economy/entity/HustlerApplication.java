@@ -64,6 +64,11 @@ public class HustlerApplication {
     @Column(nullable = false)
     private ApplicationStatus status;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role = UserRole.HUSTLER;
+
     @Column(columnDefinition = "TEXT")
     private String facilitatorNotes;
 

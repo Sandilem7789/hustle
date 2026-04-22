@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 @Service
@@ -56,6 +57,7 @@ public class AuthService {
                 .firstName(application.getFirstName())
                 .lastName(application.getLastName())
                 .businessType(profile.getBusinessType())
+                .role(application.getRole().name())
                 .build();
     }
 
@@ -64,5 +66,18 @@ public class AuthService {
         HustlerSession session = sessionRepository.findByToken(token)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
         return session.getBusinessProfile();
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessProfile requireRole(String token, UserRole... allowedRoles) {
+        HustlerSession session = sessionRepository.findByToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
+        BusinessProfile profile = session.getBusinessProfile();
+        UserRole role = profile.getApplication().getRole();
+        boolean allowed = Arrays.asList(allowedRoles).contains(role);
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+        return profile;
     }
 }

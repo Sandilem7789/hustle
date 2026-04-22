@@ -2,10 +2,14 @@ package com.hustle.economy.config;
 
 import com.hustle.economy.entity.*;
 import com.hustle.economy.repository.ApplicantRepository;
+import com.hustle.economy.repository.BusinessProfileRepository;
 import com.hustle.economy.repository.CommunityRepository;
+import com.hustle.economy.repository.HustlerApplicationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
@@ -17,6 +21,15 @@ public class DataInitializer implements ApplicationRunner {
 
     private final CommunityRepository communityRepository;
     private final ApplicantRepository applicantRepository;
+    private final HustlerApplicationRepository applicationRepository;
+    private final BusinessProfileRepository businessProfileRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    @Value("${FACILITATOR_PHONE:0000000001}")
+    private String facilitatorPhone;
+
+    @Value("${FACILITATOR_PASSWORD:Hustle@2026}")
+    private String facilitatorPassword;
 
     private static final List<String> COMMUNITIES = List.of(
             "KwaNgwenya", "KwaNibela", "KwaMakhasa", "KwaJobe", "KwaMnqobokazi"
@@ -32,7 +45,40 @@ public class DataInitializer implements ApplicationRunner {
                         .build());
             }
         }
+        seedFacilitatorAccount();
         seedKwaNgwenyaApplicants();
+    }
+
+    private void seedFacilitatorAccount() {
+        if (applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(facilitatorPhone).isPresent()) return;
+
+        Community community = communityRepository.findByNameIgnoreCase("KwaNgwenya").orElse(null);
+        if (community == null) return;
+
+        OffsetDateTime now = OffsetDateTime.now();
+
+        HustlerApplication app = applicationRepository.save(HustlerApplication.builder()
+                .firstName("Sandile")
+                .lastName("Mathenjwa")
+                .phone(facilitatorPhone)
+                .passwordHash(passwordEncoder.encode(facilitatorPassword))
+                .community(community)
+                .businessName("Hustle Facilitation")
+                .businessType("Service")
+                .status(ApplicationStatus.APPROVED)
+                .role(UserRole.FACILITATOR)
+                .submittedAt(now)
+                .decidedAt(now)
+                .build());
+
+        businessProfileRepository.save(BusinessProfile.builder()
+                .application(app)
+                .community(community)
+                .businessName("Hustle Facilitation")
+                .businessType("Service")
+                .status(ApplicationStatus.APPROVED)
+                .createdAt(now)
+                .build());
     }
 
     // ── KwaNgwenya applicant seed ──────────────────────────────────────────

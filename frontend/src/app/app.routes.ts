@@ -11,13 +11,16 @@ import { CustomerOrdersPageComponent } from './pages/customer-orders/customer-or
 import { DriverRegisterPageComponent } from './pages/driver-register/driver-register-page.component';
 import { DriverLoginPageComponent } from './pages/driver-login/driver-login-page.component';
 import { DriverDashboardPageComponent } from './pages/driver-dashboard/driver-dashboard-page.component';
+import { hustlerGuard } from './guards/hustler.guard';
+import { facilitatorGuard } from './guards/facilitator.guard';
+import { coordinatorGuard } from './guards/coordinator.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'marketplace', pathMatch: 'full' },
   { path: 'register', component: RegisterPageComponent },
-  { path: 'dashboard', component: HustlerDashboardPageComponent },
-  { path: 'facilitator', component: FacilitatorPageComponent },
-  { path: 'coordinator', component: CoordinatorPageComponent },
+  { path: 'dashboard', component: HustlerDashboardPageComponent, canActivate: [hustlerGuard] },
+  { path: 'facilitator', component: FacilitatorPageComponent, canActivate: [facilitatorGuard] },
+  { path: 'coordinator', component: CoordinatorPageComponent, canActivate: [coordinatorGuard] },
   { path: 'marketplace', component: MarketplacePageComponent },
   { path: 'customer/register', component: CustomerRegisterPageComponent },
   { path: 'customer/login', component: CustomerLoginPageComponent },
