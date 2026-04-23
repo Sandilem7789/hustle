@@ -24,17 +24,11 @@ public class DataInitializer implements ApplicationRunner {
     private final BusinessProfileRepository businessProfileRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Value("${FACILITATOR_PHONE:0000000001}")
-    private String facilitatorPhone;
+    @Value("${STAFF_PHONE:0829347789}")
+    private String staffPhone;
 
-    @Value("${FACILITATOR_PASSWORD:Hustle@2026}")
-    private String facilitatorPassword;
-
-    @Value("${COORDINATOR_PHONE:0000000002}")
-    private String coordinatorPhone;
-
-    @Value("${COORDINATOR_PASSWORD:Hustle@2026}")
-    private String coordinatorPassword;
+    @Value("${STAFF_PASSWORD:Hustle@2026}")
+    private String staffPassword;
 
     // name, latitude, longitude, province  (approx. coords for northern KZN / Phinda–Mkuze area)
     private static final Object[][] COMMUNITIES = {
@@ -68,13 +62,13 @@ public class DataInitializer implements ApplicationRunner {
                         .build())
             );
         }
-        seedFacilitatorAccount();
-        seedCoordinatorAccount();
+        applicationRepository.backfillNullRoles();
+        seedStaffAccount();
         seedKwaNgwenyaApplicants();
     }
 
-    private void seedFacilitatorAccount() {
-        if (applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(facilitatorPhone).isPresent()) return;
+    private void seedStaffAccount() {
+        if (applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(staffPhone).isPresent()) return;
 
         Community community = communityRepository.findByNameIgnoreCase("KwaNgwenya").orElse(null);
         if (community == null) return;
@@ -84,42 +78,10 @@ public class DataInitializer implements ApplicationRunner {
         HustlerApplication app = applicationRepository.save(HustlerApplication.builder()
                 .firstName("Sandile")
                 .lastName("Mathenjwa")
-                .phone(facilitatorPhone)
-                .passwordHash(passwordEncoder.encode(facilitatorPassword))
+                .phone(staffPhone)
+                .passwordHash(passwordEncoder.encode(staffPassword))
                 .community(community)
-                .businessName("Hustle Facilitation")
-                .businessType("Service")
-                .status(ApplicationStatus.APPROVED)
-                .role(UserRole.FACILITATOR)
-                .submittedAt(now)
-                .decidedAt(now)
-                .build());
-
-        businessProfileRepository.save(BusinessProfile.builder()
-                .application(app)
-                .community(community)
-                .businessName("Hustle Facilitation")
-                .businessType("Service")
-                .status(ApplicationStatus.APPROVED)
-                .createdAt(now)
-                .build());
-    }
-
-    private void seedCoordinatorAccount() {
-        if (applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(coordinatorPhone).isPresent()) return;
-
-        Community community = communityRepository.findByNameIgnoreCase("KwaNgwenya").orElse(null);
-        if (community == null) return;
-
-        OffsetDateTime now = OffsetDateTime.now();
-
-        HustlerApplication app = applicationRepository.save(HustlerApplication.builder()
-                .firstName("Coordinator")
-                .lastName("Hustle")
-                .phone(coordinatorPhone)
-                .passwordHash(passwordEncoder.encode(coordinatorPassword))
-                .community(community)
-                .businessName("Hustle Coordination")
+                .businessName("Hustle Operations")
                 .businessType("Service")
                 .status(ApplicationStatus.APPROVED)
                 .role(UserRole.COORDINATOR)
@@ -130,7 +92,7 @@ public class DataInitializer implements ApplicationRunner {
         businessProfileRepository.save(BusinessProfile.builder()
                 .application(app)
                 .community(community)
-                .businessName("Hustle Coordination")
+                .businessName("Hustle Operations")
                 .businessType("Service")
                 .status(ApplicationStatus.APPROVED)
                 .createdAt(now)

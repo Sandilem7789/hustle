@@ -3,8 +3,10 @@ package com.hustle.economy.repository;
 import com.hustle.economy.entity.ApplicationStatus;
 import com.hustle.economy.entity.HustlerApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,4 +23,9 @@ public interface HustlerApplicationRepository extends JpaRepository<HustlerAppli
 
     @Query("SELECT a FROM HustlerApplication a LEFT JOIN FETCH a.community WHERE a.id = :id")
     Optional<HustlerApplication> findByIdFetched(@Param("id") UUID id);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE hustler_applications SET role = 'HUSTLER' WHERE role IS NULL", nativeQuery = true)
+    void backfillNullRoles();
 }

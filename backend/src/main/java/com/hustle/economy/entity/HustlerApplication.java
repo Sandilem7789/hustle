@@ -66,7 +66,7 @@ public class HustlerApplication {
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column
     private UserRole role = UserRole.HUSTLER;
 
     @Column(columnDefinition = "TEXT")

@@ -57,7 +57,7 @@ public class AuthService {
                 .firstName(application.getFirstName())
                 .lastName(application.getLastName())
                 .businessType(profile.getBusinessType())
-                .role(application.getRole().name())
+                .role(application.getRole() != null ? application.getRole().name() : UserRole.HUSTLER.name())
                 .build();
     }
 
@@ -73,7 +73,9 @@ public class AuthService {
         HustlerSession session = sessionRepository.findByToken(token)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
         BusinessProfile profile = session.getBusinessProfile();
-        UserRole role = profile.getApplication().getRole();
+        UserRole role = profile.getApplication().getRole() != null
+                ? profile.getApplication().getRole()
+                : UserRole.HUSTLER;
         boolean allowed = Arrays.asList(allowedRoles).contains(role);
         if (!allowed) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
