@@ -22,7 +22,7 @@ This app is used primarily on mobile devices in rural KZN. Every UI decision mus
 - Forms must use large inputs, visible labels, and native pickers where possible
 - Limit the use of modals — prefer in-page flows or dedicated routes on mobile
 - Images must be lazy-loaded and compressed — bandwidth in rural areas is limited
-- Avoid animations that block interaction or drain battery
+- Animations must be minimal and non-blocking: short duration (150–250ms), ease-out or spring easing, opacity + transform only (GPU-composited, no layout thrash). Use for card/page entrance on tab switches. Never animate on every scroll event, never delay interaction.
 - All Angular components must be mobile-styled first; use `@media (min-width: ...)` for desktop overrides, never `max-width` mobile overrides
 
 ---

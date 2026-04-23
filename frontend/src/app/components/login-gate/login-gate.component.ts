@@ -39,6 +39,10 @@ import { AuthService } from '../../services/auth.service';
     </div>
   `,
   styles: `
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
     .gate-shell {
       min-height: calc(100vh - 140px);
       display: flex;
@@ -55,6 +59,8 @@ import { AuthService } from '../../services/auth.service';
       width: 100%;
       max-width: 400px;
       text-align: center;
+      animation: cardIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+      will-change: transform, opacity;
     }
     .gate-icon {
       font-size: 3rem;

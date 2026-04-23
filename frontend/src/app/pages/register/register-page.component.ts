@@ -48,6 +48,10 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
     </section>
   `,
   styles: `
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
     .tab-card {
       background: white;
       border-radius: 1.5rem;
@@ -57,6 +61,8 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
       width: 100%;
       margin: 0 auto;
       transition: max-width 0.3s ease;
+      animation: cardIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+      will-change: transform, opacity;
     }
     .tab-card.login-mode { max-width: 460px; }
     .tab-card.register-mode { max-width: 100%; }
