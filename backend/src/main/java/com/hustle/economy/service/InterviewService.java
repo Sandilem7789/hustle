@@ -67,9 +67,15 @@ public class InterviewService {
                         .build());
 
         interview.setConductedDate(request.getConductedDate());
-        interview.setCanDescribeBusiness(request.getCanDescribeBusiness());
-        interview.setAppearsGenuine(request.getAppearsGenuine());
-        interview.setHasRunningBusiness(request.getHasRunningBusiness());
+        if (outcome == InterviewOutcome.PASS) {
+            interview.setCanDescribeBusiness(true);
+            interview.setAppearsGenuine(true);
+            interview.setHasRunningBusiness(true);
+        } else {
+            interview.setCanDescribeBusiness(request.getCanDescribeBusiness());
+            interview.setAppearsGenuine(request.getAppearsGenuine());
+            interview.setHasRunningBusiness(request.getHasRunningBusiness());
+        }
         interview.setNotes(request.getNotes());
         interview.setOutcome(outcome);
         interview.setConductedBy(request.getConductedBy());
