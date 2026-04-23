@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ApiService, CommunityStats } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
@@ -104,9 +105,34 @@ const FUTURE_COMMUNITIES = [
         </div>
       </section>
 
+      <!-- Sign Out -->
+      <div class="signout-row">
+        <button class="signout-btn" (click)="logout()">Sign Out</button>
+      </div>
+
     </div>
   `,
   styles: `
+    .signout-row {
+      display: flex;
+      justify-content: center;
+      padding: 2rem 0 1rem;
+    }
+    .signout-btn {
+      border: 1.5px solid #E7E5E4;
+      background: none;
+      color: #A8A29E;
+      border-radius: 999px;
+      padding: 0.6rem 2rem;
+      font-size: 0.875rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      min-height: 48px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .signout-btn:hover { border-color: #E53935; color: #E53935; }
+
     .ops-shell {
       max-width: 960px;
       margin: 0 auto;
@@ -364,6 +390,7 @@ const FUTURE_COMMUNITIES = [
 export class OperationsPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly stats = signal<CommunityStats[]>([]);
   readonly loading = signal(true);
@@ -395,6 +422,11 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.map?.remove();
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/marketplace']);
   }
 
   groupedStats(): { province: string; communities: CommunityStats[] }[] {
