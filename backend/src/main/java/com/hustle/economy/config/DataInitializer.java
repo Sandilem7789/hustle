@@ -24,10 +24,10 @@ public class DataInitializer implements ApplicationRunner {
     private final BusinessProfileRepository businessProfileRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Value("${STAFF_PHONE:0829347789}")
+    @Value("${STAFF_PHONE}")
     private String staffPhone;
 
-    @Value("${STAFF_PASSWORD:Hustle@2026}")
+    @Value("${STAFF_PASSWORD}")
     private String staffPassword;
 
     // name, latitude, longitude, province  (approx. coords for northern KZN / Phinda–Mkuze area)

@@ -27,8 +27,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       PORT: 8080
-      STAFF_PHONE: ${STAFF_PHONE:-0829347789}
-      STAFF_PASSWORD: ${STAFF_PASSWORD:-Hustle@2026}
+      STAFF_PHONE: ${STAFF_PHONE}
+      STAFF_PASSWORD: ${STAFF_PASSWORD}
     ports:
       - '8080:8080'
     volumes:
