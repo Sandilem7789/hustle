@@ -178,16 +178,34 @@
 
 /* Dimmed / inaccessible tabs */
 .bottom-nav-item.dimmed {
-  opacity: 0.35;
+  opacity: 0.32;
+  cursor: default;
 }
 
-.bottom-nav-item.dimmed.active {
+/* Suppress active-state styling on locked tabs */
+.bottom-nav-item.dimmed.active,
+.bottom-nav-item.dimmed:hover {
   color: #A8A29E;
   font-weight: 700;
+  background: none;
 }
 
 .bottom-nav-item.dimmed.active::before {
   display: none;
+}
+
+.bottom-nav-item.dimmed .bottom-nav-icon {
+  transform: none !important;
+}
+
+/* Small lock overlay on the tab icon */
+.lock-badge {
+  position: absolute;
+  font-size: 0.55rem;
+  bottom: -2px;
+  right: -4px;
+  line-height: 1;
+  filter: grayscale(1);
 }
 
 /* ─── Page entrance animation (fires when router swaps components) ────────── */

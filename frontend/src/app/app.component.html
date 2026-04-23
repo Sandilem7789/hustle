@@ -48,25 +48,33 @@
 
   <a routerLink="/dashboard" routerLinkActive="active"
      class="bottom-nav-item" [class.dimmed]="!canHustler()">
-    <span class="bottom-nav-icon">👤</span>
+    <span class="bottom-nav-icon">
+      👤<span *ngIf="!canHustler()" class="lock-badge">🔒</span>
+    </span>
     <span>Hustler</span>
   </a>
 
   <a routerLink="/facilitator" routerLinkActive="active"
      class="bottom-nav-item" [class.dimmed]="!canFacilitator()">
-    <span class="bottom-nav-icon">🏛️</span>
+    <span class="bottom-nav-icon">
+      🏛️<span *ngIf="!canFacilitator()" class="lock-badge">🔒</span>
+    </span>
     <span>Facilitator</span>
   </a>
 
   <a routerLink="/coordinator" routerLinkActive="active"
      class="bottom-nav-item" [class.dimmed]="!canCoordinator()">
-    <span class="bottom-nav-icon">🗂️</span>
+    <span class="bottom-nav-icon">
+      🗂️<span *ngIf="!canCoordinator()" class="lock-badge">🔒</span>
+    </span>
     <span>Coordinator</span>
   </a>
 
   <a routerLink="/operations" routerLinkActive="active"
      class="bottom-nav-item" [class.dimmed]="!canOperations()">
-    <span class="bottom-nav-icon">🗺️</span>
+    <span class="bottom-nav-icon">
+      🗺️<span *ngIf="!canOperations()" class="lock-badge">🔒</span>
+    </span>
     <span>Operations</span>
   </a>
 </nav>
