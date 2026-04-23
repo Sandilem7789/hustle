@@ -68,35 +68,41 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private void seedStaffAccount() {
-        if (applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(staffPhone).isPresent()) return;
-
-        Community community = communityRepository.findByNameIgnoreCase("KwaNgwenya").orElse(null);
-        if (community == null) return;
-
-        OffsetDateTime now = OffsetDateTime.now();
-
-        HustlerApplication app = applicationRepository.save(HustlerApplication.builder()
-                .firstName("Sandile")
-                .lastName("Mathenjwa")
-                .phone(staffPhone)
-                .passwordHash(passwordEncoder.encode(staffPassword))
-                .community(community)
-                .businessName("Hustle Operations")
-                .businessType("Service")
-                .status(ApplicationStatus.APPROVED)
-                .role(UserRole.COORDINATOR)
-                .submittedAt(now)
-                .decidedAt(now)
-                .build());
-
-        businessProfileRepository.save(BusinessProfile.builder()
-                .application(app)
-                .community(community)
-                .businessName("Hustle Operations")
-                .businessType("Service")
-                .status(ApplicationStatus.APPROVED)
-                .createdAt(now)
-                .build());
+        applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(staffPhone).ifPresentOrElse(
+            existing -> {
+                // Upgrade existing account to COORDINATOR with correct password
+                existing.setRole(UserRole.COORDINATOR);
+                existing.setStatus(ApplicationStatus.APPROVED);
+                existing.setPasswordHash(passwordEncoder.encode(staffPassword));
+                applicationRepository.save(existing);
+            },
+            () -> {
+                Community community = communityRepository.findByNameIgnoreCase("KwaNgwenya").orElse(null);
+                if (community == null) return;
+                OffsetDateTime now = OffsetDateTime.now();
+                HustlerApplication app = applicationRepository.save(HustlerApplication.builder()
+                        .firstName("Sandile")
+                        .lastName("Mathenjwa")
+                        .phone(staffPhone)
+                        .passwordHash(passwordEncoder.encode(staffPassword))
+                        .community(community)
+                        .businessName("Hustle Operations")
+                        .businessType("Service")
+                        .status(ApplicationStatus.APPROVED)
+                        .role(UserRole.COORDINATOR)
+                        .submittedAt(now)
+                        .decidedAt(now)
+                        .build());
+                businessProfileRepository.save(BusinessProfile.builder()
+                        .application(app)
+                        .community(community)
+                        .businessName("Hustle Operations")
+                        .businessType("Service")
+                        .status(ApplicationStatus.APPROVED)
+                        .createdAt(now)
+                        .build());
+            }
+        );
     }
 
     // ── KwaNgwenya applicant seed ──────────────────────────────────────────

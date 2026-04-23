@@ -9,25 +9,48 @@
     />
   </a>
 
-  <!-- Desktop-only nav links -->
+  <!-- Desktop nav — same 5 tabs as mobile bottom nav -->
   <nav class="desktop-nav">
-    <a routerLink="/marketplace" routerLinkActive="active">🛒 Marketplace</a>
-    <ng-container *ngIf="showDashboardNav()">
-      <a routerLink="/dashboard" routerLinkActive="active">📊 Dashboard</a>
-      <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
-      <button type="button" class="nav-logout-btn" (click)="logout()">Logout</button>
-    </ng-container>
-    <ng-container *ngIf="!showDashboardNav()">
-      <a routerLink="/facilitator" routerLinkActive="active">🏛️ Facilitator</a>
-      <a routerLink="/coordinator" routerLinkActive="active">🗂️ Coordinator</a>
-      <a routerLink="/register" routerLinkActive="active">Register / Login</a>
-      <ng-container *ngIf="customerAuth.isLoggedIn()">
-        <a routerLink="/orders" routerLinkActive="active">📦 Orders</a>
-      </ng-container>
-      <ng-container *ngIf="!customerAuth.isLoggedIn()">
-        <a routerLink="/customer/login" routerLinkActive="active">Customer Login</a>
-      </ng-container>
-    </ng-container>
+    <a routerLink="/marketplace" routerLinkActive="active" class="desktop-tab">
+      <span class="desktop-tab-icon">🛒</span>
+      <span class="desktop-tab-label">Market</span>
+    </a>
+
+    <a routerLink="/dashboard" routerLinkActive="active"
+       class="desktop-tab" [class.dimmed]="!canHustler()">
+      <span class="desktop-tab-icon">
+        👤<span *ngIf="!canHustler()" class="lock-badge">🔒</span>
+      </span>
+      <span class="desktop-tab-label">Hustler</span>
+    </a>
+
+    <a routerLink="/facilitator" routerLinkActive="active"
+       class="desktop-tab" [class.dimmed]="!canFacilitator()">
+      <span class="desktop-tab-icon">
+        🏛️<span *ngIf="!canFacilitator()" class="lock-badge">🔒</span>
+      </span>
+      <span class="desktop-tab-label">Facilitator</span>
+    </a>
+
+    <a routerLink="/coordinator" routerLinkActive="active"
+       class="desktop-tab" [class.dimmed]="!canCoordinator()">
+      <span class="desktop-tab-icon">
+        🗂️<span *ngIf="!canCoordinator()" class="lock-badge">🔒</span>
+      </span>
+      <span class="desktop-tab-label">Coordinator</span>
+    </a>
+
+    <a routerLink="/operations" routerLinkActive="active"
+       class="desktop-tab" [class.dimmed]="!canOperations()">
+      <span class="desktop-tab-icon">
+        🗺️<span *ngIf="!canOperations()" class="lock-badge">🔒</span>
+      </span>
+      <span class="desktop-tab-label">Operations</span>
+    </a>
+
+    <button *ngIf="auth.isLoggedIn()" type="button" class="nav-logout-btn" (click)="logout()">
+      Logout
+    </button>
   </nav>
 </header>
 

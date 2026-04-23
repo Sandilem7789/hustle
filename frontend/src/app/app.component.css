@@ -56,47 +56,96 @@
 /* ─── Desktop Nav ─────────────────────────────────────────────────────────── */
 .desktop-nav {
   display: none;
-  gap: 0.5rem;
+  align-items: stretch;
+  gap: 0.125rem;
+  height: 100%;
+}
+
+/* Tab items — vertical layout matching the mobile bottom nav language */
+.desktop-tab {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-}
-
-.desktop-nav a {
-  color: #78716C;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 0.875rem;
+  color: #A8A29E;
   text-decoration: none;
+  font-family: inherit;
+  font-size: 0.625rem;
   font-weight: 700;
-  font-size: 0.875rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 999px;
-  transition: background 0.15s, color 0.15s;
+  position: relative;
+  transition: color 0.15s;
+  min-width: 56px;
 }
 
-.desktop-nav a.active,
-.desktop-nav a:hover {
-  background: rgba(245, 184, 0, 0.12);
+.desktop-tab-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  position: relative;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.desktop-tab-label {
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Active state — yellow bar at the bottom of the tab (mirrors top-bar on mobile) */
+.desktop-tab.active {
   color: #1C1917;
-}
-
-.desktop-nav a.active {
-  color: #92620A;
   font-weight: 800;
 }
 
-.nav-logout-btn {
+.desktop-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  border-radius: 999px 999px 0 0;
   background: #F5B800;
-  border: none;
-  color: #1C1917;
+}
+
+.desktop-tab.active .desktop-tab-icon {
+  transform: scale(1.12);
+}
+
+/* Press animation */
+.desktop-tab:active .desktop-tab-icon {
+  transform: scale(0.82);
+  transition: transform 0.06s ease-in;
+}
+
+/* Dimmed / locked tabs */
+.desktop-tab.dimmed {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.desktop-tab.dimmed.active::after { display: none; }
+.desktop-tab.dimmed .desktop-tab-icon { transform: none !important; }
+
+.nav-logout-btn {
+  background: none;
+  border: 1.5px solid #E7E5E4;
+  color: #78716C;
   border-radius: 999px;
-  padding: 0.375rem 1rem;
-  font-size: 0.875rem;
+  padding: 0.3rem 0.875rem;
+  font-size: 0.75rem;
   font-weight: 800;
   cursor: pointer;
   font-family: inherit;
-  min-height: unset;
-  transition: box-shadow 0.15s;
+  align-self: center;
+  margin-left: 0.25rem;
+  transition: border-color 0.15s, color 0.15s;
 }
 
 .nav-logout-btn:hover {
-  box-shadow: 0 4px 12px rgba(245, 184, 0, 0.4);
+  border-color: #E53935;
+  color: #E53935;
 }
 
 /* ─── Main Page Shell ─────────────────────────────────────────────────────── */
