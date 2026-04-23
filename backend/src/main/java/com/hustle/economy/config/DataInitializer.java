@@ -13,7 +13,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +29,12 @@ public class DataInitializer implements ApplicationRunner {
 
     @Value("${FACILITATOR_PASSWORD:Hustle@2026}")
     private String facilitatorPassword;
+
+    @Value("${COORDINATOR_PHONE:0000000002}")
+    private String coordinatorPhone;
+
+    @Value("${COORDINATOR_PASSWORD:Hustle@2026}")
+    private String coordinatorPassword;
 
     // name, latitude, longitude, province  (approx. coords for northern KZN / Phinda–Mkuze area)
     private static final Object[][] COMMUNITIES = {
@@ -64,6 +69,7 @@ public class DataInitializer implements ApplicationRunner {
             );
         }
         seedFacilitatorAccount();
+        seedCoordinatorAccount();
         seedKwaNgwenyaApplicants();
     }
 
@@ -93,6 +99,38 @@ public class DataInitializer implements ApplicationRunner {
                 .application(app)
                 .community(community)
                 .businessName("Hustle Facilitation")
+                .businessType("Service")
+                .status(ApplicationStatus.APPROVED)
+                .createdAt(now)
+                .build());
+    }
+
+    private void seedCoordinatorAccount() {
+        if (applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(coordinatorPhone).isPresent()) return;
+
+        Community community = communityRepository.findByNameIgnoreCase("KwaNgwenya").orElse(null);
+        if (community == null) return;
+
+        OffsetDateTime now = OffsetDateTime.now();
+
+        HustlerApplication app = applicationRepository.save(HustlerApplication.builder()
+                .firstName("Coordinator")
+                .lastName("Hustle")
+                .phone(coordinatorPhone)
+                .passwordHash(passwordEncoder.encode(coordinatorPassword))
+                .community(community)
+                .businessName("Hustle Coordination")
+                .businessType("Service")
+                .status(ApplicationStatus.APPROVED)
+                .role(UserRole.COORDINATOR)
+                .submittedAt(now)
+                .decidedAt(now)
+                .build());
+
+        businessProfileRepository.save(BusinessProfile.builder()
+                .application(app)
+                .community(community)
+                .businessName("Hustle Coordination")
                 .businessType("Service")
                 .status(ApplicationStatus.APPROVED)
                 .createdAt(now)
