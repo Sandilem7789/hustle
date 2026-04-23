@@ -1,17 +1,24 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { jsPDF } from 'jspdf';
 import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, IncomeSummary, OrderResponse } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 
 @Component({
   selector: 'app-hustler-dashboard-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoginGateComponent],
   template: `
-    <section class="layout">
+    <app-login-gate *ngIf="!auth.isLoggedIn()"
+      icon="👤"
+      title="Hustler Sign In"
+      subtitle="Log in to manage your business, track income, and view orders."
+    ></app-login-gate>
+
+    <section class="layout" *ngIf="auth.isLoggedIn()">
 
       <!-- ── HERO BANNER ── -->
       <div class="hero-banner">
@@ -627,6 +634,21 @@ export class HustlerDashboardPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
+  private dataLoaded = false;
+
+  constructor() {
+    effect(() => {
+      if (this.auth.isLoggedIn() && !this.dataLoaded) {
+        this.dataLoaded = true;
+        untracked(() => {
+          this.loadProducts();
+          this.loadIncome();
+          this.loadSummary();
+        });
+      }
+    });
+  }
+
   tab = signal<'income' | 'products' | 'orders'>('income');
   logTab = signal<'income' | 'expense'>('income');
   showAddModal = signal(false);
@@ -751,10 +773,7 @@ export class HustlerDashboardPageComponent implements OnInit {
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
   ngOnInit(): void {
-    if (!this.auth.isLoggedIn()) { this.router.navigate(['/register']); return; }
-    this.loadProducts();
-    this.loadIncome();
-    this.loadSummary();
+    // data loading handled by constructor effect (reactive on auth state)
   }
 
   logout(): void {

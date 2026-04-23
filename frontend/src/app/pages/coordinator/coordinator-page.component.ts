@@ -1,12 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FacilitatorQueueComponent } from '../../components/facilitator-queue/facilitator-queue.component';
+import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-coordinator-page',
   standalone: true,
-  imports: [FacilitatorQueueComponent],
+  imports: [CommonModule, FacilitatorQueueComponent, LoginGateComponent],
   template: `
-    <section class="layout">
+    <app-login-gate *ngIf="!authorized()"
+      icon="🗂️"
+      title="Coordinator Sign In"
+      subtitle="This section is for coordinators only."
+      [requiredRoles]="['COORDINATOR']"
+    ></app-login-gate>
+
+    <section class="layout" *ngIf="authorized()">
       <div class="coord-banner">
         <span class="coord-role">Coordinator View</span>
         <span class="coord-note">You can see all 5 communities.</span>
@@ -21,4 +31,7 @@ import { FacilitatorQueueComponent } from '../../components/facilitator-queue/fa
     .coord-note { font-size: 0.82rem; color: #78716C; }
   `
 })
-export class CoordinatorPageComponent {}
+export class CoordinatorPageComponent {
+  private readonly auth = inject(AuthService);
+  readonly authorized = computed(() => this.auth.state()?.role === 'COORDINATOR');
+}

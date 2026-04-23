@@ -46,22 +46,26 @@
     <span>Market</span>
   </a>
 
-  <a routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
+  <a routerLink="/dashboard" routerLinkActive="active"
+     class="bottom-nav-item" [class.dimmed]="!canHustler()">
     <span class="bottom-nav-icon">👤</span>
     <span>Hustler</span>
   </a>
 
-  <a routerLink="/facilitator" routerLinkActive="active" class="bottom-nav-item">
+  <a routerLink="/facilitator" routerLinkActive="active"
+     class="bottom-nav-item" [class.dimmed]="!canFacilitator()">
     <span class="bottom-nav-icon">🏛️</span>
     <span>Facilitator</span>
   </a>
 
-  <a routerLink="/coordinator" routerLinkActive="active" class="bottom-nav-item">
+  <a routerLink="/coordinator" routerLinkActive="active"
+     class="bottom-nav-item" [class.dimmed]="!canCoordinator()">
     <span class="bottom-nav-icon">🗂️</span>
     <span>Coordinator</span>
   </a>
 
-  <a routerLink="/operations" routerLinkActive="active" class="bottom-nav-item">
+  <a routerLink="/operations" routerLinkActive="active"
+     class="bottom-nav-item" [class.dimmed]="!canOperations()">
     <span class="bottom-nav-icon">🗺️</span>
     <span>Operations</span>
   </a>

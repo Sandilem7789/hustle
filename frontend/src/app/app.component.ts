@@ -19,12 +19,21 @@ export class AppComponent {
   readonly driverAuth = inject(DriverAuthService);
   private readonly router = inject(Router);
 
+  readonly currentRole = computed(() => this.auth.state()?.role ?? null);
+
+  readonly canHustler = computed(() => this.auth.isLoggedIn());
+  readonly canFacilitator = computed(() => {
+    const r = this.currentRole();
+    return r === 'FACILITATOR' || r === 'COORDINATOR';
+  });
+  readonly canCoordinator = computed(() => this.currentRole() === 'COORDINATOR');
+  readonly canOperations = computed(() => {
+    const r = this.currentRole();
+    return r === 'FACILITATOR' || r === 'COORDINATOR';
+  });
+
   showDashboardNav(): boolean {
     return this.auth.isLoggedIn();
-  }
-
-  showDriverNav(): boolean {
-    return this.router.url.startsWith('/driver');
   }
 
   logout(): void {

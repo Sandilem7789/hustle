@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { ApiService, CommunityStats } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 import * as L from 'leaflet';
 
 const FUTURE_COMMUNITIES = [
@@ -14,9 +14,16 @@ const FUTURE_COMMUNITIES = [
 @Component({
   selector: 'app-operations-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoginGateComponent],
   template: `
-    <div class="ops-shell">
+    <app-login-gate *ngIf="!authorized()"
+      icon="🗺️"
+      title="Operations Sign In"
+      subtitle="This section is for facilitators and coordinators."
+      [requiredRoles]="['FACILITATOR','COORDINATOR']"
+    ></app-login-gate>
+
+    <div class="ops-shell" *ngIf="authorized()">
 
       <!-- Header -->
       <div class="ops-header">
@@ -357,17 +364,21 @@ const FUTURE_COMMUNITIES = [
 export class OperationsPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   readonly stats = signal<CommunityStats[]>([]);
   readonly loading = signal(true);
   readonly futureCommunities = FUTURE_COMMUNITIES;
 
+  readonly authorized = computed(() => {
+    const r = this.auth.state()?.role;
+    return r === 'FACILITATOR' || r === 'COORDINATOR';
+  });
+
   private map: L.Map | null = null;
 
   ngOnInit(): void {
     const token = this.auth.getToken();
-    if (!token) { this.router.navigate(['/register']); return; }
+    if (!token) return;
 
     this.api.getOperationsStats(token).subscribe({
       next: (data) => {
