@@ -7,6 +7,15 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Navigation & Role-Based Access (Bottom Nav)
+- 5-tab bottom nav: Market, Hustler, Facilitator, Coordinator, Operations
+- Role-based tab greying: tabs dim (opacity 0.35) when the current role can't access them; tapping still navigates (shows inline login gate)
+- Access hierarchy left-to-right: Market=all, Hustler=any logged-in user, Facilitator+Operations=FACILITATOR|COORDINATOR, Coordinator=COORDINATOR only
+- Native-feel press animation on nav icons: fast squish (60ms ease-in) with spring-back (180ms cubic-bezier bounce)
+- Per-tab inline `LoginGateComponent`: each protected page shows a sign-in form in-place when auth is missing; reactive signal update shows page content immediately after login without redirect
+- Route guards removed; auth is handled inline per-page via computed signals
+- Hustler Dashboard uses `effect()` to reactively load data when login happens via the gate
+
 ### Infrastructure & Environment
 - Docker Compose stack: PostgreSQL (5432), Spring Boot backend (8080), Angular/Nginx frontend (4173)
 - Java 21 (pinned — Maven image constraint), Spring Boot 3.x, Angular 18 standalone components
