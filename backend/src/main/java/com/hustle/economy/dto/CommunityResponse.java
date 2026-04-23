@@ -10,6 +10,7 @@ import java.util.UUID;
 public class CommunityResponse {
     UUID id;
     String name;
+    String province;
     String region;
     String description;
     Double latitude;

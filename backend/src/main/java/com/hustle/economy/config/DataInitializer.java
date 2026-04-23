@@ -31,27 +31,37 @@ public class DataInitializer implements ApplicationRunner {
     @Value("${FACILITATOR_PASSWORD:Hustle@2026}")
     private String facilitatorPassword;
 
-    // name, latitude, longitude  (approx. coords for northern KZN / Phinda–Mkuze area)
+    // name, latitude, longitude, province  (approx. coords for northern KZN / Phinda–Mkuze area)
     private static final Object[][] COMMUNITIES = {
-            {"KwaNgwenya",    -27.75, 32.13},
-            {"KwaNibela",     -27.88, 32.18},
-            {"KwaMakhasa",    -27.82, 32.08},
-            {"KwaJobe",       -27.93, 32.12},
-            {"KwaMnqobokazi", -27.97, 32.07},
+            {"KwaNgwenya",    -27.75, 32.13, "KwaZulu-Natal"},
+            {"KwaNibela",     -27.88, 32.18, "KwaZulu-Natal"},
+            {"KwaMakhasa",    -27.82, 32.08, "KwaZulu-Natal"},
+            {"KwaJobe",       -27.93, 32.12, "KwaZulu-Natal"},
+            {"KwaMnqobokazi", -27.97, 32.07, "KwaZulu-Natal"},
     };
 
     @Override
     public void run(ApplicationArguments args) {
         for (Object[] row : COMMUNITIES) {
-            String name = (String) row[0];
-            if (communityRepository.findByNameIgnoreCase(name).isEmpty()) {
-                communityRepository.save(Community.builder()
+            String name     = (String) row[0];
+            Double lat      = (Double) row[1];
+            Double lng      = (Double) row[2];
+            String province = (String) row[3];
+            communityRepository.findByNameIgnoreCase(name).ifPresentOrElse(
+                existing -> {
+                    if (existing.getProvince() == null) {
+                        existing.setProvince(province);
+                        communityRepository.save(existing);
+                    }
+                },
+                () -> communityRepository.save(Community.builder()
                         .name(name)
+                        .province(province)
                         .region("KwaZulu-Natal")
-                        .latitude((Double) row[1])
-                        .longitude((Double) row[2])
-                        .build());
-            }
+                        .latitude(lat)
+                        .longitude(lng)
+                        .build())
+            );
         }
         seedFacilitatorAccount();
         seedKwaNgwenyaApplicants();

@@ -24,6 +24,7 @@ public class Community {
     @Column(nullable = false, unique = true)
     private String name;
 
+    private String province;
     private String region;
 
     @Column(columnDefinition = "TEXT")

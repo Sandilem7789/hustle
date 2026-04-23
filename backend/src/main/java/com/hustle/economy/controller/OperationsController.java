@@ -48,6 +48,7 @@ public class OperationsController {
                 .map(c -> CommunityStatsResponse.builder()
                         .communityId(c.getId())
                         .communityName(c.getName())
+                        .province(c.getProvince())
                         .region(c.getRegion())
                         .latitude(c.getLatitude())
                         .longitude(c.getLongitude())

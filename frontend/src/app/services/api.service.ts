@@ -514,6 +514,7 @@ export interface HustlerProfileUpdate {
 export interface CommunityStats {
   communityId: string;
   communityName: string;
+  province: string | null;
   region: string;
   latitude: number | null;
   longitude: number | null;

@@ -11,6 +11,7 @@ import java.util.UUID;
 public class CommunityStatsResponse {
     private UUID communityId;
     private String communityName;
+    private String province;
     private String region;
     private Double latitude;
     private Double longitude;

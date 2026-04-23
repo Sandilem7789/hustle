@@ -24,45 +24,52 @@ const FUTURE_COMMUNITIES = [
         <p class="ops-subtitle">Community performance, GIS mapping, and expansion planning</p>
       </div>
 
-      <!-- Community Analytics Grid -->
+      <!-- Community Analytics — grouped by province -->
       <section class="ops-section">
         <h2 class="section-title">Community Analytics</h2>
         <div *ngIf="loading()" class="loading-state">Loading stats…</div>
-        <div *ngIf="!loading()" class="community-grid">
-          <div *ngFor="let c of stats()" class="community-card">
-            <div class="card-header">
-              <span class="community-name">{{ c.communityName }}</span>
-              <span class="region-badge">{{ c.region }}</span>
+        <ng-container *ngIf="!loading()">
+          <div *ngFor="let group of groupedStats()" class="province-group">
+            <div class="province-header">
+              <span class="province-name">{{ group.province }}</span>
+              <span class="province-count">{{ group.communities.length }} {{ group.communities.length === 1 ? 'community' : 'communities' }}</span>
             </div>
-            <div class="stat-row">
-              <div class="stat">
-                <span class="stat-val">{{ c.totalApplicants }}</span>
-                <span class="stat-label">Applicants</span>
+            <div class="community-grid">
+              <div *ngFor="let c of group.communities" class="community-card">
+                <div class="card-header">
+                  <span class="community-name">{{ c.communityName }}</span>
+                </div>
+                <div class="stat-row">
+                  <div class="stat">
+                    <span class="stat-val">{{ c.totalApplicants }}</span>
+                    <span class="stat-label">Applicants</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-val approved">{{ c.stageBreakdown['APPROVED'] ?? 0 }}</span>
+                    <span class="stat-label">Approved</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-val active">{{ c.activeHustlers }}</span>
+                    <span class="stat-label">Active Hustlers</span>
+                  </div>
+                </div>
+                <div class="pipeline-bar">
+                  <div class="pipeline-stage" *ngFor="let entry of stageEntries(c.stageBreakdown)"
+                       [title]="entry.stage + ': ' + entry.count"
+                       [style.flex]="entry.count"
+                       [class]="'stage-' + entry.stage.toLowerCase()">
+                  </div>
+                </div>
+                <div class="stage-legend">
+                  <span *ngFor="let entry of stageEntries(c.stageBreakdown)" class="legend-item">
+                    <span class="legend-dot" [class]="'stage-' + entry.stage.toLowerCase()"></span>
+                    {{ entry.stage | titlecase }}: {{ entry.count }}
+                  </span>
+                </div>
               </div>
-              <div class="stat">
-                <span class="stat-val approved">{{ c.stageBreakdown['APPROVED'] ?? 0 }}</span>
-                <span class="stat-label">Approved</span>
-              </div>
-              <div class="stat">
-                <span class="stat-val active">{{ c.activeHustlers }}</span>
-                <span class="stat-label">Active Hustlers</span>
-              </div>
-            </div>
-            <div class="pipeline-bar">
-              <div class="pipeline-stage" *ngFor="let entry of stageEntries(c.stageBreakdown)"
-                   [title]="entry.stage + ': ' + entry.count"
-                   [style.flex]="entry.count"
-                   [class]="'stage-' + entry.stage.toLowerCase()">
-              </div>
-            </div>
-            <div class="stage-legend">
-              <span *ngFor="let entry of stageEntries(c.stageBreakdown)" class="legend-item">
-                <span class="legend-dot" [class]="'stage-' + entry.stage.toLowerCase()"></span>
-                {{ entry.stage | titlecase }}: {{ entry.count }}
-              </span>
             </div>
           </div>
-        </div>
+        </ng-container>
       </section>
 
       <!-- GIS Map -->
@@ -137,6 +144,31 @@ const FUTURE_COMMUNITIES = [
       color: #A8A29E;
       font-size: 0.875rem;
       padding: 1rem 0;
+    }
+
+    /* ── Province grouping ── */
+    .province-group {
+      margin-bottom: 1.5rem;
+    }
+    .province-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid #F5B800;
+    }
+    .province-name {
+      font-size: 0.9375rem;
+      font-weight: 900;
+      color: #1C1917;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .province-count {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #A8A29E;
     }
 
     /* ── Community Cards ── */
@@ -352,6 +384,16 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.map?.remove();
+  }
+
+  groupedStats(): { province: string; communities: CommunityStats[] }[] {
+    const map = new Map<string, CommunityStats[]>();
+    for (const c of this.stats()) {
+      const key = c.province ?? 'Unknown Province';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    }
+    return Array.from(map.entries()).map(([province, communities]) => ({ province, communities }));
   }
 
   stageEntries(breakdown: { [key: string]: number | undefined }): { stage: string; count: number }[] {
