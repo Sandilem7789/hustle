@@ -310,6 +310,7 @@ export interface AuthResponse {
   firstName: string;
   lastName: string;
   businessType?: string;
+  role?: string;
 }
 
 export interface CustomerRegisterRequest {
@@ -518,7 +519,7 @@ export interface CommunityStats {
   longitude: number | null;
   totalApplicants: number;
   activeHustlers: number;
-  stageBreakdown: Record<string, number>;
+  stageBreakdown: { [key: string]: number | undefined };
 }
 
 export interface FacilitatorHustler {

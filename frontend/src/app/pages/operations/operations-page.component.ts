@@ -354,8 +354,10 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
     this.map?.remove();
   }
 
-  stageEntries(breakdown: Record<string, number>): { stage: string; count: number }[] {
-    return Object.entries(breakdown).map(([stage, count]) => ({ stage, count }));
+  stageEntries(breakdown: { [key: string]: number | undefined }): { stage: string; count: number }[] {
+    return Object.entries(breakdown)
+      .filter(([, count]) => count !== undefined)
+      .map(([stage, count]) => ({ stage, count: count! }));
   }
 
   private initMap(communities: CommunityStats[]): void {
