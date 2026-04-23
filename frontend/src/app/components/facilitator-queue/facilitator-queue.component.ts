@@ -345,22 +345,78 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
                 </button>
               </div>
 
-              <!-- ── Interview result read-only (stage past INTERVIEW_SCHEDULED) ── -->
-              <div class="phase-section phase-done" *ngIf="interviewData[a.id] && a.pipelineStage !== 'INTERVIEW_SCHEDULED' && a.pipelineStage !== 'CAPTURED' && a.pipelineStage !== 'CALLING'">
-                <p class="phase-heading">Interview <span class="outcome-chip outcome-{{ interviewData[a.id].outcome?.toLowerCase() }}">{{ interviewData[a.id].outcome }}</span></p>
-                <div class="criteria-result">
-                  <span [class.crit-yes]="interviewData[a.id].canDescribeBusiness" [class.crit-no]="!interviewData[a.id].canDescribeBusiness">
-                    {{ interviewData[a.id].canDescribeBusiness ? '✓' : '✕' }} Describes business
-                  </span>
-                  <span [class.crit-yes]="interviewData[a.id].appearsGenuine" [class.crit-no]="!interviewData[a.id].appearsGenuine">
-                    {{ interviewData[a.id].appearsGenuine ? '✓' : '✕' }} Appears genuine
-                  </span>
-                  <span [class.crit-yes]="interviewData[a.id].hasRunningBusiness" [class.crit-no]="!interviewData[a.id].hasRunningBusiness">
-                    {{ interviewData[a.id].hasRunningBusiness ? '✓' : '✕' }} Running business
-                  </span>
+              <!-- ── Interview result (stage past INTERVIEW_SCHEDULED) ── -->
+              <ng-container *ngIf="interviewData[a.id] && a.pipelineStage !== 'INTERVIEW_SCHEDULED' && a.pipelineStage !== 'CAPTURED' && a.pipelineStage !== 'CALLING'">
+
+                <!-- Read-only view -->
+                <div class="phase-section phase-done" *ngIf="interviewEditingId() !== a.id">
+                  <div class="phase-heading-row">
+                    <p class="phase-heading" style="margin:0">Interview <span class="outcome-chip outcome-{{ interviewData[a.id].outcome?.toLowerCase() }}">{{ interviewData[a.id].outcome }}</span></p>
+                    <button class="btn btn-edit-interview" (click)="beginEditInterview(a)">✎ Edit</button>
+                  </div>
+                  <div class="criteria-result">
+                    <span [class.crit-yes]="interviewData[a.id].canDescribeBusiness" [class.crit-no]="!interviewData[a.id].canDescribeBusiness">
+                      {{ interviewData[a.id].canDescribeBusiness ? '✓' : '✕' }} Describes business
+                    </span>
+                    <span [class.crit-yes]="interviewData[a.id].appearsGenuine" [class.crit-no]="!interviewData[a.id].appearsGenuine">
+                      {{ interviewData[a.id].appearsGenuine ? '✓' : '✕' }} Appears genuine
+                    </span>
+                    <span [class.crit-yes]="interviewData[a.id].hasRunningBusiness" [class.crit-no]="!interviewData[a.id].hasRunningBusiness">
+                      {{ interviewData[a.id].hasRunningBusiness ? '✓' : '✕' }} Running business
+                    </span>
+                  </div>
+                  <p *ngIf="interviewData[a.id].notes" class="phase-notes">{{ interviewData[a.id].notes }}</p>
                 </div>
-                <p *ngIf="interviewData[a.id].notes" class="phase-notes">{{ interviewData[a.id].notes }}</p>
-              </div>
+
+                <!-- Edit form -->
+                <div class="phase-section" *ngIf="interviewEditingId() === a.id">
+                  <p class="phase-heading">Edit Interview Outcome</p>
+                  <div class="edit-grid">
+                    <label>
+                      <span class="field-label">Date conducted *</span>
+                      <input type="date" [(ngModel)]="interviewForms[a.id].conductedDate" [ngModelOptions]="{standalone: true}" />
+                    </label>
+                    <label>
+                      <span class="field-label">Conducted By</span>
+                      <input [(ngModel)]="interviewForms[a.id].conductedBy" [ngModelOptions]="{standalone: true}" placeholder="Your name" />
+                    </label>
+                  </div>
+                  <div class="criteria-list">
+                    <label class="criteria-row">
+                      <input type="checkbox" [(ngModel)]="interviewForms[a.id].canDescribeBusiness" [ngModelOptions]="{standalone: true}" />
+                      <span>Can clearly describe their business</span>
+                    </label>
+                    <label class="criteria-row">
+                      <input type="checkbox" [(ngModel)]="interviewForms[a.id].appearsGenuine" [ngModelOptions]="{standalone: true}" />
+                      <span>Appears genuine and truthful</span>
+                    </label>
+                    <label class="criteria-row">
+                      <input type="checkbox" [(ngModel)]="interviewForms[a.id].hasRunningBusiness" [ngModelOptions]="{standalone: true}" />
+                      <span>Has an actual running micro business</span>
+                    </label>
+                  </div>
+                  <label class="full-label">
+                    <span class="field-label">Notes</span>
+                    <textarea rows="2" [(ngModel)]="interviewForms[a.id].notes" [ngModelOptions]="{standalone: true}" placeholder="Any notes from the interview…"></textarea>
+                  </label>
+                  <div class="outcome-row">
+                    <span class="field-label">Outcome:</span>
+                    <div class="outcome-btns">
+                      <button class="btn outcome-pass" [class.selected]="interviewForms[a.id].outcome === 'PASS'" (click)="interviewForms[a.id].outcome = 'PASS'">✓ Pass</button>
+                      <button class="btn outcome-fail" [class.selected]="interviewForms[a.id].outcome === 'FAIL'" (click)="interviewForms[a.id].outcome = 'FAIL'">✕ Fail</button>
+                      <button class="btn outcome-noshow" [class.selected]="interviewForms[a.id].outcome === 'NO_SHOW'" (click)="interviewForms[a.id].outcome = 'NO_SHOW'">— No Show</button>
+                    </div>
+                  </div>
+                  <p *ngIf="interviewErrors[a.id]" class="edit-error">{{ interviewErrors[a.id] }}</p>
+                  <div class="edit-actions mt-sm">
+                    <button class="btn approve" (click)="submitInterview(a)" [disabled]="interviewSavingId() === a.id">
+                      {{ interviewSavingId() === a.id ? 'Saving…' : '✓ Save Changes' }}
+                    </button>
+                    <button class="btn btn-cancel" (click)="interviewEditingId.set(null)">Cancel</button>
+                  </div>
+                </div>
+
+              </ng-container>
 
               <!-- ── Verification form (stage = BUSINESS_VERIFICATION) ── -->
               <div class="phase-section" *ngIf="a.pipelineStage === 'BUSINESS_VERIFICATION'">
@@ -975,6 +1031,9 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
     .phase-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E7E5E4; }
     .phase-section.phase-done { background: #FAFAF9; border-radius: 0.75rem; padding: 0.75rem 1rem; border: 1px solid #E7E5E4; border-top: 1px solid #E7E5E4; margin-top: 0.75rem; }
     .phase-heading { font-size: 0.85rem; font-weight: 800; color: #1C1917; margin: 0 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .phase-heading-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .btn-edit-interview { background: none; border: 1.5px solid #E7E5E4; color: #78716C; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 32px; transition: border-color 0.15s, color 0.15s; }
+    .btn-edit-interview:hover { border-color: #F5B800; color: #1C1917; }
     .full-label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; margin-top: 0.75rem; }
     .full-label textarea { border-radius: 0.6rem; border: 2px solid #E7E5E4; padding: 0.5rem 0.75rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; resize: vertical; outline: none; }
     .full-label textarea:focus { border-color: #F5B800; }
@@ -1220,17 +1279,32 @@ export class FacilitatorQueueComponent implements OnInit {
     this.api.recordInterview(a.id, f as InterviewRequest).subscribe({
       next: (result) => {
         this.interviewData[a.id] = result;
-        // Update the applicant's stage in the local list
         this.applicants.update(list => list.map(x =>
           x.id === a.id ? { ...x, pipelineStage: 'INTERVIEWED' } : x
         ));
         this.interviewSavingId.set(null);
+        this.interviewEditingId.set(null);
       },
       error: (err) => {
         this.interviewErrors[a.id] = err?.error?.message || 'Failed to save interview.';
         this.interviewSavingId.set(null);
       }
     });
+  }
+
+  beginEditInterview(a: ApplicantResponse): void {
+    const existing = this.interviewData[a.id];
+    this.interviewForms[a.id] = {
+      conductedDate: existing?.conductedDate ?? '',
+      conductedBy: existing?.conductedBy ?? '',
+      canDescribeBusiness: existing?.canDescribeBusiness ?? false,
+      appearsGenuine: existing?.appearsGenuine ?? false,
+      hasRunningBusiness: existing?.hasRunningBusiness ?? false,
+      notes: existing?.notes ?? '',
+      outcome: existing?.outcome as InterviewRequest['outcome'] ?? undefined,
+    };
+    this.interviewErrors[a.id] = '';
+    this.interviewEditingId.set(a.id);
   }
 
   captureGps(applicantId: string): void {
@@ -1554,6 +1628,7 @@ export class FacilitatorQueueComponent implements OnInit {
   interviewForms: Record<string, Partial<InterviewRequest>> = {};
   interviewErrors: Record<string, string> = {};
   interviewSavingId = signal<string | null>(null);
+  interviewEditingId = signal<string | null>(null);
 
   // ── Verification state ──────────────────────────────────────────────────
   verificationData: Record<string, BusinessVerificationResponse> = {};
