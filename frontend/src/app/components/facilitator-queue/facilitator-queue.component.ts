@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, Input, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler, ApplicantResponse, ApplicantRequest, CohortCapResponse, InterviewResponse, InterviewRequest, BusinessVerificationResponse, BusinessVerificationRequest, ActivateApplicantResponse, MonthlyCheckInResponse, MonthlyCheckInRequest } from '../../services/api.service';
+import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler, ApplicantResponse, ApplicantRequest, CohortCapResponse, InterviewResponse, InterviewRequest, BusinessVerificationResponse, BusinessVerificationRequest, ActivateApplicantResponse, MonthlyCheckInResponse, MonthlyCheckInRequest, IncomeEntryResponse, IncomeEntryRequest } from '../../services/api.service';
 import { MapPickerComponent } from '../map-picker/map-picker.component';
 
 @Component({
@@ -560,7 +560,7 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
             <div class="hc-detail" *ngIf="expandedHustler() === h.businessProfileId" (click)="$event.stopPropagation()">
               <!-- Sub-tabs -->
               <div class="sub-tabs">
-                <button [class.active]="hSubTab() === 'finance'" (click)="hSubTab.set('finance')">Finances</button>
+                <button [class.active]="hSubTab() === 'finance'" (click)="openFinanceTab(h)">Finances</button>
                 <button [class.active]="hSubTab() === 'business'" (click)="hSubTab.set('business')">Business</button>
                 <button [class.active]="hSubTab() === 'checkin'" (click)="openCheckInTab(h)">
                   Check-in<span *ngIf="h.missedCheckIn" class="missed-dot">●</span>
@@ -581,6 +581,70 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
                   <div class="stat-box">
                     <span class="stat-label">Month Profit</span>
                     <span class="stat-val" [class.income]="h.monthProfit >= 0" [class.expense]="h.monthProfit < 0">R {{ h.monthProfit | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+
+                <!-- Income History -->
+                <div class="income-history-section">
+                  <p class="phase-heading" style="margin-top:1rem">Income History</p>
+                  <div *ngIf="incomeLoading() === h.businessProfileId" class="muted small" style="padding:0.5rem 0">Loading…</div>
+                  <div *ngIf="incomeLoading() !== h.businessProfileId">
+                    <div *ngIf="!incomeEntries[h.businessProfileId]?.length" class="muted small" style="padding:0.5rem 0">No entries recorded.</div>
+                    <div *ngFor="let entry of incomeEntries[h.businessProfileId]" class="income-entry-row">
+
+                      <!-- Edit form (inline) -->
+                      <ng-container *ngIf="incomeEditingId() === entry.id; else incomeReadRow">
+                        <div class="income-edit-form">
+                          <div class="income-edit-grid">
+                            <label>
+                              <span class="field-label">Date</span>
+                              <input type="date" [(ngModel)]="incomeEditData.date" [ngModelOptions]="{standalone: true}" />
+                            </label>
+                            <label>
+                              <span class="field-label">Type</span>
+                              <select [(ngModel)]="incomeEditData.entryType" [ngModelOptions]="{standalone: true}">
+                                <option value="INCOME">Income</option>
+                                <option value="EXPENSE">Expense</option>
+                              </select>
+                            </label>
+                            <label>
+                              <span class="field-label">Amount (R)</span>
+                              <input type="number" min="0" step="0.01" [(ngModel)]="incomeEditData.amount" [ngModelOptions]="{standalone: true}" />
+                            </label>
+                            <label>
+                              <span class="field-label">Channel</span>
+                              <select [(ngModel)]="incomeEditData.channel" [ngModelOptions]="{standalone: true}">
+                                <option value="CASH">Cash</option>
+                                <option value="MARKETPLACE">Marketplace</option>
+                              </select>
+                            </label>
+                            <label class="income-edit-notes">
+                              <span class="field-label">Notes</span>
+                              <input type="text" [(ngModel)]="incomeEditData.notes" [ngModelOptions]="{standalone: true}" placeholder="Optional notes" />
+                            </label>
+                          </div>
+                          <p *ngIf="incomeErrors[h.businessProfileId]" class="edit-error">{{ incomeErrors[h.businessProfileId] }}</p>
+                          <div class="income-edit-actions">
+                            <button class="btn approve" (click)="saveIncomeEdit(entry, h)" [disabled]="incomeSavingId() === h.businessProfileId">
+                              {{ incomeSavingId() === h.businessProfileId ? 'Saving…' : '✓ Save' }}
+                            </button>
+                            <button class="btn btn-ghost" (click)="cancelIncomeEdit(h)">Cancel</button>
+                          </div>
+                        </div>
+                      </ng-container>
+
+                      <!-- Read view -->
+                      <ng-template #incomeReadRow>
+                        <div class="income-row-content">
+                          <span class="income-date">{{ entry.date }}</span>
+                          <span class="entry-type-badge" [class.badge-income]="entry.entryType === 'INCOME'" [class.badge-expense]="entry.entryType === 'EXPENSE'">{{ entry.entryType }}</span>
+                          <span class="income-amount" [class.income]="entry.entryType === 'INCOME'" [class.expense]="entry.entryType === 'EXPENSE'">R {{ entry.amount | number:'1.2-2' }}</span>
+                          <span class="income-channel muted small">{{ entry.channel }}</span>
+                          <span class="income-notes muted small">{{ entry.notes || '' }}</span>
+                          <button class="btn-edit-sm" (click)="startIncomeEdit(entry, h)">Edit</button>
+                        </div>
+                      </ng-template>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -961,6 +1025,27 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
     .stat-val { font-size: 1rem; font-weight: 800; color: #1C1917; }
     .stat-val.income { color: #2DB344; }
     .stat-val.expense { color: #E53935; }
+    .income-history-section { margin-top: 0.5rem; }
+    .income-entry-row { border: 1px solid #E7E5E4; border-radius: 0.75rem; margin-bottom: 0.5rem; overflow: hidden; background: white; }
+    .income-row-content { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; flex-wrap: wrap; }
+    .income-date { font-size: 0.8rem; font-weight: 700; color: #1C1917; min-width: 80px; }
+    .entry-type-badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+    .badge-income { background: rgba(45,179,68,0.12); color: #166534; }
+    .badge-expense { background: rgba(229,57,53,0.1); color: #E53935; }
+    .income-amount { font-size: 0.9rem; font-weight: 800; }
+    .income-amount.income { color: #2DB344; }
+    .income-amount.expense { color: #E53935; }
+    .income-channel { margin-left: auto; }
+    .income-notes { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-edit-sm { background: #F5F0E8; border: 1px solid #E7E5E4; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: inherit; color: #1C1917; flex-shrink: 0; }
+    .btn-edit-sm:hover { border-color: #F5B800; }
+    .income-edit-form { padding: 0.75rem; background: rgba(245,184,0,0.04); }
+    .income-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .income-edit-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; }
+    .income-edit-notes { grid-column: span 2; }
+    .income-edit-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+    .btn-ghost { background: #F5F0E8; color: #78716C; }
+    @media (max-width: 480px) { .income-edit-grid { grid-template-columns: 1fr; } .income-edit-notes { grid-column: span 1; } .income-row-content { gap: 0.4rem; } }
     .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0 0 1.25rem; }
     .filters label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; min-width: 140px; }
     select { border-radius: 0.75rem; border: 2px solid #E7E5E4; padding: 0.5rem 0.75rem; font-size: 0.95rem; font-family: inherit; background: white; color: #1C1917; outline: none; }
@@ -1553,6 +1638,14 @@ export class FacilitatorQueueComponent implements OnInit {
   checkInErrors: Record<string, string> = {};
   checkInSavingId = signal<string | null>(null);
 
+  // ── Income history state ─────────────────────────────────────────────────
+  incomeEntries: Record<string, IncomeEntryResponse[]> = {};
+  incomeLoading = signal<string | null>(null);
+  incomeEditingId = signal<string | null>(null);
+  incomeEditData: { date: string; amount: number; channel: string; entryType: string; notes: string } = { date: '', amount: 0, channel: 'CASH', entryType: 'INCOME', notes: '' };
+  incomeSavingId = signal<string | null>(null);
+  incomeErrors: Record<string, string> = {};
+
   currentMonth(): string {
     return new Date().toISOString().slice(0, 7);
   }
@@ -1568,6 +1661,59 @@ export class FacilitatorQueueComponent implements OnInit {
         error: () => { this.checkInHistory[h.businessProfileId] = []; }
       });
     }
+  }
+
+  openFinanceTab(h: FacilitatorHustler): void {
+    this.hSubTab.set('finance');
+    if (!this.incomeEntries[h.businessProfileId]) {
+      this.incomeLoading.set(h.businessProfileId);
+      this.api.listHustlerIncome(h.businessProfileId).subscribe({
+        next: (list) => { this.incomeEntries[h.businessProfileId] = list; this.incomeLoading.set(null); },
+        error: () => { this.incomeEntries[h.businessProfileId] = []; this.incomeLoading.set(null); }
+      });
+    }
+  }
+
+  startIncomeEdit(entry: IncomeEntryResponse, h: FacilitatorHustler): void {
+    this.incomeEditingId.set(entry.id);
+    this.incomeEditData = {
+      date: entry.date,
+      amount: entry.amount,
+      channel: entry.channel,
+      entryType: entry.entryType,
+      notes: entry.notes ?? ''
+    };
+    this.incomeErrors[h.businessProfileId] = '';
+  }
+
+  cancelIncomeEdit(h: FacilitatorHustler): void {
+    this.incomeEditingId.set(null);
+    this.incomeErrors[h.businessProfileId] = '';
+  }
+
+  saveIncomeEdit(entry: IncomeEntryResponse, h: FacilitatorHustler): void {
+    this.incomeSavingId.set(h.businessProfileId);
+    this.incomeErrors[h.businessProfileId] = '';
+    const payload: IncomeEntryRequest = {
+      date: this.incomeEditData.date,
+      amount: this.incomeEditData.amount,
+      channel: this.incomeEditData.channel as 'CASH' | 'MARKETPLACE',
+      entryType: this.incomeEditData.entryType as 'INCOME' | 'EXPENSE',
+      notes: this.incomeEditData.notes || undefined
+    };
+    this.api.updateHustlerIncome(h.businessProfileId, entry.id, payload).subscribe({
+      next: (updated) => {
+        this.incomeEntries[h.businessProfileId] = this.incomeEntries[h.businessProfileId].map(e =>
+          e.id === updated.id ? updated : e
+        );
+        this.incomeEditingId.set(null);
+        this.incomeSavingId.set(null);
+      },
+      error: (err) => {
+        this.incomeErrors[h.businessProfileId] = err?.error?.message || 'Failed to save changes.';
+        this.incomeSavingId.set(null);
+      }
+    });
   }
 
   submitCheckIn(h: FacilitatorHustler): void {
@@ -1687,6 +1833,13 @@ export class FacilitatorQueueComponent implements OnInit {
       this.hSubTab.set('finance');
       this.confirmingDeactivate.set(null);
       this.hEditingId.set(null);
+      if (!this.incomeEntries[id]) {
+        this.incomeLoading.set(id);
+        this.api.listHustlerIncome(id).subscribe({
+          next: (list) => { this.incomeEntries[id] = list; this.incomeLoading.set(null); },
+          error: () => { this.incomeEntries[id] = []; this.incomeLoading.set(null); }
+        });
+      }
     }
   }
 

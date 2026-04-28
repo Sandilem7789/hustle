@@ -7,6 +7,7 @@ import com.hustle.economy.entity.BusinessProfile;
 import com.hustle.economy.entity.EntryType;
 import com.hustle.economy.entity.IncomeEntry;
 import com.hustle.economy.repository.IncomeEntryRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,6 +102,19 @@ public class IncomeService {
               .append(e.getNotes() != null ? e.getNotes().replace(",", ";") : "").append("\n");
         }
         return sb.toString();
+    }
+
+    @Transactional
+    public IncomeEntryResponse updateIncome(UUID entryId, IncomeEntryRequest request) {
+        IncomeEntry entry = incomeEntryRepository.findById(entryId)
+                .orElseThrow(() -> new EntityNotFoundException("Income entry not found"));
+        EntryType type = "EXPENSE".equalsIgnoreCase(request.getEntryType()) ? EntryType.EXPENSE : EntryType.INCOME;
+        entry.setDate(request.getDate());
+        entry.setAmount(request.getAmount());
+        entry.setChannel(request.getChannel().toUpperCase(Locale.ROOT));
+        entry.setEntryType(type);
+        entry.setNotes(request.getNotes());
+        return toResponse(incomeEntryRepository.save(entry));
     }
 
     private boolean isIncome(IncomeEntry e) {

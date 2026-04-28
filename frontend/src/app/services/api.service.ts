@@ -293,6 +293,14 @@ export class ApiService {
     return this.http.patch<FacilitatorHustler>(`${this.baseUrl}/api/facilitator/hustlers/${id}/active`, { active });
   }
 
+  listHustlerIncome(businessProfileId: string): Observable<IncomeEntryResponse[]> {
+    return this.http.get<IncomeEntryResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income`);
+  }
+
+  updateHustlerIncome(businessProfileId: string, entryId: string, payload: IncomeEntryRequest): Observable<IncomeEntryResponse> {
+    return this.http.put<IncomeEntryResponse>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income/${entryId}`, payload);
+  }
+
   // ─── Operations ───────────────────────────────────────────────────────────
   getOperationsStats(token: string): Observable<CommunityStats[]> {
     return this.http.get<CommunityStats[]>(`${this.baseUrl}/api/operations/stats`, {
