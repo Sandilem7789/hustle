@@ -1,16 +1,10 @@
 import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ApiService, CommunityStats } from '../../services/api.service';
+import { ApiService, CommunityStats, BusinessProfile } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 import * as L from 'leaflet';
-
-const FUTURE_COMMUNITIES = [
-  { name: 'KwaDapha', region: 'KwaZulu-Natal', status: 'Planned' },
-  { name: 'KwaHlabisa', region: 'KwaZulu-Natal', status: 'Planned' },
-  { name: 'Mpumalanga Communities', region: 'Mpumalanga', status: 'Expansion Phase' },
-];
 
 @Component({
   selector: 'app-operations-page',
@@ -29,23 +23,84 @@ const FUTURE_COMMUNITIES = [
       <!-- Header -->
       <div class="ops-header">
         <h1 class="ops-title">Operations</h1>
-        <p class="ops-subtitle">Community performance, GIS mapping, and expansion planning</p>
+        <p class="ops-subtitle">Community performance and GIS mapping</p>
       </div>
 
       <!-- Community Analytics — grouped by province -->
       <section class="ops-section">
         <h2 class="section-title">Community Analytics</h2>
         <div *ngIf="loading()" class="loading-state">Loading stats…</div>
-        <ng-container *ngIf="!loading()">
+
+        <!-- Detail view for a selected community -->
+        <ng-container *ngIf="!loading() && selectedCommunity()">
+          <div class="detail-back-row">
+            <button class="back-btn" (click)="clearSelectedCommunity()">← Back</button>
+            <span class="detail-title">{{ selectedCommunity()!.communityName }}</span>
+          </div>
+
+          <!-- Stats summary -->
+          <div class="stat-row detail-stats">
+            <div class="stat">
+              <span class="stat-val">{{ selectedCommunity()!.totalApplicants }}</span>
+              <span class="stat-label">Applicants</span>
+            </div>
+            <div class="stat">
+              <span class="stat-val approved">{{ selectedCommunity()!.stageBreakdown['APPROVED'] ?? 0 }}</span>
+              <span class="stat-label">Approved</span>
+            </div>
+            <div class="stat">
+              <span class="stat-val active">{{ selectedCommunity()!.activeHustlers }}</span>
+              <span class="stat-label">Active Hustlers</span>
+            </div>
+          </div>
+
+          <!-- Pipeline bar -->
+          <div class="pipeline-bar detail-pipeline">
+            <div *ngFor="let entry of stageEntries(selectedCommunity()!.stageBreakdown)"
+                 [title]="entry.stage + ': ' + entry.count"
+                 [style.flex]="entry.count"
+                 [class]="'stage-' + entry.stage.toLowerCase()">
+            </div>
+          </div>
+          <div class="stage-legend" style="margin-bottom:1.25rem">
+            <span *ngFor="let entry of stageEntries(selectedCommunity()!.stageBreakdown)" class="legend-item">
+              <span class="legend-dot" [class]="'stage-' + entry.stage.toLowerCase()"></span>
+              {{ entry.stage | titlecase }}: {{ entry.count }}
+            </span>
+          </div>
+
+          <!-- Active hustlers list -->
+          <div class="hustlers-list-title">Active Hustlers</div>
+          <div *ngIf="hustlersLoading()" class="loading-state">Loading hustlers…</div>
+          <div *ngIf="!hustlersLoading() && communityHustlers().length === 0" class="loading-state">No active hustlers in this community yet.</div>
+          <div class="hustler-list" *ngIf="!hustlersLoading() && communityHustlers().length > 0">
+            <div *ngFor="let h of communityHustlers()" class="hustler-row">
+              <div class="hustler-info">
+                <span class="hustler-name">{{ h.businessName }}</span>
+                <span class="hustler-type">{{ h.businessType }}</span>
+              </div>
+              <span class="hustler-area" *ngIf="h.operatingArea">{{ h.operatingArea }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Community grid -->
+        <ng-container *ngIf="!loading() && !selectedCommunity()">
           <div *ngFor="let group of groupedStats()" class="province-group">
             <div class="province-header">
               <span class="province-name">{{ group.province }}</span>
               <span class="province-count">{{ group.communities.length }} {{ group.communities.length === 1 ? 'community' : 'communities' }}</span>
             </div>
             <div class="community-grid">
-              <div *ngFor="let c of group.communities" class="community-card">
+              <div *ngFor="let c of group.communities"
+                   class="community-card clickable-card"
+                   (click)="selectCommunity(c)"
+                   role="button"
+                   tabindex="0"
+                   (keydown.enter)="selectCommunity(c)">
                 <div class="card-header">
                   <span class="community-name">{{ c.communityName }}</span>
+                  <span class="chevron">›</span>
                 </div>
                 <div class="stat-row">
                   <div class="stat">
@@ -62,7 +117,7 @@ const FUTURE_COMMUNITIES = [
                   </div>
                 </div>
                 <div class="pipeline-bar">
-                  <div class="pipeline-stage" *ngFor="let entry of stageEntries(c.stageBreakdown)"
+                  <div *ngFor="let entry of stageEntries(c.stageBreakdown)"
                        [title]="entry.stage + ': ' + entry.count"
                        [style.flex]="entry.count"
                        [class]="'stage-' + entry.stage.toLowerCase()">
@@ -85,24 +140,6 @@ const FUTURE_COMMUNITIES = [
         <h2 class="section-title">GIS — Community Locations</h2>
         <div id="ops-map" class="ops-map"></div>
         <p class="map-note">Coordinates are approximate — update via community settings once field-verified.</p>
-      </section>
-
-      <!-- Future Communities -->
-      <section class="ops-section">
-        <h2 class="section-title">Future Communities</h2>
-        <p class="section-desc">Communities planned for future cohorts and regional expansion.</p>
-        <div class="future-grid">
-          <div *ngFor="let fc of futureCommunities" class="future-card">
-            <div class="future-name">{{ fc.name }}</div>
-            <div class="future-region">{{ fc.region }}</div>
-            <span class="future-badge" [class.expansion]="fc.status !== 'Planned'">{{ fc.status }}</span>
-          </div>
-          <div class="future-card add-card">
-            <div class="add-icon">+</div>
-            <div class="add-label">Add Community</div>
-            <div class="add-sub">Coming soon</div>
-          </div>
-        </div>
       </section>
 
       <!-- Sign Out -->
@@ -317,69 +354,99 @@ const FUTURE_COMMUNITIES = [
       font-style: italic;
     }
 
-    /* ── Future Communities ── */
-    .future-grid {
-      display: grid;
+    /* ── Clickable card ── */
+    .clickable-card {
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .clickable-card:hover {
+      box-shadow: 0 6px 20px rgba(28,25,23,0.12);
+      transform: translateY(-1px);
+    }
+    .clickable-card:active { transform: translateY(0); }
+    .chevron {
+      font-size: 1.25rem;
+      color: #A8A29E;
+      line-height: 1;
+    }
+
+    /* ── Community detail view ── */
+    .detail-back-row {
+      display: flex;
+      align-items: center;
       gap: 0.75rem;
-      grid-template-columns: repeat(2, 1fr);
+      margin-bottom: 1rem;
     }
-    .future-card {
-      background: #fff;
+    .back-btn {
+      border: 1.5px solid #E7E5E4;
+      background: none;
+      color: #78716C;
+      border-radius: 999px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      min-height: 40px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .back-btn:hover { border-color: #1C1917; color: #1C1917; }
+    .detail-title {
+      font-size: 1.125rem;
+      font-weight: 900;
+      color: #1C1917;
+    }
+    .detail-stats { margin-bottom: 0.75rem; }
+    .detail-pipeline { margin-bottom: 0.5rem; height: 10px; }
+
+    /* ── Hustler list ── */
+    .hustlers-list-title {
+      font-size: 0.8125rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #A8A29E;
+      margin-bottom: 0.75rem;
+    }
+    .hustler-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .hustler-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FAFAF9;
       border: 1px solid #E7E5E4;
-      border-radius: 1rem;
-      padding: 1rem;
-      box-shadow: 0 2px 8px rgba(28,25,23,0.04);
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      gap: 0.5rem;
     }
-    .future-name {
+    .hustler-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .hustler-name {
       font-size: 0.9375rem;
       font-weight: 800;
       color: #1C1917;
-      margin-bottom: 0.2rem;
     }
-    .future-region {
+    .hustler-type {
       font-size: 0.75rem;
       color: #78716C;
-      margin-bottom: 0.5rem;
+      font-weight: 600;
     }
-    .future-badge {
-      display: inline-block;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      background: #F5F5F4;
-      color: #78716C;
-      border-radius: 999px;
-      padding: 0.2rem 0.6rem;
-    }
-    .future-badge.expansion {
-      background: rgba(0,168,150,0.12);
-      color: #00766A;
-    }
-    .add-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-style: dashed;
-      border-color: #D6D3D1;
+    .hustler-area {
+      font-size: 0.75rem;
       color: #A8A29E;
-      gap: 0.25rem;
-    }
-    .add-icon {
-      font-size: 1.5rem;
-      font-weight: 300;
-      line-height: 1;
-    }
-    .add-label {
-      font-size: 0.8125rem;
-      font-weight: 800;
-    }
-    .add-sub {
-      font-size: 0.6875rem;
+      font-weight: 600;
+      text-align: right;
     }
 
     @media (min-width: 640px) {
       .community-grid { grid-template-columns: repeat(2, 1fr); }
-      .future-grid { grid-template-columns: repeat(3, 1fr); }
       .ops-map { height: 420px; }
     }
     @media (min-width: 960px) {
@@ -394,7 +461,9 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
 
   readonly stats = signal<CommunityStats[]>([]);
   readonly loading = signal(true);
-  readonly futureCommunities = FUTURE_COMMUNITIES;
+  readonly selectedCommunity = signal<CommunityStats | null>(null);
+  readonly communityHustlers = signal<BusinessProfile[]>([]);
+  readonly hustlersLoading = signal(false);
 
   readonly authorized = computed(() => {
     const r = this.auth.state()?.role;
@@ -443,6 +512,21 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
     return Object.entries(breakdown)
       .filter(([, count]) => count !== undefined)
       .map(([stage, count]) => ({ stage, count: count! }));
+  }
+
+  selectCommunity(community: CommunityStats): void {
+    this.selectedCommunity.set(community);
+    this.communityHustlers.set([]);
+    this.hustlersLoading.set(true);
+    this.api.listHustlersByCommunity(community.communityId).subscribe({
+      next: (hustlers) => { this.communityHustlers.set(hustlers); this.hustlersLoading.set(false); },
+      error: () => this.hustlersLoading.set(false)
+    });
+  }
+
+  clearSelectedCommunity(): void {
+    this.selectedCommunity.set(null);
+    this.communityHustlers.set([]);
   }
 
   private initMap(communities: CommunityStats[]): void {
