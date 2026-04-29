@@ -19,7 +19,7 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
         </div>
 
         <!-- LOGIN FORM -->
-        <div *ngIf="activeTab() === 'login'" class="form-section login-section">
+        <div [hidden]="activeTab() !== 'login'" class="form-section login-section">
           <h2>Welcome back</h2>
           <p class="muted">Log in with your phone number and password.</p>
           <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-grid">
@@ -40,7 +40,7 @@ import { RegistrationFormComponent } from '../../components/registration-form/re
         </div>
 
         <!-- REGISTER FORM -->
-        <div *ngIf="activeTab() === 'register'" class="form-section">
+        <div [hidden]="activeTab() !== 'register'" class="form-section">
           <app-registration-form></app-registration-form>
           <p class="switch-hint" style="margin-top:1rem">Already registered? <button class="link-btn" (click)="activeTab.set('login')">Login here</button></p>
         </div>
