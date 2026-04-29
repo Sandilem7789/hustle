@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 const resolvedBaseUrl = (() => {
-  if (environment.apiBaseUrl && environment.apiBaseUrl.length) {
+  if (environment.apiBaseUrl != null) {
     return environment.apiBaseUrl;
   }
   if (typeof window === 'undefined') {
