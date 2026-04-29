@@ -6,6 +6,7 @@ set -euo pipefail
 REPO_URL="https://github.com/Sandilem7789/hustle.git"
 INSTALL_DIR="$HOME/hustle-backend"
 COMPOSE_FILE="docker-compose.prod.yml"
+TRAEFIK_NETWORK="root_default"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 info()    { echo -e "${GREEN}[INFO]${NC}  $*"; }
@@ -20,7 +21,7 @@ echo ""
 
 # ── 1. Safety: refuse to run as root ──────────────────────────────────────────
 if [ "$EUID" -eq 0 ]; then
-    abort "Do not run this script as root. Run as user 'sandile' and sudo will be used where needed."
+    abort "Do not run this script as root. Run as user 'sandile'."
 fi
 
 # ── 2. Docker check ───────────────────────────────────────────────────────────
@@ -35,7 +36,21 @@ fi
 
 info "Docker OK."
 
-# ── 3. Clone or update the repo ───────────────────────────────────────────────
+# ── 3. Verify Traefik network exists ──────────────────────────────────────────
+if ! docker network inspect "$TRAEFIK_NETWORK" &>/dev/null; then
+    abort "Traefik network '$TRAEFIK_NETWORK' not found. Is Traefik running?"
+fi
+info "Traefik network '$TRAEFIK_NETWORK' found."
+
+# ── 4. Stop old hustle stack inside OpenClaw workspace (if running) ───────────
+OLD_COMPOSE="/home/sandile/openclaw/workspace/hustle/docker-compose.yml"
+if [ -f "$OLD_COMPOSE" ]; then
+    warn "Found old hustle stack in OpenClaw workspace — stopping it..."
+    docker compose -f "$OLD_COMPOSE" down --remove-orphans 2>/dev/null || true
+    info "Old stack stopped."
+fi
+
+# ── 5. Clone or update the repo ───────────────────────────────────────────────
 if [ -d "$INSTALL_DIR/.git" ]; then
     info "Repo already exists — pulling latest..."
     git -C "$INSTALL_DIR" pull origin main
@@ -46,9 +61,9 @@ fi
 
 cd "$INSTALL_DIR"
 
-# ── 4. Create .env if not present ─────────────────────────────────────────────
+# ── 6. Create .env if not present ─────────────────────────────────────────────
 if [ -f ".env" ]; then
-    warn ".env already exists — skipping credential prompt. Delete it and re-run if you need to change credentials."
+    warn ".env already exists — skipping credential prompt. Delete it and re-run to change credentials."
 else
     echo ""
     info "Creating .env — enter your production credentials."
@@ -77,37 +92,24 @@ POSTGRES_DB=${PG_DB}
 STAFF_PHONE=${STAFF_PHONE}
 STAFF_PASSWORD=${STAFF_PASS}
 EOF
-    # Owner read/write only — no one else can read credentials
     chmod 600 .env
     info ".env created with permissions 600 (owner-only)."
 fi
 
-# ── 5. Free port 80 if something else is holding it ───────────────────────────
-if sudo ss -tlnp 2>/dev/null | grep -q ':80 '; then
-    warn "Port 80 is already in use:"
-    sudo ss -tlnp | grep ':80 ' || true
-    echo ""
-    read -rp "  Stop the process on port 80 and continue? [y/N]: " CONFIRM
-    [[ "$CONFIRM" =~ ^[Yy]$ ]] || abort "Aborted. Free port 80 manually first."
-
-    # Stop host-level Nginx if it's the culprit
-    sudo systemctl stop nginx  2>/dev/null && info "Stopped host nginx." || true
-    sudo systemctl disable nginx 2>/dev/null || true
-fi
-
-# ── 6. Tear down any old stack ────────────────────────────────────────────────
-info "Stopping any previous stack..."
+# ── 7. Tear down any previous hustle-backend stack ────────────────────────────
+info "Stopping any previous hustle-backend stack..."
 docker compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
 
-# ── 7. Build and start ────────────────────────────────────────────────────────
+# ── 8. Build and start ────────────────────────────────────────────────────────
 info "Building images and starting services (first run takes a few minutes)..."
 docker compose -f "$COMPOSE_FILE" up -d --build
 
-# ── 8. Health check — wait up to 90 s for the backend ────────────────────────
+# ── 9. Health check — query the backend container directly ────────────────────
 info "Waiting for backend to be ready..."
 READY=0
-for i in $(seq 1 30); do
-    if curl -sf http://localhost/api/hustlers >/dev/null 2>&1; then
+for i in $(seq 1 40); do
+    if docker compose -f "$COMPOSE_FILE" exec -T backend \
+        curl -sf http://localhost:8080/api/hustlers >/dev/null 2>&1; then
         READY=1
         break
     fi
@@ -122,8 +124,8 @@ if [ "$READY" -eq 1 ]; then
     echo -e "  Deployment successful!"
     echo -e "======================================${NC}"
     echo ""
-    info "API endpoint : http://148.230.79.29/api/"
-    info "Frontend     : https://hustleconomy.netlify.app/"
+    info "API (via Traefik) : https://srv1144757.hstgr.cloud/api/"
+    info "Frontend          : https://hustleconomy.netlify.app/"
     echo ""
     info "Useful commands:"
     echo "  docker compose -f $COMPOSE_FILE logs -f backend   # live backend logs"
@@ -131,5 +133,5 @@ if [ "$READY" -eq 1 ]; then
     echo "  docker compose -f $COMPOSE_FILE down               # stop everything"
 else
     echo ""
-    abort "Backend did not respond after 90 s. Check logs:\n  docker compose -f $COMPOSE_FILE logs backend"
+    abort "Backend did not respond after 120 s. Check logs:\n  docker compose -f $COMPOSE_FILE logs backend"
 fi

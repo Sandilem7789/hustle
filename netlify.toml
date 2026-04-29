@@ -5,7 +5,7 @@
 
 [[redirects]]
   from   = "/api/*"
-  to     = "http://148.230.79.29/api/:splat"
+  to     = "https://srv1144757.hstgr.cloud/api/:splat"
   status = 200
   force  = true
 
