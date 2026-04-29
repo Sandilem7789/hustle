@@ -4,6 +4,12 @@
   publish = "dist/frontend/browser"
 
 [[redirects]]
+  from   = "/api/*"
+  to     = "http://148.230.79.29:8080/api/:splat"
+  status = 200
+  force  = true
+
+[[redirects]]
   from   = "/*"
   to     = "/index.html"
   status = 200
