@@ -3,17 +3,16 @@ package com.hustle.economy.controller;
 import com.hustle.economy.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,15 +22,22 @@ import java.util.UUID;
 public class UploadController {
 
     private final AuthService authService;
+    private final S3Client s3Client;
 
-    @Value("${app.uploads.dir:/app/uploads}")
-    private String uploadsDir;
+    @Value("${r2.bucket}")
+    private String bucket;
 
     @PostMapping
     public ResponseEntity<Map<String, String>> upload(
             @RequestHeader("X-Auth-Token") String token,
             @RequestParam("file") MultipartFile file) throws IOException {
+
         authService.requireAuth(token);
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Only image files are allowed"));
+        }
 
         String original = file.getOriginalFilename();
         String ext = (original != null && original.contains("."))
@@ -39,24 +45,31 @@ public class UploadController {
                 : ".jpg";
         String filename = UUID.randomUUID().toString().replace("-", "") + ext;
 
-        Path dir = Paths.get(uploadsDir);
-        Files.createDirectories(dir);
-        Files.copy(file.getInputStream(), dir.resolve(filename));
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(filename)
+                        .contentType(contentType)
+                        .build(),
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
         return ResponseEntity.ok(Map.of("url", "/api/uploads/" + filename));
     }
 
     @GetMapping("/{filename:.+}")
-    public ResponseEntity<Resource> serve(@PathVariable String filename) throws IOException {
-        Path file = Paths.get(uploadsDir).resolve(filename).normalize();
-        Resource resource = new FileSystemResource(file);
-        if (!resource.exists()) {
+    public ResponseEntity<byte[]> serve(@PathVariable String filename) {
+        try {
+            ResponseBytes<GetObjectResponse> obj = s3Client.getObjectAsBytes(
+                    GetObjectRequest.builder().bucket(bucket).key(filename).build());
+
+            String ct = obj.response().contentType();
+            return ResponseEntity.ok()
+                    .header("Cache-Control", "public, max-age=31536000, immutable")
+                    .contentType(MediaType.parseMediaType(ct != null ? ct : "application/octet-stream"))
+                    .body(obj.asByteArray());
+
+        } catch (NoSuchKeyException e) {
             return ResponseEntity.notFound().build();
         }
-        String contentType = Files.probeContentType(file);
-        if (contentType == null) contentType = "application/octet-stream";
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .body(resource);
     }
 }
