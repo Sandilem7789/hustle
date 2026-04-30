@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 
 const resolvedBaseUrl = (() => {
   if (environment.apiBaseUrl != null) {
@@ -19,7 +20,11 @@ const resolvedBaseUrl = (() => {
 export class ApiService {
   readonly baseUrl = resolvedBaseUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: AuthService) {}
+
+  private ah(): HttpHeaders {
+    return new HttpHeaders({ 'X-Auth-Token': this.auth.getToken() ?? '' });
+  }
 
   // ─── Hustler Auth ────────────────────────────────────────────────────────
   login(phone: string, password: string): Observable<AuthResponse> {
@@ -106,11 +111,11 @@ export class ApiService {
 
   // ─── Facilitator Driver Management ───────────────────────────────────────
   listFacilitatorDrivers(): Observable<DriverResponse[]> {
-    return this.http.get<DriverResponse[]>(`${this.baseUrl}/api/facilitator/drivers`);
+    return this.http.get<DriverResponse[]>(`${this.baseUrl}/api/facilitator/drivers`, { headers: this.ah() });
   }
 
   setDriverStatus(driverId: string, status: string): Observable<DriverResponse> {
-    return this.http.patch<DriverResponse>(`${this.baseUrl}/api/facilitator/drivers/${driverId}/status`, { status });
+    return this.http.patch<DriverResponse>(`${this.baseUrl}/api/facilitator/drivers/${driverId}/status`, { status }, { headers: this.ah() });
   }
 
   // ─── Hustler Applications ────────────────────────────────────────────────
@@ -121,15 +126,15 @@ export class ApiService {
   listApplications(status = 'PENDING', communityId?: string): Observable<HustlerApplication[]> {
     const params: Record<string, string> = { status };
     if (communityId) params['communityId'] = communityId;
-    return this.http.get<HustlerApplication[]>(`${this.baseUrl}/api/hustlers`, { params });
+    return this.http.get<HustlerApplication[]>(`${this.baseUrl}/api/hustlers`, { params, headers: this.ah() });
   }
 
   decideApplication(id: string, payload: { status: string; facilitatorNotes?: string }): Observable<HustlerApplication> {
-    return this.http.patch<HustlerApplication>(`${this.baseUrl}/api/hustlers/${id}/decision`, payload);
+    return this.http.patch<HustlerApplication>(`${this.baseUrl}/api/hustlers/${id}/decision`, payload, { headers: this.ah() });
   }
 
   updateHustlerProfile(id: string, payload: HustlerProfileUpdate): Observable<HustlerApplication> {
-    return this.http.patch<HustlerApplication>(`${this.baseUrl}/api/hustlers/${id}/profile`, payload);
+    return this.http.patch<HustlerApplication>(`${this.baseUrl}/api/hustlers/${id}/profile`, payload, { headers: this.ah() });
   }
 
   // ─── Products ────────────────────────────────────────────────────────────
@@ -202,53 +207,53 @@ export class ApiService {
     const form = new FormData();
     form.append('file', file);
     return this.http.post<{ url: string }>(`${this.baseUrl}/api/uploads`, form, {
-      headers: new HttpHeaders({ 'X-Auth-Token': token })
+      headers: new HttpHeaders({ 'X-Auth-Token': token || this.auth.getToken() || '' })
     });
   }
 
   // ─── Monthly Check-ins ────────────────────────────────────────────────────
   listCheckIns(businessProfileId: string): Observable<MonthlyCheckInResponse[]> {
-    return this.http.get<MonthlyCheckInResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/checkins`);
+    return this.http.get<MonthlyCheckInResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/checkins`, { headers: this.ah() });
   }
 
   recordCheckIn(businessProfileId: string, payload: MonthlyCheckInRequest): Observable<MonthlyCheckInResponse> {
-    return this.http.post<MonthlyCheckInResponse>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/checkins`, payload);
+    return this.http.post<MonthlyCheckInResponse>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/checkins`, payload, { headers: this.ah() });
   }
 
   // ─── Account Activation ───────────────────────────────────────────────────
   activateApplicant(id: string): Observable<ActivateApplicantResponse> {
-    return this.http.post<ActivateApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/activate`, {});
+    return this.http.post<ActivateApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/activate`, {}, { headers: this.ah() });
   }
 
   resetApplicantPassword(id: string): Observable<ActivateApplicantResponse> {
-    return this.http.post<ActivateApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/reset-password`, {});
+    return this.http.post<ActivateApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/reset-password`, {}, { headers: this.ah() });
   }
 
   // ─── Interview ────────────────────────────────────────────────────────────
   getInterview(applicantId: string): Observable<InterviewResponse> {
-    return this.http.get<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview`);
+    return this.http.get<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview`, { headers: this.ah() });
   }
 
   scheduleInterview(applicantId: string, scheduledDate: string): Observable<InterviewResponse> {
-    return this.http.patch<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview/schedule`, { scheduledDate });
+    return this.http.patch<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview/schedule`, { scheduledDate }, { headers: this.ah() });
   }
 
   recordInterview(applicantId: string, payload: InterviewRequest): Observable<InterviewResponse> {
-    return this.http.post<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview`, payload);
+    return this.http.post<InterviewResponse>(`${this.baseUrl}/api/applicants/${applicantId}/interview`, payload, { headers: this.ah() });
   }
 
   // ─── Business Verification ────────────────────────────────────────────────
   getVerification(applicantId: string): Observable<BusinessVerificationResponse> {
-    return this.http.get<BusinessVerificationResponse>(`${this.baseUrl}/api/applicants/${applicantId}/verification`);
+    return this.http.get<BusinessVerificationResponse>(`${this.baseUrl}/api/applicants/${applicantId}/verification`, { headers: this.ah() });
   }
 
   recordVerification(applicantId: string, payload: BusinessVerificationRequest): Observable<BusinessVerificationResponse> {
-    return this.http.post<BusinessVerificationResponse>(`${this.baseUrl}/api/applicants/${applicantId}/verification`, payload);
+    return this.http.post<BusinessVerificationResponse>(`${this.baseUrl}/api/applicants/${applicantId}/verification`, payload, { headers: this.ah() });
   }
 
   // ─── Applicants (Pipeline) ────────────────────────────────────────────────
   createApplicant(payload: ApplicantRequest): Observable<ApplicantResponse> {
-    return this.http.post<ApplicantResponse>(`${this.baseUrl}/api/applicants`, payload);
+    return this.http.post<ApplicantResponse>(`${this.baseUrl}/api/applicants`, payload, { headers: this.ah() });
   }
 
   listApplicants(communityId?: string, stage?: string, callStatus?: string): Observable<ApplicantResponse[]> {
@@ -257,21 +262,23 @@ export class ApiService {
     if (stage) params['stage'] = stage;
     if (callStatus) params['callStatus'] = callStatus;
     return this.http.get<ApplicantResponse[]>(`${this.baseUrl}/api/applicants`, {
-      params: Object.keys(params).length ? params : undefined
+      params: Object.keys(params).length ? params : undefined,
+      headers: this.ah()
     });
   }
 
   updateApplicantCallStatus(id: string, callStatus: string): Observable<ApplicantResponse> {
-    return this.http.patch<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/call`, { callStatus });
+    return this.http.patch<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/call`, { callStatus }, { headers: this.ah() });
   }
 
   updateApplicantStage(id: string, stage: string, reason?: string): Observable<ApplicantResponse> {
-    return this.http.patch<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/stage`, { stage, reason });
+    return this.http.patch<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/stage`, { stage, reason }, { headers: this.ah() });
   }
 
   getCapStatus(communityId: string, cohortNumber: number): Observable<CohortCapResponse> {
     return this.http.get<CohortCapResponse>(`${this.baseUrl}/api/applicants/cap-status`, {
-      params: { communityId, cohortNumber: cohortNumber.toString() }
+      params: { communityId, cohortNumber: cohortNumber.toString() },
+      headers: this.ah()
     });
   }
 
@@ -286,19 +293,19 @@ export class ApiService {
 
   // ─── Facilitator ──────────────────────────────────────────────────────────
   listFacilitatorHustlers(): Observable<FacilitatorHustler[]> {
-    return this.http.get<FacilitatorHustler[]>(`${this.baseUrl}/api/facilitator/hustlers`);
+    return this.http.get<FacilitatorHustler[]>(`${this.baseUrl}/api/facilitator/hustlers`, { headers: this.ah() });
   }
 
   setHustlerActive(id: string, active: boolean): Observable<FacilitatorHustler> {
-    return this.http.patch<FacilitatorHustler>(`${this.baseUrl}/api/facilitator/hustlers/${id}/active`, { active });
+    return this.http.patch<FacilitatorHustler>(`${this.baseUrl}/api/facilitator/hustlers/${id}/active`, { active }, { headers: this.ah() });
   }
 
   listHustlerIncome(businessProfileId: string): Observable<IncomeEntryResponse[]> {
-    return this.http.get<IncomeEntryResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income`);
+    return this.http.get<IncomeEntryResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income`, { headers: this.ah() });
   }
 
   updateHustlerIncome(businessProfileId: string, entryId: string, payload: IncomeEntryRequest): Observable<IncomeEntryResponse> {
-    return this.http.put<IncomeEntryResponse>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income/${entryId}`, payload);
+    return this.http.put<IncomeEntryResponse>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income/${entryId}`, payload, { headers: this.ah() });
   }
 
   // ─── Operations ───────────────────────────────────────────────────────────
