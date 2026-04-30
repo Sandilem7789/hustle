@@ -1,7 +1,7 @@
 package com.hustle.economy.controller;
 
 import com.hustle.economy.service.AuthService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,14 +18,19 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/uploads")
-@RequiredArgsConstructor
 public class UploadController {
 
     private final AuthService authService;
-    private final S3Client s3Client;
 
-    @Value("${r2.bucket}")
+    @Autowired(required = false)
+    private S3Client s3Client;
+
+    @Value("${r2.bucket:hustle}")
     private String bucket;
+
+    public UploadController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping
     public ResponseEntity<Map<String, String>> upload(
@@ -33,6 +38,10 @@ public class UploadController {
             @RequestParam("file") MultipartFile file) throws IOException {
 
         authService.requireAuth(token);
+
+        if (s3Client == null) {
+            return ResponseEntity.status(503).body(Map.of("error", "File storage not configured"));
+        }
 
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
@@ -58,6 +67,9 @@ public class UploadController {
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<byte[]> serve(@PathVariable String filename) {
+        if (s3Client == null) {
+            return ResponseEntity.status(503).build();
+        }
         try {
             ResponseBytes<GetObjectResponse> obj = s3Client.getObjectAsBytes(
                     GetObjectRequest.builder().bucket(bucket).key(filename).build());
