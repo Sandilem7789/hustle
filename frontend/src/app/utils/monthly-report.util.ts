@@ -82,6 +82,29 @@ const WHITE: [number, number, number]      = [255, 255, 255];
 const DARK: [number, number, number]       = [30, 30, 30];
 const MID_GRAY: [number, number, number]   = [110, 110, 110];
 
+// Per-column background colours: W1, W2, W3, W4, TOTAL
+const COL_BG: [number, number, number][] = [
+  [244, 250, 238],  // W1 — pale lime
+  [238, 247, 244],  // W2 — pale mint
+  [244, 250, 238],  // W3 — pale lime
+  [238, 247, 244],  // W4 — pale mint
+  [228, 239, 252],  // TOTAL — pale blue
+];
+const COL_HL: [number, number, number][] = [
+  [146, 208, 80],   // W1 — brand green
+  [138, 200, 74],   // W2 — slightly cooler
+  [146, 208, 80],   // W3 — brand green
+  [138, 200, 74],   // W4 — slightly cooler
+  [122, 185, 62],   // TOTAL — deeper green
+];
+const COL_HDR: [number, number, number][] = [
+  [213, 222, 206],  // W1 — warm gray-green
+  [207, 218, 213],  // W2 — cool gray-mint
+  [213, 222, 206],  // W3 — warm gray-green
+  [207, 218, 213],  // W4 — cool gray-mint
+  [198, 212, 226],  // TOTAL — blue-gray
+];
+
 // Renders one hustler's monthly report onto the current page of `doc`.
 function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryResponse[], monthStr: string): void {
   const [yr, mo] = monthStr.split('-').map(Number);
@@ -153,7 +176,11 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
   y += 7;
 
   // table header
-  doc.setFillColor(...LT_GRAY); doc.rect(LM, y, W, ROW_H, 'F');
+  doc.setFillColor(...LT_GRAY); doc.rect(LM, y, C2X - LM, ROW_H, 'F');
+  for (let ci = 0; ci < 5; ci++) {
+    doc.setFillColor(...COL_HDR[ci]);
+    doc.rect([C2X, C3X, C4X, C5X, C6X][ci], y, CW, ROW_H, 'F');
+  }
   doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
   doc.text('#', C0X + 1, y + 4.8);
   doc.text('Weekly Report', C1X + 1, y + 4.8);
@@ -165,8 +192,15 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
 
   // row helper
   const row = (num: string, label: string, vals: number[], highlight: boolean, bold: boolean) => {
+    // label column
     doc.setFillColor(...(highlight ? GREEN : WHITE));
-    doc.rect(LM, y, W, ROW_H, 'F');
+    doc.rect(LM, y, C2X - LM, ROW_H, 'F');
+    // per-column backgrounds
+    const cols = highlight ? COL_HL : COL_BG;
+    for (let ci = 0; ci < 5; ci++) {
+      doc.setFillColor(...cols[ci]);
+      doc.rect([C2X, C3X, C4X, C5X, C6X][ci], y, CW, ROW_H, 'F');
+    }
     doc.setDrawColor(...LT_GRAY); doc.setLineWidth(0.2); doc.line(LM, y + ROW_H, RM, y + ROW_H);
     doc.setTextColor(...DARK);
     doc.setFontSize(7); doc.setFont('helvetica', bold ? 'bold' : 'normal');
