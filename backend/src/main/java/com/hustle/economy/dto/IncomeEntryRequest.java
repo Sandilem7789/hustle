@@ -19,4 +19,5 @@ public class IncomeEntryRequest {
     private String channel; // CASH or MARKETPLACE
     private String entryType; // INCOME or EXPENSE; defaults to INCOME
     private String notes;
+    private String category;
 }

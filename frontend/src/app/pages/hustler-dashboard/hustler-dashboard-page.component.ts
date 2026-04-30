@@ -4,6 +4,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { Router } from '@angular/router';
 import { jsPDF } from 'jspdf';
 import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, IncomeSummary, OrderResponse } from '../../services/api.service';
+import { generateMonthlyReportPdf } from '../../utils/monthly-report.util';
 import { AuthService } from '../../services/auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 
@@ -86,6 +87,30 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
               <input type="number" min="0" step="0.01" formControlName="amount" placeholder="0.00" />
             </label>
             <label class="span-2">
+              <span>Category</span>
+              <select [(ngModel)]="incomeCategory" [ngModelOptions]="{standalone:true}">
+                <option value="">— Select category —</option>
+                <ng-container *ngIf="logTab() === 'income'">
+                  <option value="CASH_SALES">Cash Sales</option>
+                  <option value="CREDIT_SALES">Credit Sale</option>
+                  <option value="GRANTS_SASSA">Grants / SASSA</option>
+                  <option value="OTHER_SALARY_WAGES">Other Salary / Wages</option>
+                  <option value="OTHER_HOUSEHOLD">Other Household Income</option>
+                </ng-container>
+                <ng-container *ngIf="logTab() === 'expense'">
+                  <option value="COST_OF_GOODS">Cost of Goods (Direct Cost)</option>
+                  <option value="TRANSPORT">Transport</option>
+                  <option value="RUNNER_FEE">Runner Fee</option>
+                  <option value="ELECTRICITY">Electricity</option>
+                  <option value="WAGES">Wages</option>
+                  <option value="AIRTIME_DATA">Airtime / Data</option>
+                  <option value="OTHER_OVERHEAD_1">Other Overhead 1</option>
+                  <option value="OTHER_OVERHEAD_2">Other Overhead 2</option>
+                  <option value="SAVINGS">Savings</option>
+                </ng-container>
+              </select>
+            </label>
+            <label class="span-2">
               <span>Notes (optional)</span>
               <input formControlName="notes" placeholder="e.g. sold beaded necklace, market day" />
             </label>
@@ -133,7 +158,10 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
               </select>
               <button class="outline-btn" (click)="exportCsv('weekly')">↓ Weekly CSV</button>
               <button class="outline-btn" (click)="exportCsv('monthly')">↓ Monthly CSV</button>
-              <button class="report-btn">📊 Monthly Report</button>
+              <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input-sm" />
+              <button class="report-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">
+                {{ reportDownloading() ? 'Generating…' : '↓ Monthly Report PDF' }}
+              </button>
             </div>
           </div>
 
@@ -609,6 +637,8 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
       transition: background 0.15s;
     }
     .report-btn:hover { background: rgba(27,111,212,0.12); }
+    .report-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .month-input-sm { border: 1.5px solid #E7E5E4; border-radius: 0.5rem; padding: 0.35rem 0.55rem; font-size: 0.82rem; font-family: inherit; color: #1C1917; }
 
     .logout-btn {
       display: block;
@@ -664,6 +694,9 @@ export class HustlerDashboardPageComponent implements OnInit {
   isServiceIncome = false;
   invoiceCustomer = '';
   invoiceService = '';
+  incomeCategory = '';
+  reportMonth = new Date().toISOString().slice(0, 7);
+  reportDownloading = signal(false);
 
   incomeForm = this.fb.group({
     date: [new Date().toISOString().slice(0, 10), Validators.required],
@@ -859,8 +892,9 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.incomeError.set('');
     const payload = {
       ...this.incomeForm.value,
-      channel: 'CASH' as const,
-      entryType: (this.logTab() === 'expense' ? 'EXPENSE' : 'INCOME') as 'INCOME' | 'EXPENSE'
+      channel: (this.incomeCategory === 'CREDIT_SALES' ? 'MARKETPLACE' : 'CASH') as 'CASH' | 'MARKETPLACE',
+      entryType: (this.logTab() === 'expense' ? 'EXPENSE' : 'INCOME') as 'INCOME' | 'EXPENSE',
+      category: this.incomeCategory || undefined,
     };
     this.api.logIncome(payload as any, this.auth.getToken()!).subscribe({
       next: (entry) => {
@@ -872,12 +906,30 @@ export class HustlerDashboardPageComponent implements OnInit {
         this.isServiceIncome = false;
         this.invoiceCustomer = '';
         this.invoiceService = '';
+        this.incomeCategory = '';
         setTimeout(() => this.incomeSuccess.set(false), 2500);
       },
       error: (err) => {
         this.incomeLoading.set(false);
         this.incomeError.set(err?.error?.message || 'Failed to log entry. Please try again.');
       }
+    });
+  }
+
+  downloadMyMonthlyReport(): void {
+    this.reportDownloading.set(true);
+    this.api.listMyIncomeForMonth(this.reportMonth, this.auth.getToken()!).subscribe({
+      next: (entries) => {
+        const state = this.auth.state();
+        generateMonthlyReportPdf({
+          firstName: state?.firstName ?? '',
+          lastName: state?.lastName ?? '',
+          businessName: state?.businessName ?? '',
+          businessType: state?.businessType ?? '',
+        }, entries, this.reportMonth);
+        this.reportDownloading.set(false);
+      },
+      error: () => this.reportDownloading.set(false),
     });
   }
 

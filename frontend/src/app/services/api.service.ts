@@ -304,6 +304,26 @@ export class ApiService {
     return this.http.get<IncomeEntryResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income`, { headers: this.ah() });
   }
 
+  listHustlerIncomeForMonth(businessProfileId: string, monthStr: string): Observable<IncomeEntryResponse[]> {
+    const [yr, mo] = monthStr.split('-').map(Number);
+    const from = `${yr}-${String(mo).padStart(2,'0')}-01`;
+    const lastDay = new Date(yr, mo, 0).getDate();
+    const to = `${yr}-${String(mo).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+    return this.http.get<IncomeEntryResponse[]>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income`, {
+      params: { from, to }, headers: this.ah()
+    });
+  }
+
+  listMyIncomeForMonth(monthStr: string, token: string): Observable<IncomeEntryResponse[]> {
+    const [yr, mo] = monthStr.split('-').map(Number);
+    const from = `${yr}-${String(mo).padStart(2,'0')}-01`;
+    const lastDay = new Date(yr, mo, 0).getDate();
+    const to = `${yr}-${String(mo).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+    return this.http.get<IncomeEntryResponse[]>(`${this.baseUrl}/api/income/my`, {
+      params: { from, to }, headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
   updateHustlerIncome(businessProfileId: string, entryId: string, payload: IncomeEntryRequest): Observable<IncomeEntryResponse> {
     return this.http.put<IncomeEntryResponse>(`${this.baseUrl}/api/facilitator/hustlers/${businessProfileId}/income/${entryId}`, payload, { headers: this.ah() });
   }
@@ -505,6 +525,7 @@ export interface IncomeEntryRequest {
   channel: 'CASH' | 'MARKETPLACE';
   entryType: 'INCOME' | 'EXPENSE';
   notes?: string;
+  category?: string;
 }
 
 export interface IncomeEntryResponse {
@@ -514,6 +535,7 @@ export interface IncomeEntryResponse {
   channel: string;
   entryType: string;
   notes?: string;
+  category?: string;
   createdAt: string;
 }
 

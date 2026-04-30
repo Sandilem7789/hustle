@@ -40,6 +40,7 @@ public class IncomeService {
                 .channel(request.getChannel().toUpperCase(Locale.ROOT))
                 .entryType(type)
                 .notes(request.getNotes())
+                .category(request.getCategory())
                 .createdAt(OffsetDateTime.now())
                 .build();
         return toResponse(incomeEntryRepository.save(entry));
@@ -114,6 +115,7 @@ public class IncomeService {
         entry.setChannel(request.getChannel().toUpperCase(Locale.ROOT));
         entry.setEntryType(type);
         entry.setNotes(request.getNotes());
+        entry.setCategory(request.getCategory());
         return toResponse(incomeEntryRepository.save(entry));
     }
 
@@ -134,7 +136,7 @@ public class IncomeService {
                 .id(e.getId()).date(e.getDate()).amount(e.getAmount())
                 .channel(e.getChannel())
                 .entryType(e.getEntryType() != null ? e.getEntryType().name() : "INCOME")
-                .notes(e.getNotes()).createdAt(e.getCreatedAt())
+                .notes(e.getNotes()).category(e.getCategory()).createdAt(e.getCreatedAt())
                 .build();
     }
 }

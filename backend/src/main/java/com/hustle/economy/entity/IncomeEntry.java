@@ -34,6 +34,9 @@ public class IncomeEntry {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column
+    private String category;
+
     @Column(nullable = false)
     private OffsetDateTime createdAt;
 }

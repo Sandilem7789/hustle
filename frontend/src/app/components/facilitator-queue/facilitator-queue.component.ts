@@ -4,6 +4,7 @@ import { Component, OnInit, Input, signal, inject, computed } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler, ApplicantResponse, ApplicantRequest, CohortCapResponse, InterviewResponse, InterviewRequest, BusinessVerificationResponse, BusinessVerificationRequest, ActivateApplicantResponse, MonthlyCheckInResponse, MonthlyCheckInRequest, IncomeEntryResponse, IncomeEntryRequest } from '../../services/api.service';
 import { MapPickerComponent } from '../map-picker/map-picker.component';
+import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler } from '../../utils/monthly-report.util';
 
 @Component({
   selector: 'app-facilitator-queue',
@@ -584,6 +585,15 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
                   </div>
                 </div>
 
+                <!-- Monthly Report Download -->
+                <div class="report-download-row">
+                  <label class="field-label">Report Month</label>
+                  <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
+                  <button class="btn btn-report" (click)="downloadMonthlyReport(h)" [disabled]="reportDownloading() === h.businessProfileId">
+                    {{ reportDownloading() === h.businessProfileId ? 'Generating…' : '↓ Monthly Report PDF' }}
+                  </button>
+                </div>
+
                 <!-- Income History -->
                 <div class="income-history-section">
                   <p class="phase-heading" style="margin-top:1rem">Income History</p>
@@ -618,6 +628,32 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
                                 <option value="MARKETPLACE">Marketplace</option>
                               </select>
                             </label>
+                            <label>
+                              <span class="field-label">Category</span>
+                              <select [(ngModel)]="incomeEditData.category" [ngModelOptions]="{standalone: true}">
+                                <option value="">— Select —</option>
+                                <optgroup label="Sales">
+                                  <option value="CASH_SALES">Cash Sales</option>
+                                  <option value="CREDIT_SALES">Credit Sale</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                  <option value="COST_OF_GOODS">Cost of Goods (Direct Cost)</option>
+                                  <option value="TRANSPORT">Transport</option>
+                                  <option value="RUNNER_FEE">Runner Fee</option>
+                                  <option value="ELECTRICITY">Electricity</option>
+                                  <option value="WAGES">Wages</option>
+                                  <option value="AIRTIME_DATA">Airtime/Data</option>
+                                  <option value="OTHER_OVERHEAD_1">Other Overhead 1</option>
+                                  <option value="OTHER_OVERHEAD_2">Other Overhead 2</option>
+                                  <option value="SAVINGS">Savings</option>
+                                </optgroup>
+                                <optgroup label="Household Income">
+                                  <option value="GRANTS_SASSA">Grants/SASSA</option>
+                                  <option value="OTHER_SALARY_WAGES">Other Salary/Wages</option>
+                                  <option value="OTHER_HOUSEHOLD">Other Household</option>
+                                </optgroup>
+                              </select>
+                            </label>
                             <label class="income-edit-notes">
                               <span class="field-label">Notes</span>
                               <input type="text" [(ngModel)]="incomeEditData.notes" [ngModelOptions]="{standalone: true}" placeholder="Optional notes" />
@@ -639,7 +675,7 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
                           <span class="income-date">{{ entry.date }}</span>
                           <span class="entry-type-badge" [class.badge-income]="entry.entryType === 'INCOME'" [class.badge-expense]="entry.entryType === 'EXPENSE'">{{ entry.entryType }}</span>
                           <span class="income-amount" [class.income]="entry.entryType === 'INCOME'" [class.expense]="entry.entryType === 'EXPENSE'">R {{ entry.amount | number:'1.2-2' }}</span>
-                          <span class="income-channel muted small">{{ entry.channel }}</span>
+                          <span class="income-cat muted small">{{ entry.category ? categoryLabel(entry.category) : entry.channel }}</span>
                           <span class="income-notes muted small">{{ entry.notes || '' }}</span>
                           <button class="btn-edit-sm" (click)="startIncomeEdit(entry, h)">Edit</button>
                         </div>
@@ -881,6 +917,18 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
               <div class="export-actions">
                 <button class="btn btn-export btn-export-csv" (click)="exportActiveHustlers('csv')">↓ CSV</button>
                 <button class="btn btn-export" (click)="exportActiveHustlers('xlsx')">↓ Excel</button>
+              </div>
+            </div>
+            <div class="export-card export-card-wide">
+              <div class="export-info">
+                <p class="export-name">Monthly Financial Reports — All Hustlers</p>
+                <p class="muted small">One PDF with a full 4-week financial report per active hustler</p>
+              </div>
+              <div class="export-actions bulk-report-actions">
+                <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
+                <button class="btn btn-export btn-report-pdf" (click)="downloadBulkMonthlyReports()" [disabled]="bulkReportDownloading()">
+                  {{ bulkReportDownloading() ? 'Generating…' : '↓ Download PDF' }}
+                </button>
               </div>
             </div>
           </div>
@@ -1179,13 +1227,24 @@ import { MapPickerComponent } from '../map-picker/map-picker.component';
     .export-section-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #A8A29E; margin: 0 0 0.75rem; }
     .export-cards { display: flex; flex-direction: column; gap: 0.6rem; }
     .export-card { display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 0.75rem; padding: 0.85rem 1rem; flex-wrap: wrap; }
+    .export-card-wide { flex-direction: column; align-items: flex-start; }
     .export-info { flex: 1; min-width: 0; }
     .export-name { font-weight: 700; font-size: 0.95rem; color: #1C1917; margin: 0 0 0.1rem; }
     .export-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .bulk-report-actions { align-items: center; flex-wrap: wrap; }
     .btn-export { background: #1C1917; color: white; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
     .btn-export:hover { background: #292524; }
+    .btn-export:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-export-csv { background: white; color: #1C1917; border: 1.5px solid #1C1917; }
     .btn-export-csv:hover { background: #F5F5F4; }
+    .btn-report-pdf { background: #166534; }
+    .btn-report-pdf:hover { background: #14532d; }
+    .month-input { border: 1.5px solid #D6D3D1; border-radius: 0.5rem; padding: 0.45rem 0.65rem; font-size: 0.85rem; font-family: inherit; color: #1C1917; }
+    .report-download-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 0.75rem 0 0.5rem; }
+    .btn-report { background: #166534; color: white; font-weight: 700; font-size: 0.82rem; padding: 0.45rem 1rem; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
+    .btn-report:hover { background: #14532d; }
+    .btn-report:disabled { opacity: 0.55; cursor: not-allowed; }
+    .income-cat { font-size: 0.72rem; }
 
     .btn-schedule { background: rgba(0,168,150,0.1); color: #00746A; border: 1px solid rgba(0,168,150,0.3); font-weight: 700; }
     .schedule-row { margin-bottom: 0.5rem; }
@@ -1283,6 +1342,17 @@ export class FacilitatorQueueComponent implements OnInit {
   stageCount(stage: string): number {
     const list = this.applicants();
     return stage ? list.filter(a => a.pipelineStage === stage).length : list.length;
+  }
+
+  categoryLabel(cat: string): string {
+    const labels: Record<string, string> = {
+      CASH_SALES: 'Cash Sales', CREDIT_SALES: 'Credit Sale', COST_OF_GOODS: 'Cost of Goods',
+      TRANSPORT: 'Transport', RUNNER_FEE: 'Runner Fee', ELECTRICITY: 'Electricity',
+      WAGES: 'Wages', AIRTIME_DATA: 'Airtime/Data', OTHER_OVERHEAD_1: 'Other Overhead 1',
+      OTHER_OVERHEAD_2: 'Other Overhead 2', SAVINGS: 'Savings',
+      GRANTS_SASSA: 'Grants/SASSA', OTHER_SALARY_WAGES: 'Other Salary/Wages', OTHER_HOUSEHOLD: 'Other Household',
+    };
+    return labels[cat] ?? cat;
   }
 
   stageLabel(stage: string): string {
@@ -1642,7 +1712,10 @@ export class FacilitatorQueueComponent implements OnInit {
   incomeEntries: Record<string, IncomeEntryResponse[]> = {};
   incomeLoading = signal<string | null>(null);
   incomeEditingId = signal<string | null>(null);
-  incomeEditData: { date: string; amount: number; channel: string; entryType: string; notes: string } = { date: '', amount: 0, channel: 'CASH', entryType: 'INCOME', notes: '' };
+  incomeEditData: { date: string; amount: number; channel: string; entryType: string; notes: string; category: string } = { date: '', amount: 0, channel: 'CASH', entryType: 'INCOME', notes: '', category: '' };
+  reportMonth = new Date().toISOString().slice(0, 7);
+  reportDownloading = signal<string | null>(null);
+  bulkReportDownloading = signal(false);
   incomeSavingId = signal<string | null>(null);
   incomeErrors: Record<string, string> = {};
 
@@ -1681,7 +1754,8 @@ export class FacilitatorQueueComponent implements OnInit {
       amount: entry.amount,
       channel: entry.channel,
       entryType: entry.entryType,
-      notes: entry.notes ?? ''
+      notes: entry.notes ?? '',
+      category: entry.category ?? '',
     };
     this.incomeErrors[h.businessProfileId] = '';
   }
@@ -1699,7 +1773,8 @@ export class FacilitatorQueueComponent implements OnInit {
       amount: this.incomeEditData.amount,
       channel: this.incomeEditData.channel as 'CASH' | 'MARKETPLACE',
       entryType: this.incomeEditData.entryType as 'INCOME' | 'EXPENSE',
-      notes: this.incomeEditData.notes || undefined
+      notes: this.incomeEditData.notes || undefined,
+      category: this.incomeEditData.category || undefined,
     };
     this.api.updateHustlerIncome(h.businessProfileId, entry.id, payload).subscribe({
       next: (updated) => {
@@ -1714,6 +1789,42 @@ export class FacilitatorQueueComponent implements OnInit {
         this.incomeSavingId.set(null);
       }
     });
+  }
+
+  downloadMonthlyReport(h: FacilitatorHustler): void {
+    this.reportDownloading.set(h.businessProfileId);
+    this.api.listHustlerIncomeForMonth(h.businessProfileId, this.reportMonth).subscribe({
+      next: (entries) => {
+        const hustler: ReportHustler = {
+          firstName: h.firstName, lastName: h.lastName,
+          businessName: h.businessName, businessType: h.businessType,
+          communityName: h.communityName,
+        };
+        generateMonthlyReportPdf(hustler, entries, this.reportMonth);
+        this.reportDownloading.set(null);
+      },
+      error: () => this.reportDownloading.set(null),
+    });
+  }
+
+  downloadBulkMonthlyReports(): void {
+    const list = this.hustlers().filter(h => h.active);
+    if (!list.length) return;
+    this.bulkReportDownloading.set(true);
+    let remaining = list.length;
+    const collected: { hustler: ReportHustler; entries: IncomeEntryResponse[] }[] = [];
+    for (const h of list) {
+      this.api.listHustlerIncomeForMonth(h.businessProfileId, this.reportMonth).subscribe({
+        next: (entries) => {
+          collected.push({
+            hustler: { firstName: h.firstName, lastName: h.lastName, businessName: h.businessName, businessType: h.businessType, communityName: h.communityName },
+            entries,
+          });
+          if (--remaining === 0) { generateBulkMonthlyReportPdf(collected, this.reportMonth); this.bulkReportDownloading.set(false); }
+        },
+        error: () => { if (--remaining === 0) { generateBulkMonthlyReportPdf(collected, this.reportMonth); this.bulkReportDownloading.set(false); } },
+      });
+    }
   }
 
   submitCheckIn(h: FacilitatorHustler): void {

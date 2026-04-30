@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -66,9 +69,11 @@ public class FacilitatorController {
     @GetMapping("/hustlers/{id}/income")
     public ResponseEntity<List<IncomeEntryResponse>> listHustlerIncome(
             @PathVariable UUID id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestHeader("X-Auth-Token") String token) {
         authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
-        return ResponseEntity.ok(incomeService.listMyIncome(id, null, null));
+        return ResponseEntity.ok(incomeService.listMyIncome(id, from, to));
     }
 
     @PutMapping("/hustlers/{id}/income/{entryId}")

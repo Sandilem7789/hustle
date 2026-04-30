@@ -16,5 +16,6 @@ public class IncomeEntryResponse {
     private String channel;
     private String entryType;
     private String notes;
+    private String category;
     private OffsetDateTime createdAt;
 }
