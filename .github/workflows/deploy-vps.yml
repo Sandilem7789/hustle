@@ -1,0 +1,33 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build & deploy backend to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -e
+
+            # ── 1. Update production backend (outside OpenClaw) ──────────────
+            cd ~/hustle-backend
+            git pull origin main
+
+            # ── 2. Rebuild and restart with Traefik config ───────────────────
+            docker compose -f docker-compose.prod.yml up --build -d
+
+            # ── 3. Keep OpenClaw workspace in sync (code only) ───────────────
+            git -C ~/openclaw/workspace/hustle pull origin main || true
+
+            echo "Deploy complete."

@@ -11,7 +11,7 @@ export interface ReportHustler {
 }
 
 interface WeekData {
-  cashSales: number; creditSales: number; cogs: number;
+  cashSales: number; creditSales: number; inAppSales: number; cogs: number;
   transport: number; runnerFee: number; electricity: number;
   wages: number; airtimeData: number; overhead1: number; overhead2: number;
   savings: number; grantsSassa: number; otherSalary: number; otherHousehold: number;
@@ -19,7 +19,7 @@ interface WeekData {
 
 function blank(): WeekData {
   return {
-    cashSales: 0, creditSales: 0, cogs: 0,
+    cashSales: 0, creditSales: 0, inAppSales: 0, cogs: 0,
     transport: 0, runnerFee: 0, electricity: 0,
     wages: 0, airtimeData: 0, overhead1: 0, overhead2: 0,
     savings: 0, grantsSassa: 0, otherSalary: 0, otherHousehold: 0,
@@ -49,6 +49,7 @@ function buildWeeks(entries: IncomeEntryResponse[], year: number, month: number)
     switch (resolveCategory(e)) {
       case 'CASH_SALES':         w.cashSales      += a; break;
       case 'CREDIT_SALES':       w.creditSales    += a; break;
+      case 'IN_APP_SALES':       w.inAppSales     += a; break;
       case 'COST_OF_GOODS':      w.cogs           += a; break;
       case 'TRANSPORT':          w.transport      += a; break;
       case 'RUNNER_FEE':         w.runnerFee      += a; break;
@@ -86,7 +87,7 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
   const [yr, mo] = monthStr.split('-').map(Number);
   const weeks = buildWeeks(entries, yr, mo);
 
-  const totalSales  = (i: number) => weeks[i].cashSales + weeks[i].creditSales;
+  const totalSales  = (i: number) => weeks[i].cashSales + weeks[i].creditSales + weeks[i].inAppSales;
   const grossProfit = (i: number) => totalSales(i) - weeks[i].cogs;
   const overheads   = (i: number) =>
     weeks[i].transport + weeks[i].runnerFee + weeks[i].electricity +
@@ -97,6 +98,7 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
 
   const T = {
     cashSales: sumW(weeks, 'cashSales'), creditSales: sumW(weeks, 'creditSales'),
+    inAppSales: sumW(weeks, 'inAppSales'),
     cogs: sumW(weeks, 'cogs'), transport: sumW(weeks, 'transport'),
     runnerFee: sumW(weeks, 'runnerFee'), electricity: sumW(weeks, 'electricity'),
     wages: sumW(weeks, 'wages'), airtimeData: sumW(weeks, 'airtimeData'),
@@ -104,7 +106,7 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
     savings: sumW(weeks, 'savings'), grantsSassa: sumW(weeks, 'grantsSassa'),
     otherSalary: sumW(weeks, 'otherSalary'), otherHousehold: sumW(weeks, 'otherHousehold'),
   };
-  const tTotalSales  = T.cashSales + T.creditSales;
+  const tTotalSales  = T.cashSales + T.creditSales + T.inAppSales;
   const tGrossProfit = tTotalSales - T.cogs;
   const tOverheads   = T.transport + T.runnerFee + T.electricity + T.wages + T.airtimeData + T.overhead1 + T.overhead2;
   const tDistOwner   = tGrossProfit - tOverheads;
@@ -119,7 +121,7 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
   const C2X = C1X + C1W, C3X = C2X + CW, C4X = C3X + CW;
   const C5X = C4X + CW, C6X = C5X + CW;
   const ROW_H = 7;
-  const NUM_ROWS = 20;
+  const NUM_ROWS = 21;
 
   let y = 12;
 
@@ -181,10 +183,11 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
   const wv = (fn: (i: number) => number) => [0,1,2,3].map(fn).concat([fn(0)+fn(1)+fn(2)+fn(3)]);
   const wk = (key: keyof WeekData) => [...[0,1,2,3].map(i => weeks[i][key] as number), sumW(weeks, key)];
 
-  row('1',   '(1.1+1.2) = TOTAL SALES',                 wv(totalSales),  true,  true);
-  row('1.1', 'Cash Sales',                               wk('cashSales'), false, false);
+  row('1',   '(1.1+1.2+1.3) = TOTAL SALES',              wv(totalSales),    true,  true);
+  row('1.1', 'Cash Sales',                               wk('cashSales'),   false, false);
   row('1.2', 'Credit Sale',                              wk('creditSales'), false, false);
-  row('2',   'Minus: COST OF GOODS SOLD (Direct Cost)',  wk('cogs'),      false, false);
+  row('1.3', 'In-App Sales',                             wk('inAppSales'),  false, false);
+  row('2',   'Minus: COST OF GOODS SOLD (Direct Cost)',  wk('cogs'),        false, false);
   row('3',   '(1-2) = GROSS PROFIT',                     wv(grossProfit), true,  true);
   row('4',   'Minus: OVERHEADS (Other Expenses)',        wv(overheads),   true,  true);
   row('4.1', 'Transport',                                wk('transport'), false, false);

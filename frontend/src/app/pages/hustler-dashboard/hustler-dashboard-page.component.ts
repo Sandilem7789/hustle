@@ -93,6 +93,7 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
                 <ng-container *ngIf="logTab() === 'income'">
                   <option value="CASH_SALES">Cash Sales</option>
                   <option value="CREDIT_SALES">Credit Sale</option>
+                  <option value="IN_APP_SALES">In-App Sales</option>
                   <option value="GRANTS_SASSA">Grants / SASSA</option>
                   <option value="OTHER_SALARY_WAGES">Other Salary / Wages</option>
                   <option value="OTHER_HOUSEHOLD">Other Household Income</option>
@@ -892,7 +893,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.incomeError.set('');
     const payload = {
       ...this.incomeForm.value,
-      channel: (this.incomeCategory === 'CREDIT_SALES' ? 'MARKETPLACE' : 'CASH') as 'CASH' | 'MARKETPLACE',
+      channel: (['CREDIT_SALES', 'IN_APP_SALES'].includes(this.incomeCategory) ? 'MARKETPLACE' : 'CASH') as 'CASH' | 'MARKETPLACE',
       entryType: (this.logTab() === 'expense' ? 'EXPENSE' : 'INCOME') as 'INCOME' | 'EXPENSE',
       category: this.incomeCategory || undefined,
     };

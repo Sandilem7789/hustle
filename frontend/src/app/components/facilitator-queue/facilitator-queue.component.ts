@@ -635,6 +635,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
                                 <optgroup label="Sales">
                                   <option value="CASH_SALES">Cash Sales</option>
                                   <option value="CREDIT_SALES">Credit Sale</option>
+                                  <option value="IN_APP_SALES">In-App Sales</option>
                                 </optgroup>
                                 <optgroup label="Expenses">
                                   <option value="COST_OF_GOODS">Cost of Goods (Direct Cost)</option>
@@ -1346,7 +1347,7 @@ export class FacilitatorQueueComponent implements OnInit {
 
   categoryLabel(cat: string): string {
     const labels: Record<string, string> = {
-      CASH_SALES: 'Cash Sales', CREDIT_SALES: 'Credit Sale', COST_OF_GOODS: 'Cost of Goods',
+      CASH_SALES: 'Cash Sales', CREDIT_SALES: 'Credit Sale', IN_APP_SALES: 'In-App Sales', COST_OF_GOODS: 'Cost of Goods',
       TRANSPORT: 'Transport', RUNNER_FEE: 'Runner Fee', ELECTRICITY: 'Electricity',
       WAGES: 'Wages', AIRTIME_DATA: 'Airtime/Data', OTHER_OVERHEAD_1: 'Other Overhead 1',
       OTHER_OVERHEAD_2: 'Other Overhead 2', SAVINGS: 'Savings',
