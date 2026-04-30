@@ -149,7 +149,7 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
   let y = 12;
 
   // header
-  doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+  doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
   doc.text('HUSTLE ECONOMY', LM, y); y += 5;
   doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(...MID_GRAY);
   doc.text('SizoPopa Sonke One Day!', LM, y); y += 4;

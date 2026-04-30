@@ -46,9 +46,9 @@
 }
 
 .site-logo {
-  height: 44px;
+  height: 48px;
   width: auto;
-  max-width: 200px;   /* prevent it overflowing on very small phones */
+  max-width: 220px;   /* prevent it overflowing on very small phones */
   display: block;
   object-fit: contain;
 }
@@ -283,8 +283,8 @@
   }
 
   .site-logo {
-    height: 50px;
-    max-width: 260px;
+    height: 55px;
+    max-width: 286px;
   }
 
   .desktop-nav {

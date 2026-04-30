@@ -955,7 +955,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     const lm = 20, rm = 190, mid = rm - lm;
     let y = 22;
 
-    doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+    doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
     doc.text('HUSTLE ECONOMY', lm, y); y += 6;
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
     doc.text('Empowering local hustlers', lm, y); y += 5;
