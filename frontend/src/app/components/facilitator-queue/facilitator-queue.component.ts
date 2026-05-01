@@ -615,13 +615,21 @@ import { AppSelectComponent } from '../app-select/app-select.component';
 
                       <!-- Read view -->
                       <ng-template #incomeReadRow>
-                        <div class="income-row-content">
+                        <div class="income-row-summary" (click)="toggleIncomeEntry(entry.id)">
                           <span class="income-date">{{ entry.date }}</span>
-                          <span class="entry-type-badge" [class.badge-income]="entry.entryType === 'INCOME'" [class.badge-expense]="entry.entryType === 'EXPENSE'">{{ entry.entryType }}</span>
-                          <span class="income-amount" [class.income]="entry.entryType === 'INCOME'" [class.expense]="entry.entryType === 'EXPENSE'">R {{ entry.amount | number:'1.2-2' }}</span>
-                          <span class="income-cat muted small">{{ entry.category ? categoryLabel(entry.category) : entry.channel }}</span>
-                          <span class="income-notes muted small">{{ entry.notes || '' }}</span>
-                          <button class="btn-edit-sm" (click)="startIncomeEdit(entry, h)">Edit</button>
+                          <span class="entry-type-badge" [class.badge-income]="entry.entryType === 'INCOME'" [class.badge-expense]="entry.entryType === 'EXPENSE'">
+                            {{ entry.entryType === 'EXPENSE' ? 'Expense' : 'Income' }}
+                          </span>
+                          <span class="income-amount" [class.income]="entry.entryType === 'INCOME'" [class.expense]="entry.entryType === 'EXPENSE'">
+                            {{ entry.entryType === 'EXPENSE' ? '−' : '+' }}R {{ entry.amount | number:'1.2-2' }}
+                          </span>
+                          <button class="btn-edit-sm" (click)="$event.stopPropagation(); startIncomeEdit(entry, h)">Edit</button>
+                          <span class="income-chevron" [class.income-chevron-open]="expandedIncomeId() === entry.id">›</span>
+                        </div>
+                        <div class="income-row-detail" *ngIf="expandedIncomeId() === entry.id">
+                          <span *ngIf="entry.category" class="income-detail-chip">{{ categoryLabel(entry.category) }}</span>
+                          <span *ngIf="entry.channel" class="income-detail-chip income-detail-channel">{{ entry.channel }}</span>
+                          <p class="income-detail-notes">{{ entry.notes || 'No notes' }}</p>
                         </div>
                       </ng-template>
                     </div>
@@ -1018,26 +1026,35 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .stat-val.income { color: #2DB344; }
     .stat-val.expense { color: #E53935; }
     .income-history-section { margin-top: 0.5rem; }
-    .income-entry-row { border: 1px solid #E7E5E4; border-radius: 0.75rem; margin-bottom: 0.5rem; overflow: hidden; background: white; }
-    .income-row-content { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; flex-wrap: wrap; }
-    .income-date { font-size: 0.8rem; font-weight: 700; color: #1C1917; min-width: 80px; }
-    .entry-type-badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+    .income-entry-row { border: 1px solid #E7E5E4; border-radius: 0.75rem; margin-bottom: 0.4rem; overflow: hidden; background: white; }
+    /* Summary row — always visible, tap to expand */
+    .income-row-summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.75rem; cursor: pointer; transition: background 0.1s; }
+    .income-row-summary:hover { background: #FAFAF9; }
+    .income-date { font-size: 0.8rem; font-weight: 700; color: #78716C; min-width: 76px; flex-shrink: 0; }
+    .entry-type-badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
     .badge-income { background: rgba(45,179,68,0.12); color: #166534; }
     .badge-expense { background: rgba(229,57,53,0.1); color: #E53935; }
-    .income-amount { font-size: 0.9rem; font-weight: 800; }
+    .income-amount { font-size: 0.9rem; font-weight: 800; margin-left: auto; }
     .income-amount.income { color: #2DB344; }
     .income-amount.expense { color: #E53935; }
-    .income-channel { margin-left: auto; }
-    .income-notes { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .btn-edit-sm { background: #F5F0E8; border: 1px solid #E7E5E4; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: inherit; color: #1C1917; flex-shrink: 0; }
-    .btn-edit-sm:hover { border-color: #F5B800; }
+    /* Edit button — compact height, sits right of the amount */
+    .btn-edit-sm { background: #F5F0E8; border: 1px solid #E7E5E4; border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit; color: #1C1917; flex-shrink: 0; height: 28px; min-height: unset; line-height: 1; margin-left: 0.4rem; }
+    .btn-edit-sm:hover { border-color: #F5B800; background: rgba(245,184,0,0.08); }
+    /* Chevron */
+    .income-chevron { font-size: 1rem; color: #A8A29E; transition: transform 0.2s ease-out; flex-shrink: 0; display: inline-block; margin-left: 0.1rem; }
+    .income-chevron-open { transform: rotate(90deg); }
+    /* Expanded detail panel */
+    .income-row-detail { padding: 0 0.75rem 0.6rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+    .income-detail-chip { display: inline-block; background: rgba(245,184,0,0.1); color: #92620A; font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.45rem; border-radius: 999px; text-transform: uppercase; }
+    .income-detail-channel { background: rgba(0,168,150,0.1); color: #00665E; }
+    .income-detail-notes { font-size: 0.82rem; color: #78716C; margin: 0; flex-basis: 100%; }
     .income-edit-form { padding: 0.75rem; background: rgba(245,184,0,0.04); }
     .income-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
     .income-edit-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; }
     .income-edit-notes { grid-column: span 2; }
     .income-edit-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
     .btn-ghost { background: #F5F0E8; color: #78716C; }
-    @media (max-width: 480px) { .income-edit-grid { grid-template-columns: 1fr; } .income-edit-notes { grid-column: span 1; } .income-row-content { gap: 0.4rem; } }
+    @media (max-width: 480px) { .income-edit-grid { grid-template-columns: 1fr; } .income-edit-notes { grid-column: span 1; } }
     .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0 0 1.25rem; }
     .filters label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; min-width: 140px; }
     select { appearance: none; -webkit-appearance: none; border-radius: 0.75rem; border: 2px solid #E7E5E4; padding: 0.5rem 2.25rem 0.5rem 0.75rem; font-size: 0.95rem; font-family: inherit; font-weight: 600; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.65rem center / 16px; color: #1C1917; outline: none; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; min-height: 40px; }
@@ -1774,6 +1791,11 @@ export class FacilitatorQueueComponent implements OnInit {
   incomeEntries: Record<string, IncomeEntryResponse[]> = {};
   incomeLoading = signal<string | null>(null);
   incomeEditingId = signal<string | null>(null);
+  expandedIncomeId = signal<string | null>(null);
+
+  toggleIncomeEntry(id: string): void {
+    this.expandedIncomeId.update(cur => cur === id ? null : id);
+  }
   incomeEditData: { date: string; amount: number; channel: string; entryType: string; notes: string; category: string } = { date: '', amount: 0, channel: 'CASH', entryType: 'INCOME', notes: '', category: '' };
   reportMonth = new Date().toISOString().slice(0, 7);
   reportDownloading = signal<string | null>(null);
@@ -1810,6 +1832,7 @@ export class FacilitatorQueueComponent implements OnInit {
   }
 
   startIncomeEdit(entry: IncomeEntryResponse, h: FacilitatorHustler): void {
+    this.expandedIncomeId.set(null);
     this.incomeEditingId.set(entry.id);
     this.incomeEditData = {
       date: entry.date,
