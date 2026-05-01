@@ -26,6 +26,7 @@ import { AuthService } from '../../services/auth.service';
   `,
   styles: `
     .layout { padding: 1rem; max-width: 960px; margin: 0 auto; }
+    @media (max-width: 600px) { .layout { padding: 0.375rem; } }
     .signout-row {
       display: flex;
       justify-content: center;

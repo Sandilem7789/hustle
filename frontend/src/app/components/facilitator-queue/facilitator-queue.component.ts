@@ -908,7 +908,7 @@ import { AppSelectComponent } from '../app-select/app-select.component';
   `,
   styles: `
     .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
+    @media (max-width: 600px) { .card { padding: 0.75rem; border-radius: 1rem; } }
 
     /* Top-level tabs */
     .top-tabs { display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 1.5rem; }
@@ -957,6 +957,7 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .applicant-card.expanded { border-color: #F5B800; box-shadow: 0 0 0 2px rgba(245,184,0,0.2); }
     .applicant-card.age-flagged { border-left: 3px solid #F97316; }
     .ac-summary { display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem 1.25rem; cursor: pointer; gap: 1rem; }
+    @media (max-width: 600px) { .ac-summary { padding: 0.75rem; gap: 0.6rem; } }
     .ac-summary:hover { background: rgba(245,184,0,0.04); }
     .ac-main { flex: 1; min-width: 0; }
     .ac-name-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.15rem; }
@@ -983,6 +984,7 @@ import { AppSelectComponent } from '../app-select/app-select.component';
 
     /* Applicant detail */
     .ac-detail { border-top: 1px solid #E7E5E4; padding: 1rem 1.25rem; }
+    @media (max-width: 600px) { .ac-detail { padding: 0.75rem; } }
     .action-row { margin: 0.75rem 0 0.5rem; }
     .action-row .field-label { display: block; margin-bottom: 0.4rem; }
     .call-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -1006,6 +1008,7 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .hustler-card.expanded { border-color: #F5B800; box-shadow: 0 0 0 2px rgba(245,184,0,0.2); }
     .hc-summary { display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem 1.25rem; gap: 1rem; }
     .hc-summary:hover { background: rgba(245,184,0,0.04); }
+    @media (max-width: 600px) { .hc-summary { padding: 0.75rem; gap: 0.6rem; } }
     .hc-main h3 { margin: 0 0 0.2rem; font-size: 1rem; font-weight: 800; color: #1C1917; }
     .hc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; flex-shrink: 0; }
     .profit-chip { display: flex; flex-direction: column; align-items: flex-end; padding: 0.35rem 0.75rem; border-radius: 0.75rem; }
@@ -1016,8 +1019,10 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .profit-chip.positive .profit-val { color: #2DB344; }
     .profit-chip.negative .profit-val { color: #E53935; }
     .hc-detail { border-top: 1px solid #E7E5E4; padding: 1rem 1.25rem; }
+    @media (max-width: 600px) { .hc-detail { padding: 0.75rem; } }
     .sub-tabs { display: flex; gap: 0; border-bottom: 1px solid #E7E5E4; margin-bottom: 1rem; }
     .sub-tabs button { padding: 0.5rem 1.25rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #A8A29E; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; }
+    @media (max-width: 600px) { .sub-tabs button { padding: 0.5rem 0.75rem; font-size: 0.82rem; } }
     .sub-tabs button.active { color: #1C1917; border-bottom-color: #F5B800; }
     .stat-row { display: flex; gap: 1rem; flex-wrap: wrap; }
     .stat-box { flex: 1; min-width: 100px; background: #FAFAF9; border-radius: 0.75rem; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.25rem; border: 1px solid #E7E5E4; }
@@ -1037,7 +1042,7 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .income-amount { font-size: 0.9rem; font-weight: 800; margin-left: auto; }
     .income-amount.income { color: #2DB344; }
     .income-amount.expense { color: #E53935; }
-    /* Edit button — compact height, sits right of the amount */
+    /* Edit button — compact height */
     .btn-edit-sm { background: #F5F0E8; border: 1px solid #E7E5E4; border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit; color: #1C1917; flex-shrink: 0; height: 28px; min-height: unset; line-height: 1; margin-left: 0.4rem; }
     .btn-edit-sm:hover { border-color: #F5B800; background: rgba(245,184,0,0.08); }
     /* Chevron */
@@ -1048,6 +1053,31 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .income-detail-chip { display: inline-block; background: rgba(245,184,0,0.1); color: #92620A; font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.45rem; border-radius: 999px; text-transform: uppercase; }
     .income-detail-channel { background: rgba(0,168,150,0.1); color: #00665E; }
     .income-detail-notes { font-size: 0.82rem; color: #78716C; margin: 0; flex-basis: 100%; }
+
+    /* ── Mobile: reflow income row to 2 lines ───────────────────────────── */
+    /* Line 1: date  badge  ›                                                */
+    /* Line 2: amount (left)              edit (right)                       */
+    @media (max-width: 600px) {
+      .income-row-summary {
+        flex-wrap: wrap;
+        padding: 0.5rem 0.6rem;
+        gap: 0.25rem 0.4rem;
+        align-items: center;
+      }
+      /* Force a row break between the chevron and the amount */
+      .income-row-summary::after {
+        content: '';
+        flex-basis: 100%;
+        height: 0;
+        order: 4;
+      }
+      .income-date   { order: 1; min-width: unset; font-size: 0.76rem; }
+      .entry-type-badge { order: 2; }
+      .income-chevron { order: 3; margin-left: auto; margin-right: 0; }
+      .income-amount  { order: 5; margin-left: 0; font-size: 0.88rem; }
+      .btn-edit-sm    { order: 6; margin-left: auto; margin-right: 0; }
+      .income-row-detail { padding: 0 0.6rem 0.5rem; }
+    }
     .income-edit-form { padding: 0.75rem; background: rgba(245,184,0,0.04); }
     .income-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
     .income-edit-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; }
