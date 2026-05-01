@@ -13,6 +13,10 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,6 +32,9 @@ public class UploadController {
     @Value("${r2.bucket:hustle}")
     private String bucket;
 
+    @Value("${upload.local-dir:/app/uploads}")
+    private String localUploadDir;
+
     public UploadController(AuthService authService) {
         this.authService = authService;
     }
@@ -38,10 +45,6 @@ public class UploadController {
             @RequestParam("file") MultipartFile file) throws IOException {
 
         authService.requireAuth(token);
-
-        if (s3Client == null) {
-            return ResponseEntity.status(503).body(Map.of("error", "File storage not configured"));
-        }
 
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
@@ -54,34 +57,52 @@ public class UploadController {
                 : ".jpg";
         String filename = UUID.randomUUID().toString().replace("-", "") + ext;
 
-        s3Client.putObject(
-                PutObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(filename)
-                        .contentType(contentType)
-                        .build(),
-                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+        if (s3Client != null) {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(filename)
+                            .contentType(contentType)
+                            .build(),
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+        } else {
+            Path dir = Paths.get(localUploadDir);
+            Files.createDirectories(dir);
+            Files.copy(file.getInputStream(), dir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+        }
 
         return ResponseEntity.ok(Map.of("url", "/api/uploads/" + filename));
     }
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<byte[]> serve(@PathVariable String filename) {
-        if (s3Client == null) {
-            return ResponseEntity.status(503).build();
-        }
-        try {
-            ResponseBytes<GetObjectResponse> obj = s3Client.getObjectAsBytes(
-                    GetObjectRequest.builder().bucket(bucket).key(filename).build());
+        if (s3Client != null) {
+            try {
+                ResponseBytes<GetObjectResponse> obj = s3Client.getObjectAsBytes(
+                        GetObjectRequest.builder().bucket(bucket).key(filename).build());
 
-            String ct = obj.response().contentType();
-            return ResponseEntity.ok()
-                    .header("Cache-Control", "public, max-age=31536000, immutable")
-                    .contentType(MediaType.parseMediaType(ct != null ? ct : "application/octet-stream"))
-                    .body(obj.asByteArray());
+                String ct = obj.response().contentType();
+                return ResponseEntity.ok()
+                        .header("Cache-Control", "public, max-age=31536000, immutable")
+                        .contentType(MediaType.parseMediaType(ct != null ? ct : "application/octet-stream"))
+                        .body(obj.asByteArray());
 
-        } catch (NoSuchKeyException e) {
-            return ResponseEntity.notFound().build();
+            } catch (NoSuchKeyException e) {
+                return ResponseEntity.notFound().build();
+            }
+        } else {
+            try {
+                Path filePath = Paths.get(localUploadDir, filename);
+                if (!Files.exists(filePath)) return ResponseEntity.notFound().build();
+                byte[] bytes = Files.readAllBytes(filePath);
+                String ct = Files.probeContentType(filePath);
+                return ResponseEntity.ok()
+                        .header("Cache-Control", "public, max-age=31536000, immutable")
+                        .contentType(MediaType.parseMediaType(ct != null ? ct : "application/octet-stream"))
+                        .body(bytes);
+            } catch (IOException e) {
+                return ResponseEntity.internalServerError().build();
+            }
         }
     }
 }
