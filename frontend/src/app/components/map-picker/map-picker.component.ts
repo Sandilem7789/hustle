@@ -1,16 +1,39 @@
-import { Component, Input, Output, EventEmitter, AfterViewInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, NgZone, inject } from '@angular/core';
 import * as L from 'leaflet';
 
 @Component({
   selector: 'app-map-picker',
   standalone: true,
   template: `
-    <div [id]="mapId" class="map-container"></div>
-    <p class="map-hint">Tap the map to drop a pin on the business location.</p>
+    <div class="map-wrap">
+      <div [id]="mapId" class="map-container"></div>
+      <p class="map-hint">Tap the map to drop a pin · Pinch to zoom</p>
+    </div>
   `,
   styles: `
-    .map-container { height: 220px; border-radius: 0.75rem; border: 2px solid #E7E5E4; overflow: hidden; z-index: 0; }
-    .map-hint { font-size: 0.78rem; color: #A8A29E; margin: 0.3rem 0 0; }
+    .map-wrap { position: relative; width: 100%; }
+
+    .map-container {
+      height: 280px;
+      width: 100%;
+      border-radius: 0.75rem;
+      border: 2px solid #E7E5E4;
+      position: relative;
+      /* tell the browser: touch gestures here belong to Leaflet, not the page */
+      touch-action: none;
+      /* isolate Leaflet's internal z-index stack from the rest of the page */
+      isolation: isolate;
+    }
+
+    /* Leaflet controls must sit above the tile layer but below our modals */
+    .map-container :global(.leaflet-control-container) { z-index: 400; }
+
+    .map-hint {
+      font-size: 0.76rem;
+      color: #A8A29E;
+      margin: 0.3rem 0 0;
+      text-align: center;
+    }
   `
 })
 export class MapPickerComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -20,15 +43,20 @@ export class MapPickerComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   readonly mapId = `map-picker-${Math.random().toString(36).slice(2)}`;
 
+  private readonly zone = inject(NgZone);
+
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
-  // Default centre: Phinda area, KwaZulu-Natal
   private readonly DEFAULT_LAT = -27.8;
   private readonly DEFAULT_LNG = 32.4;
 
   ngAfterViewInit(): void {
-    this.initMap();
+    // Defer so the container has finished layout before Leaflet measures it.
+    // Without this, Leaflet sees a partially-rendered container and leaves
+    // blank tile rows along one or more edges.
+    setTimeout(() => this.initMap(), 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -38,6 +66,7 @@ export class MapPickerComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
     this.map?.remove();
     this.map = null;
   }
@@ -49,11 +78,18 @@ export class MapPickerComponent implements AfterViewInit, OnChanges, OnDestroy {
     const centerLat = this.lat ?? this.DEFAULT_LAT;
     const centerLng = this.lng ?? this.DEFAULT_LNG;
 
-    this.map = L.map(el, { zoomControl: true }).setView([centerLat, centerLng], this.lat ? 15 : 11);
+    this.map = L.map(el, {
+      zoomControl: true,
+      // Scroll-wheel zoom causes the page to jump on desktop — disable it.
+      // Users pinch-zoom on mobile and use the +/- buttons on desktop.
+      scrollWheelZoom: false,
+      // Required for Leaflet's touch-drag handlers to work on iOS
+      tap: false,
+    }).setView([centerLat, centerLng], this.lat ? 15 : 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
+      maxZoom: 19,
     }).addTo(this.map);
 
     if (this.lat && this.lng) {
@@ -63,6 +99,20 @@ export class MapPickerComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.placeMarker(e.latlng.lat, e.latlng.lng);
       this.coordsChange.emit({ lat: e.latlng.lat, lng: e.latlng.lng });
+    });
+
+    // Force Leaflet to recalculate tile coverage after initial render.
+    // Needed when the map sits inside a tab, accordion, or *ngIf block
+    // that wasn't fully laid out when ngAfterViewInit first fired.
+    setTimeout(() => this.map?.invalidateSize(), 150);
+
+    // Re-tile when the container resizes (phone rotation, panel expand/collapse).
+    // Run outside Angular's zone so resize callbacks don't trigger CD on every frame.
+    this.zone.runOutsideAngular(() => {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.map?.invalidateSize();
+      });
+      this.resizeObserver.observe(el);
     });
   }
 

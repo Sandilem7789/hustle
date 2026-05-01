@@ -422,3 +422,22 @@ main.page-shell {
   );
   border-radius: var(--radius-pill);
 }
+
+/* ─── Leaflet map overrides ──────────────────────────────────────────────── */
+/* Prevent our global button rule (min-height: 48px) from blowing up the
+   Leaflet zoom controls, which are <a> tags but sometimes rendered as
+   buttons by browser extensions / accessibility trees.                     */
+.leaflet-control-zoom a,
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  min-height: unset !important;
+  font-family: inherit;
+}
+
+/* Ensure the tile layer renders above the container background */
+.leaflet-tile-pane { z-index: 2; }
+.leaflet-overlay-pane { z-index: 3; }
+.leaflet-marker-pane { z-index: 4; }
+.leaflet-tooltip-pane { z-index: 5; }
+.leaflet-popup-pane { z-index: 6; }
+.leaflet-control { z-index: 8; }
