@@ -550,12 +550,20 @@ import { AppSelectComponent } from '../app-select/app-select.component';
                 </div>
 
                 <!-- Monthly Report Download -->
-                <div class="report-download-row">
-                  <label class="field-label">Report Month</label>
-                  <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
-                  <button class="btn btn-report" (click)="downloadMonthlyReport(h)" [disabled]="reportDownloading() === h.businessProfileId">
-                    {{ reportDownloading() === h.businessProfileId ? 'Generating…' : '↓ Monthly Report PDF' }}
-                  </button>
+                <div class="report-bar">
+                  <div class="report-bar-left">
+                    <span class="report-bar-icon">📄</span>
+                    <div>
+                      <p class="report-bar-title">Monthly Report</p>
+                      <p class="report-bar-sub">{{ h.businessName }}</p>
+                    </div>
+                  </div>
+                  <div class="report-bar-right">
+                    <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="report-month-input" />
+                    <button class="report-dl-btn" (click)="downloadMonthlyReport(h)" [disabled]="reportDownloading() === h.businessProfileId">
+                      {{ reportDownloading() === h.businessProfileId ? 'Generating…' : '↓ PDF' }}
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Income History -->
@@ -852,15 +860,18 @@ import { AppSelectComponent } from '../app-select/app-select.component';
                 <button class="btn btn-export" (click)="exportActiveHustlers('xlsx')">↓ Excel</button>
               </div>
             </div>
-            <div class="export-card export-card-wide">
-              <div class="export-info">
-                <p class="export-name">Monthly Financial Reports — All Hustlers</p>
-                <p class="muted small">One PDF with a full 4-week financial report per active hustler</p>
+            <div class="report-bar report-bar-bulk">
+              <div class="report-bar-left">
+                <span class="report-bar-icon">📊</span>
+                <div>
+                  <p class="report-bar-title">Monthly Financial Reports — All Hustlers</p>
+                  <p class="report-bar-sub">One PDF with a full 4-week financial report per active hustler</p>
+                </div>
               </div>
-              <div class="export-actions bulk-report-actions">
-                <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
-                <button class="btn btn-export btn-report-pdf" (click)="downloadBulkMonthlyReports()" [disabled]="bulkReportDownloading()">
-                  {{ bulkReportDownloading() ? 'Generating…' : '↓ Download PDF' }}
+              <div class="report-bar-right">
+                <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="report-month-input" />
+                <button class="report-dl-btn" (click)="downloadBulkMonthlyReports()" [disabled]="bulkReportDownloading()">
+                  {{ bulkReportDownloading() ? 'Generating…' : '↓ PDF' }}
                 </button>
               </div>
             </div>
@@ -1167,19 +1178,71 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .export-info { flex: 1; min-width: 0; }
     .export-name { font-weight: 700; font-size: 0.95rem; color: #1C1917; margin: 0 0 0.1rem; }
     .export-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-    .bulk-report-actions { align-items: center; flex-wrap: wrap; }
     .btn-export { background: #1C1917; color: white; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 0.75rem; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
     .btn-export:hover { background: #292524; }
     .btn-export:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-export-csv { background: white; color: #1C1917; border: 1.5px solid #1C1917; }
     .btn-export-csv:hover { background: #F5F5F4; }
-    .btn-report-pdf { background: #166534; }
-    .btn-report-pdf:hover { background: #14532d; }
-    .month-input { border: 1.5px solid #D6D3D1; border-radius: 0.5rem; padding: 0.45rem 0.65rem; font-size: 0.85rem; font-family: inherit; color: #1C1917; }
-    .report-download-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 0.75rem 0 0.5rem; }
-    .btn-report { background: #166534; color: white; font-weight: 700; font-size: 0.82rem; padding: 0.45rem 1rem; border-radius: 0.75rem; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
-    .btn-report:hover { background: #14532d; }
-    .btn-report:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ── Shared Report Bar (matches hustler dashboard style) ── */
+    .report-bar {
+      background: white;
+      border: 1px solid #E7E5E4;
+      border-left: 4px solid #F5B800;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 10px rgba(28,25,23,0.06);
+      margin: 0.75rem 0 0.5rem;
+    }
+    .report-bar-bulk { margin: 0; }
+    .report-bar-left { display: flex; align-items: center; gap: 0.75rem; }
+    .report-bar-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+    .report-bar-title { font-size: 0.95rem; font-weight: 800; color: #1C1917; margin: 0; }
+    .report-bar-sub { font-size: 0.78rem; color: #78716C; margin: 0.1rem 0 0; }
+    .report-bar-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+    .report-month-input {
+      height: 40px;
+      min-height: unset;
+      border: 1.5px solid #E7E5E4;
+      border-radius: 0.6rem;
+      padding: 0 0.65rem;
+      font-size: 0.88rem;
+      font-family: inherit;
+      color: #1C1917;
+      background: #FAFAF9;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .report-month-input:focus { border-color: #F5B800; }
+    .report-dl-btn {
+      height: 40px;
+      min-height: unset;
+      border: none;
+      border-radius: 0.6rem;
+      padding: 0 1rem;
+      font-size: 0.88rem;
+      font-weight: 800;
+      background: #F5B800;
+      color: #1C1917;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 3px 10px rgba(245,184,0,0.3);
+      transition: box-shadow 0.15s;
+      white-space: nowrap;
+    }
+    .report-dl-btn:hover { box-shadow: 0 5px 16px rgba(245,184,0,0.45); }
+    .report-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+    @media (max-width: 480px) {
+      .report-bar { flex-direction: column; align-items: flex-start; }
+      .report-bar-right { width: 100%; }
+      .report-month-input { flex: 1; }
+      .report-dl-btn { flex: 1; }
+    }
     .income-cat { font-size: 0.72rem; }
 
     .btn-schedule { background: rgba(0,168,150,0.1); color: #00746A; border: 1px solid rgba(0,168,150,0.3); font-weight: 700; }
