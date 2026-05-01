@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ApiService, Community, ProductResponse } from '../../services/api.service';
+import { ApiService, ProductResponse } from '../../services/api.service';
 import { CustomerAuthService } from '../../services/customer-auth.service';
 import { CartService } from '../../services/cart.service';
 
@@ -26,23 +26,6 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
         </button>
       </div>
 
-      <!-- COMMUNITY FILTER PILLS -->
-      <div class="filter-bar">
-        <button class="filter-btn" [class.active]="selectedCommunityId() === null" (click)="selectCommunity(null)">
-          All communities
-        </button>
-        <button *ngFor="let c of communities()"
-                class="filter-btn"
-                [class.active]="selectedCommunityId() === c.id"
-                (click)="selectCommunity(c.id)">
-          {{ c.name }}
-        </button>
-      </div>
-
-      <p class="community-label" *ngIf="selectedCommunityId() !== null">
-        {{ selectedCommunityName() }}
-      </p>
-
       <!-- LOADING -->
       <div *ngIf="loading()" class="muted" style="margin-top:1rem">Loading products…</div>
 
@@ -58,7 +41,7 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
           <div class="no-img" *ngIf="!p.mediaUrl">🛒</div>
           <div class="product-body">
             <h3>{{ p.name }}</h3>
-            <p class="shop-name">{{ p.businessName }}</p>
+            <a class="shop-name" (click)="goToBusiness(p.businessId)">{{ p.businessName }}</a>
             <span *ngIf="p.category" class="cat-tag">{{ p.category }}</span>
             <p class="muted desc">{{ p.description }}</p>
             <p class="price">R {{ p.price | number:'1.2-2' }}</p>
@@ -94,14 +77,6 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
     .cat-btn:hover { border-color: #F5B800; color: #1C1917; }
     .cat-btn.cat-active { background: #F5B800; border-color: #F5B800; color: #1C1917; font-weight: 800; }
 
-    /* Community pills */
-    .filter-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
-    .filter-btn { border: 1px solid #E7E5E4; border-radius: 999px; padding: 0.4rem 1rem; background: #FAFAF9; cursor: pointer; font-size: 0.875rem; font-weight: 700; color: #78716C; transition: all 0.15s; min-height: 36px; font-family: inherit; }
-    .filter-btn:hover { background: rgba(245,184,0,0.08); border-color: #F5B800; color: #1C1917; }
-    .filter-btn.active { background: #1C1917; border-color: #1C1917; color: white; font-weight: 800; }
-
-    .community-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #A8A29E; margin-bottom: 1rem; }
-
     /* Grid */
     .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
     @media (max-width: 600px) { .product-grid { grid-template-columns: 1fr; } }
@@ -113,7 +88,8 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
     .no-img { width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: #F5F0E8; }
     .product-body { padding: 0.9rem; }
     .product-body h3 { margin: 0 0 0.15rem; font-size: 1rem; color: #1C1917; font-weight: 800; }
-    .shop-name { font-size: 0.75rem; font-weight: 800; color: #00A896; margin: 0 0 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .shop-name { font-size: 0.75rem; font-weight: 800; color: #00A896; margin: 0 0 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; text-decoration: none; display: block; }
+    .shop-name:hover { color: #007A6E; text-decoration: underline; }
     .cat-tag { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; margin-bottom: 0.4rem; text-transform: uppercase; }
     .desc { font-size: 0.85rem; margin: 0.3rem 0 0.5rem; line-height: 1.4; color: #78716C; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .price { font-weight: 800; color: #2DB344; font-size: 1rem; margin: 0 0 0.75rem; }
@@ -135,24 +111,11 @@ export class CommunityHubComponent implements OnInit {
 
   readonly categories = CATEGORIES;
 
-  communities = signal<Community[]>([]);
   products = signal<ProductResponse[]>([]);
-  selectedCommunityId = signal<string | null>(null);
   selectedCategory = signal<string>('ALL');
   loading = signal(true);
 
-  selectedCommunityName() {
-    const id = this.selectedCommunityId();
-    return this.communities().find(c => c.id === id)?.name ?? '';
-  }
-
   ngOnInit(): void {
-    this.api.listCommunities().subscribe(c => this.communities.set(c));
-    this.loadProducts();
-  }
-
-  selectCommunity(id: string | null): void {
-    this.selectedCommunityId.set(id);
     this.loadProducts();
   }
 
@@ -163,9 +126,8 @@ export class CommunityHubComponent implements OnInit {
 
   loadProducts(): void {
     this.loading.set(true);
-    const id = this.selectedCommunityId();
     const cat = this.selectedCategory();
-    this.api.listProducts(id ?? undefined, cat === 'ALL' ? undefined : cat).subscribe({
+    this.api.listProducts(undefined, cat === 'ALL' ? undefined : cat).subscribe({
       next: list => { this.products.set(list); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
@@ -178,6 +140,10 @@ export class CommunityHubComponent implements OnInit {
 
   goToLogin(): void {
     this.router.navigate(['/customer/login']);
+  }
+
+  goToBusiness(businessId: string): void {
+    this.router.navigate(['/business', businessId]);
   }
 
   resolveUrl(u: string): string { return u.startsWith('http') ? u : this.api.baseUrl + u; }

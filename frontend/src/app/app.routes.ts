@@ -12,6 +12,7 @@ import { DriverRegisterPageComponent } from './pages/driver-register/driver-regi
 import { DriverLoginPageComponent } from './pages/driver-login/driver-login-page.component';
 import { DriverDashboardPageComponent } from './pages/driver-dashboard/driver-dashboard-page.component';
 import { OperationsPageComponent } from './pages/operations/operations-page.component';
+import { BusinessPageComponent } from './pages/business/business-page.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'marketplace', pathMatch: 'full' },
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: 'coordinator', component: CoordinatorPageComponent },
   { path: 'operations', component: OperationsPageComponent },
   { path: 'marketplace', component: MarketplacePageComponent },
+  { path: 'business/:businessId', component: BusinessPageComponent },
   { path: 'customer/register', component: CustomerRegisterPageComponent },
   { path: 'customer/login', component: CustomerLoginPageComponent },
   { path: 'checkout', component: CheckoutPageComponent },

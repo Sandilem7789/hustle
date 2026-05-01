@@ -162,10 +162,11 @@ export class ApiService {
     });
   }
 
-  listProducts(communityId?: string, category?: string): Observable<ProductResponse[]> {
+  listProducts(communityId?: string, category?: string, businessId?: string): Observable<ProductResponse[]> {
     const params: Record<string, string> = {};
     if (communityId) params['communityId'] = communityId;
     if (category) params['category'] = category;
+    if (businessId) params['businessId'] = businessId;
     return this.http.get<ProductResponse[]>(`${this.baseUrl}/api/products`, {
       params: Object.keys(params).length ? params : undefined
     });

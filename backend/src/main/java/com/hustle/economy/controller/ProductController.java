@@ -57,7 +57,8 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<List<ProductResponse>> listProducts(
             @RequestParam(required = false) String communityId,
-            @RequestParam(required = false) String category) {
-        return ResponseEntity.ok(productService.listProducts(communityId, category));
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String businessId) {
+        return ResponseEntity.ok(productService.listProducts(communityId, category, businessId));
     }
 }

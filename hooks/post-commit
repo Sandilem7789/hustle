@@ -1,0 +1,27 @@
+#!/bin/bash
+CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null)
+
+FRONTEND=false
+BACKEND=false
+
+echo "$CHANGED" | grep -q "^frontend/" && FRONTEND=true
+echo "$CHANGED" | grep -q "^backend/"  && BACKEND=true
+
+if ! $FRONTEND && ! $BACKEND; then
+  exit 0
+fi
+
+LOG="$(git rev-parse --show-toplevel)/.git/rebuild.log"
+
+if $FRONTEND && $BACKEND; then
+  echo "[post-commit] Rebuilding frontend + backend..."
+  docker compose up --build -d frontend backend >> "$LOG" 2>&1 &
+elif $FRONTEND; then
+  echo "[post-commit] Rebuilding frontend..."
+  docker compose up --build -d frontend >> "$LOG" 2>&1 &
+else
+  echo "[post-commit] Rebuilding backend..."
+  docker compose up --build -d backend >> "$LOG" 2>&1 &
+fi
+
+echo "[post-commit] Build running in background — tail .git/rebuild.log to follow"

@@ -59,10 +59,15 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> listProducts(String communityId, String category) {
-        List<Product> products = communityId != null && !communityId.isBlank()
-                ? productRepository.findByCommunityIdFetched(UUID.fromString(communityId))
-                : productRepository.findAllFetched();
+    public List<ProductResponse> listProducts(String communityId, String category, String businessId) {
+        List<Product> products;
+        if (businessId != null && !businessId.isBlank()) {
+            products = productRepository.findByBusinessIdFetched(UUID.fromString(businessId));
+        } else if (communityId != null && !communityId.isBlank()) {
+            products = productRepository.findByCommunityIdFetched(UUID.fromString(communityId));
+        } else {
+            products = productRepository.findAllFetched();
+        }
         if (category != null && !category.isBlank()) {
             ProductCategory cat = ProductCategory.valueOf(category.toUpperCase());
             products = products.stream().filter(p -> cat.equals(p.getCategory())).toList();
