@@ -83,8 +83,6 @@ export class MapPickerComponent implements AfterViewInit, OnChanges, OnDestroy {
       // Scroll-wheel zoom causes the page to jump on desktop — disable it.
       // Users pinch-zoom on mobile and use the +/- buttons on desktop.
       scrollWheelZoom: false,
-      // Required for Leaflet's touch-drag handlers to work on iOS
-      tap: false,
     }).setView([centerLat, centerLng], this.lat ? 15 : 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

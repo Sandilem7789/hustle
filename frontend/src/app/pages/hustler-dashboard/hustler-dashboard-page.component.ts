@@ -64,6 +64,23 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
         </div>
       </div>
 
+      <!-- ── MONTHLY REPORT BAR ── -->
+      <div class="report-bar">
+        <div class="report-bar-left">
+          <span class="report-bar-icon">📄</span>
+          <div>
+            <p class="report-bar-title">Monthly Report</p>
+            <p class="report-bar-sub">Download your income & expenses as a PDF</p>
+          </div>
+        </div>
+        <div class="report-bar-right">
+          <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
+          <button class="report-dl-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">
+            {{ reportDownloading() ? 'Generating…' : '↓ PDF' }}
+          </button>
+        </div>
+      </div>
+
       <!-- ── TAB BAR ── -->
       <div class="tab-bar">
         <button [class.tab-active-finances]="tab() === 'income'" (click)="tab.set('income')">Finances</button>
@@ -133,27 +150,33 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
             <h2>Income history</h2>
             <div class="history-controls">
               <app-select [(ngModel)]="historyFilter" (ngModelChange)="applyFilter()" [ngModelOptions]="{standalone: true}" [options]="historyFilterOpts" placeholder="This week"></app-select>
-              <button class="outline-btn" (click)="exportCsv('weekly')">↓ Weekly CSV</button>
-              <button class="outline-btn" (click)="exportCsv('monthly')">↓ Monthly CSV</button>
-              <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input-sm" />
-              <button class="report-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">
-                {{ reportDownloading() ? 'Generating…' : '↓ Monthly Report PDF' }}
-              </button>
             </div>
           </div>
 
           <div *ngIf="incomeHistory().length === 0" class="muted" style="margin-top:1rem">No entries yet.</div>
-          <table *ngIf="incomeHistory().length > 0" class="income-table">
-            <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Notes</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let e of incomeHistory()" [class.expense-row]="e.entryType === 'EXPENSE'">
-                <td>{{ e.date }}</td>
-                <td><span class="badge" [class.income-badge]="e.entryType !== 'EXPENSE'" [class.expense-badge]="e.entryType === 'EXPENSE'">{{ e.entryType === 'EXPENSE' ? 'Expense' : 'Income' }}</span></td>
-                <td [class.expense-amt]="e.entryType === 'EXPENSE'">{{ e.entryType === 'EXPENSE' ? '−' : '' }}R {{ e.amount | number:'1.2-2' }}</td>
-                <td class="muted">{{ e.notes || '—' }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="history-list" *ngIf="incomeHistory().length > 0">
+            <div
+              *ngFor="let e of incomeHistory(); let i = index"
+              class="history-item"
+              [class.expense-item]="e.entryType === 'EXPENSE'"
+              (click)="toggleEntry(i)"
+            >
+              <div class="history-row">
+                <span class="history-date">{{ e.date }}</span>
+                <span class="badge" [class.income-badge]="e.entryType !== 'EXPENSE'" [class.expense-badge]="e.entryType === 'EXPENSE'">
+                  {{ e.entryType === 'EXPENSE' ? 'Expense' : 'Income' }}
+                </span>
+                <span class="history-amount" [class.expense-amt]="e.entryType === 'EXPENSE'">
+                  {{ e.entryType === 'EXPENSE' ? '−' : '+' }}R {{ e.amount | number:'1.2-2' }}
+                </span>
+                <span class="history-chevron" [class.history-chevron-open]="expandedEntryIdx() === i">›</span>
+              </div>
+              <div class="history-detail" *ngIf="expandedEntryIdx() === i">
+                <span *ngIf="e.category" class="detail-chip">{{ e.category }}</span>
+                <p class="detail-notes">{{ e.notes || 'No notes' }}</p>
+              </div>
+            </div>
+          </div>
 
           <div class="period-summary" *ngIf="incomeHistory().length > 0">
             <div class="ps-item">
@@ -491,18 +514,86 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
     .invoice-btn:hover:not(:disabled) { background: rgba(45,179,68,0.08); }
     .invoice-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+    /* ── Monthly Report Bar ── */
+    .report-bar {
+      background: white;
+      border: 1px solid #E7E5E4;
+      border-left: 4px solid #F5B800;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 10px rgba(28,25,23,0.06);
+    }
+    .report-bar-left { display: flex; align-items: center; gap: 0.75rem; }
+    .report-bar-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+    .report-bar-title { font-size: 0.95rem; font-weight: 800; color: #1C1917; margin: 0; }
+    .report-bar-sub { font-size: 0.78rem; color: #78716C; margin: 0.1rem 0 0; }
+    .report-bar-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+    .month-input {
+      height: 40px;
+      border: 1.5px solid #E7E5E4;
+      border-radius: 0.6rem;
+      padding: 0 0.65rem;
+      font-size: 0.88rem;
+      font-family: inherit;
+      color: #1C1917;
+      background: #FAFAF9;
+      outline: none;
+      transition: border-color 0.15s;
+      min-height: unset;
+    }
+    .month-input:focus { border-color: #F5B800; }
+    .report-dl-btn {
+      height: 40px;
+      min-height: unset;
+      border: none;
+      border-radius: 0.6rem;
+      padding: 0 1rem;
+      font-size: 0.88rem;
+      font-weight: 800;
+      background: #F5B800;
+      color: #1C1917;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 3px 10px rgba(245,184,0,0.3);
+      transition: box-shadow 0.15s;
+      white-space: nowrap;
+    }
+    .report-dl-btn:hover { box-shadow: 0 5px 16px rgba(245,184,0,0.45); }
+    .report-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+    @media (max-width: 480px) {
+      .report-bar { flex-direction: column; align-items: flex-start; }
+      .report-bar-right { width: 100%; }
+      .month-input { flex: 1; }
+      .report-dl-btn { flex: 1; }
+    }
+
     /* ── History ── */
     .history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
     .history-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .outline-btn { border: 1.5px solid #E7E5E4; background: white; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.85rem; cursor: pointer; color: #78716C; font-weight: 700; min-height: 36px; font-family: inherit; transition: border-color 0.15s, color 0.15s; }
     .outline-btn:hover { border-color: #F5B800; color: #1C1917; }
-    .income-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
-    .income-table th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #E7E5E4; color: #A8A29E; font-size: 0.8rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; }
-    .income-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #E7E5E4; color: #1C1917; }
-    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+    .history-list { display: flex; flex-direction: column; gap: 0; margin-top: 0.75rem; border: 1px solid #E7E5E4; border-radius: 0.75rem; overflow: hidden; }
+    .history-item { cursor: pointer; border-bottom: 1px solid #E7E5E4; transition: background 0.1s; }
+    .history-item:last-child { border-bottom: none; }
+    .history-item:hover { background: #FAFAF9; }
+    .history-item.expense-item:hover { background: rgba(229,57,53,0.02); }
+    .history-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; }
+    .history-date { font-size: 0.82rem; font-weight: 700; color: #78716C; min-width: 80px; flex-shrink: 0; }
+    .history-amount { font-size: 0.95rem; font-weight: 800; color: #2DB344; margin-left: auto; }
+    .history-amount.expense-amt { color: #E53935; }
+    .history-chevron { font-size: 1.1rem; color: #A8A29E; transition: transform 0.2s ease-out; flex-shrink: 0; margin-left: 0.25rem; display: inline-block; }
+    .history-chevron-open { transform: rotate(90deg); }
+    .history-detail { padding: 0 1rem 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .detail-chip { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; text-transform: uppercase; align-self: flex-start; }
+    .detail-notes { font-size: 0.84rem; color: #78716C; margin: 0; }
+    .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; flex-shrink: 0; }
     .income-badge  { background: rgba(45,179,68,0.12); color: #2DB344; }
     .expense-badge { background: rgba(229,57,53,0.1);  color: #E53935; }
-    .expense-row td { background: rgba(229,57,53,0.03); }
     .expense-amt { color: #E53935; font-weight: 700; }
     .period-summary { display: flex; align-items: center; margin-top: 1rem; background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 0.75rem; overflow: hidden; }
     .ps-item { flex: 1; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -601,24 +692,7 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
     .order-status-cancelled { background: rgba(229,57,53,0.1); color: #E53935; }
     .order-status-delivered { background: rgba(45,179,68,0.12); color: #2DB344; }
 
-    /* ── Report & Logout buttons ── */
-    .report-btn {
-      border: 1.5px solid #1B6FD4;
-      background: rgba(27,111,212,0.06);
-      color: #1B6FD4;
-      border-radius: 999px;
-      padding: 0.4rem 0.9rem;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      min-height: 36px;
-      transition: background 0.15s;
-    }
-    .report-btn:hover { background: rgba(27,111,212,0.12); }
-    .report-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .month-input-sm { border: 1.5px solid #E7E5E4; border-radius: 0.5rem; padding: 0.35rem 0.55rem; font-size: 0.82rem; font-family: inherit; color: #1C1917; }
-
+    /* ── Logout button ── */
     .logout-btn {
       display: block;
       width: 100%;
@@ -698,6 +772,11 @@ export class HustlerDashboardPageComponent implements OnInit {
   incomeSuccess = signal(false);
   incomeError = signal('');
   historyFilter = 'week';
+  expandedEntryIdx = signal<number | null>(null);
+
+  toggleEntry(i: number): void {
+    this.expandedEntryIdx.update(cur => cur === i ? null : i);
+  }
 
   isServiceIncome = false;
   invoiceCustomer = '';
