@@ -5,17 +5,18 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler, ApplicantResponse, ApplicantRequest, CohortCapResponse, InterviewResponse, InterviewRequest, BusinessVerificationResponse, BusinessVerificationRequest, ActivateApplicantResponse, MonthlyCheckInResponse, MonthlyCheckInRequest, IncomeEntryResponse, IncomeEntryRequest } from '../../services/api.service';
 import { MapPickerComponent } from '../map-picker/map-picker.component';
 import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler } from '../../utils/monthly-report.util';
+import { AppSelectComponent } from '../app-select/app-select.component';
 
 @Component({
   selector: 'app-facilitator-queue',
   standalone: true,
-  imports: [CommonModule, FormsModule, MapPickerComponent],
+  imports: [CommonModule, FormsModule, MapPickerComponent, AppSelectComponent],
   template: `
     <section class="card">
       <!-- TOP TABS -->
       <div class="top-tabs">
         <button [class.active]="fTab() === 'pipeline'" (click)="fTab.set('pipeline')">Pipeline</button>
-        <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Active Hustlers</button>
+        <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Active<br>Hustlers</button>
         <button [class.active]="fTab() === 'exports'" (click)="fTab.set('exports')">Exports</button>
       </div>
 
@@ -39,23 +40,11 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
           <div class="edit-grid">
             <label>
               <span class="field-label">Community *</span>
-              <select [(ngModel)]="newApplicant.communityId" [ngModelOptions]="{standalone: true}">
-                <option value="">— Select community —</option>
-                <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-              </select>
+              <app-select [(ngModel)]="newApplicant.communityId" [ngModelOptions]="{standalone: true}" [options]="addCommunityOpts()" placeholder="— Select community —"></app-select>
             </label>
             <label>
               <span class="field-label">Cohort</span>
-              <select [(ngModel)]="newApplicant.cohortNumber" [ngModelOptions]="{standalone: true}">
-                <option [ngValue]="8">Cohort 8</option>
-                <option [ngValue]="1">Cohort 1</option>
-                <option [ngValue]="2">Cohort 2</option>
-                <option [ngValue]="3">Cohort 3</option>
-                <option [ngValue]="4">Cohort 4</option>
-                <option [ngValue]="5">Cohort 5</option>
-                <option [ngValue]="6">Cohort 6</option>
-                <option [ngValue]="7">Cohort 7</option>
-              </select>
+              <app-select [(ngModel)]="newApplicant.cohortNumber" [ngModelOptions]="{standalone: true}" [options]="cohortAddOpts" placeholder="Cohort 8"></app-select>
             </label>
             <label>
               <span class="field-label">First Name *</span>
@@ -67,12 +56,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
             </label>
             <label>
               <span class="field-label">Gender</span>
-              <select [(ngModel)]="newApplicant.gender" [ngModelOptions]="{standalone: true}">
-                <option value="">— Select —</option>
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-                <option value="Other">Other</option>
-              </select>
+              <app-select [(ngModel)]="newApplicant.gender" [ngModelOptions]="{standalone: true}" [options]="genderOpts" placeholder="— Select —"></app-select>
             </label>
             <label>
               <span class="field-label">Age</span>
@@ -124,23 +108,11 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
         <div class="filters">
           <label>
             <span>Community</span>
-            <select [(ngModel)]="pipelineCommunityId" (ngModelChange)="onPipelineCommunityChange()">
-              <option value="">All communities</option>
-              <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-            </select>
+            <app-select [(ngModel)]="pipelineCommunityId" (ngModelChange)="onPipelineCommunityChange()" [options]="filterCommunityOpts()" placeholder="All communities"></app-select>
           </label>
           <label>
             <span>Cohort</span>
-            <select [(ngModel)]="pipelineCohort" (ngModelChange)="onPipelineCommunityChange()">
-              <option value="8">Cohort 8</option>
-              <option value="1">Cohort 1</option>
-              <option value="2">Cohort 2</option>
-              <option value="3">Cohort 3</option>
-              <option value="4">Cohort 4</option>
-              <option value="5">Cohort 5</option>
-              <option value="6">Cohort 6</option>
-              <option value="7">Cohort 7</option>
-            </select>
+            <app-select [(ngModel)]="pipelineCohort" (ngModelChange)="onPipelineCommunityChange()" [options]="cohortFilterOpts" placeholder="Cohort 8"></app-select>
           </label>
         </div>
 
@@ -275,15 +247,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
               <!-- Rejection reason form — outside stage-actions so it doesn't stretch the buttons -->
               <div class="reject-form" *ngIf="rejectFormId() === a.id">
                 <p class="field-label" style="margin-bottom:0.4rem">Reason for rejection *</p>
-                <select [(ngModel)]="rejectReasons[a.id]" [ngModelOptions]="{standalone: true}" class="reject-select">
-                  <option value="">— Select a reason —</option>
-                  <option value="Previously included in another cohort">Previously included in another cohort</option>
-                  <option value="Outside age range (18–35)">Outside age range (18–35)</option>
-                  <option value="Business not verified">Business not verified</option>
-                  <option value="No-show for interview">No-show for interview</option>
-                  <option value="Duplicate application">Duplicate application</option>
-                  <option value="Other">Other (specify below)</option>
-                </select>
+                <app-select [(ngModel)]="rejectReasons[a.id]" [ngModelOptions]="{standalone: true}" [options]="rejectReasonOpts" placeholder="— Select a reason —"></app-select>
                 <textarea
                   *ngIf="rejectReasons[a.id] === 'Other'"
                   [(ngModel)]="rejectReasonOther[a.id]"
@@ -612,10 +576,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
                             </label>
                             <label>
                               <span class="field-label">Type</span>
-                              <select [(ngModel)]="incomeEditData.entryType" [ngModelOptions]="{standalone: true}">
-                                <option value="INCOME">Income</option>
-                                <option value="EXPENSE">Expense</option>
-                              </select>
+                              <app-select [(ngModel)]="incomeEditData.entryType" [ngModelOptions]="{standalone: true}" [options]="entryTypeOpts" placeholder="Type"></app-select>
                             </label>
                             <label>
                               <span class="field-label">Amount (R)</span>
@@ -623,37 +584,11 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
                             </label>
                             <label>
                               <span class="field-label">Channel</span>
-                              <select [(ngModel)]="incomeEditData.channel" [ngModelOptions]="{standalone: true}">
-                                <option value="CASH">Cash</option>
-                                <option value="MARKETPLACE">Marketplace</option>
-                              </select>
+                              <app-select [(ngModel)]="incomeEditData.channel" [ngModelOptions]="{standalone: true}" [options]="channelOpts" placeholder="Channel"></app-select>
                             </label>
                             <label>
                               <span class="field-label">Category</span>
-                              <select [(ngModel)]="incomeEditData.category" [ngModelOptions]="{standalone: true}">
-                                <option value="">— Select —</option>
-                                <optgroup label="Sales">
-                                  <option value="CASH_SALES">Cash Sales</option>
-                                  <option value="CREDIT_SALES">Credit Sale</option>
-                                  <option value="IN_APP_SALES">In-App Sales</option>
-                                </optgroup>
-                                <optgroup label="Expenses">
-                                  <option value="COST_OF_GOODS">Cost of Goods (Direct Cost)</option>
-                                  <option value="TRANSPORT">Transport</option>
-                                  <option value="RUNNER_FEE">Runner Fee</option>
-                                  <option value="ELECTRICITY">Electricity</option>
-                                  <option value="WAGES">Wages</option>
-                                  <option value="AIRTIME_DATA">Airtime/Data</option>
-                                  <option value="OTHER_OVERHEAD_1">Other Overhead 1</option>
-                                  <option value="OTHER_OVERHEAD_2">Other Overhead 2</option>
-                                  <option value="SAVINGS">Savings</option>
-                                </optgroup>
-                                <optgroup label="Household Income">
-                                  <option value="GRANTS_SASSA">Grants/SASSA</option>
-                                  <option value="OTHER_SALARY_WAGES">Other Salary/Wages</option>
-                                  <option value="OTHER_HOUSEHOLD">Other Household</option>
-                                </optgroup>
-                              </select>
+                              <app-select [(ngModel)]="incomeEditData.category" [ngModelOptions]="{standalone: true}" [options]="categoryOpts" placeholder="— Select —"></app-select>
                             </label>
                             <label class="income-edit-notes">
                               <span class="field-label">Notes</span>
@@ -781,10 +716,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
                 <div class="edit-grid">
                   <label class="span-2">
                     <span class="field-label">Community</span>
-                    <select [(ngModel)]="hEditData.communityId" [ngModelOptions]="{standalone: true}">
-                      <option value="">— keep current —</option>
-                      <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-                    </select>
+                    <app-select [(ngModel)]="hEditData.communityId" [ngModelOptions]="{standalone: true}" [options]="editCommunityOpts()" placeholder="— keep current —"></app-select>
                   </label>
                   <label class="span-2">
                     <span class="field-label">Operating area</span>
@@ -960,8 +892,8 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
 
     /* Top-level tabs */
-    .top-tabs { display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 1.5rem; overflow-x: auto; }
-    .top-tabs button { flex: 1; min-width: 72px; padding: 0.85rem 0.75rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; font-family: inherit; min-height: 48px; white-space: nowrap; }
+    .top-tabs { display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 1.5rem; }
+    .top-tabs button { flex: 1; padding: 0.75rem 0.5rem; border: none; background: none; font-size: 0.85rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; font-family: inherit; min-height: 48px; text-align: center; line-height: 1.25; }
     .top-tabs button.active { color: #1C1917; border-bottom: 2px solid #F5B800; margin-bottom: -2px; }
 
     .sub-heading { margin: 0 0 1.25rem; font-size: 0.9rem; color: #78716C; }
@@ -970,7 +902,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     /* ── Pipeline tab ───────────────────────────────────────────────────── */
     .pipeline-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; gap: 1rem; flex-wrap: wrap; }
     .ph-text h2 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #1C1917; }
-    .btn-add { background: #F5B800; color: #1C1917; font-weight: 800; padding: 0.6rem 1.25rem; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; min-height: 44px; font-size: 0.9rem; }
+    .btn-add { background: #F5B800; color: #1C1917; font-weight: 800; padding: 0.6rem 1.25rem; border-radius: 0.75rem; border: none; cursor: pointer; font-family: inherit; min-height: 44px; font-size: 0.9rem; }
 
     /* Search */
     .pipeline-search-row { position: relative; margin-bottom: 0.85rem; }
@@ -996,7 +928,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     .stage-scroll { overflow-x: auto; margin-bottom: 1rem; -webkit-overflow-scrolling: touch; }
     .stage-scroll::-webkit-scrollbar { display: none; }
     .stage-tabs { display: flex; gap: 0.3rem; white-space: nowrap; padding-bottom: 2px; }
-    .stage-tabs button { padding: 0.4rem 0.85rem; border: 2px solid #E7E5E4; border-radius: 999px; background: white; font-size: 0.78rem; font-weight: 700; color: #78716C; cursor: pointer; font-family: inherit; transition: all 0.15s; min-height: 36px; display: inline-flex; align-items: center; gap: 0.3rem; }
+    .stage-tabs button { padding: 0.4rem 0.85rem; border: 2px solid #E7E5E4; border-radius: 0.75rem; background: white; font-size: 0.78rem; font-weight: 700; color: #78716C; cursor: pointer; font-family: inherit; transition: all 0.15s; min-height: 36px; display: inline-flex; align-items: center; gap: 0.3rem; }
     .stage-tabs button.active { background: #F5B800; border-color: #F5B800; color: #1C1917; }
     .stage-count { background: rgba(28,25,23,0.12); border-radius: 999px; padding: 0 0.4rem; font-size: 0.68rem; font-weight: 800; }
 
@@ -1035,14 +967,14 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     .action-row { margin: 0.75rem 0 0.5rem; }
     .action-row .field-label { display: block; margin-bottom: 0.4rem; }
     .call-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-    .btn-call { background: #F5F0E8; color: #78716C; font-size: 0.8rem; padding: 0.35rem 0.75rem; border-radius: 999px; border: 2px solid transparent; min-height: 36px; cursor: pointer; font-family: inherit; font-weight: 700; transition: all 0.15s; }
+    .btn-call { background: #F5F0E8; color: #78716C; font-size: 0.8rem; padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 2px solid transparent; min-height: 36px; cursor: pointer; font-family: inherit; font-weight: 700; transition: all 0.15s; }
     .btn-call.active-call { background: #1C1917; color: white; border-color: #1C1917; }
     .btn-call:disabled { opacity: 0.5; cursor: not-allowed; }
     .stage-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #E7E5E4; }
     .btn-advance { background: #F5B800; color: #1C1917; }
     .approved-msg { color: #2DB344; font-weight: 700; font-size: 0.9rem; margin: 0; }
     .cred-row { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
-    .btn-cred { background: #F5F0E8; color: #1C1917; border: 2px solid #E7E5E4; border-radius: 999px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; align-self: flex-start; transition: all 0.15s; }
+    .btn-cred { background: #F5F0E8; color: #1C1917; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; align-self: flex-start; transition: all 0.15s; }
     .btn-cred:hover { border-color: #F5B800; background: rgba(245,184,0,0.08); }
     .btn-cred:disabled { opacity: 0.5; cursor: not-allowed; }
     .rejected-msg { color: #E53935; font-weight: 700; font-size: 0.9rem; margin: 0.5rem 0 0; }
@@ -1086,7 +1018,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     .income-amount.expense { color: #E53935; }
     .income-channel { margin-left: auto; }
     .income-notes { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .btn-edit-sm { background: #F5F0E8; border: 1px solid #E7E5E4; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: inherit; color: #1C1917; flex-shrink: 0; }
+    .btn-edit-sm { background: #F5F0E8; border: 1px solid #E7E5E4; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: inherit; color: #1C1917; flex-shrink: 0; }
     .btn-edit-sm:hover { border-color: #F5B800; }
     .income-edit-form { padding: 0.75rem; background: rgba(245,184,0,0.04); }
     .income-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
@@ -1097,8 +1029,8 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     @media (max-width: 480px) { .income-edit-grid { grid-template-columns: 1fr; } .income-edit-notes { grid-column: span 1; } .income-row-content { gap: 0.4rem; } }
     .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0 0 1.25rem; }
     .filters label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; min-width: 140px; }
-    select { border-radius: 0.75rem; border: 2px solid #E7E5E4; padding: 0.5rem 0.75rem; font-size: 0.95rem; font-family: inherit; background: white; color: #1C1917; outline: none; }
-    select:focus { border-color: #F5B800; }
+    select { appearance: none; -webkit-appearance: none; border-radius: 0.75rem; border: 2px solid #E7E5E4; padding: 0.5rem 2.25rem 0.5rem 0.75rem; font-size: 0.95rem; font-family: inherit; font-weight: 600; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.65rem center / 16px; color: #1C1917; outline: none; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; min-height: 40px; }
+    select:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); background-color: white; }
     .count { margin-bottom: 1rem; font-size: 0.85rem; color: #78716C; }
     .queue { display: flex; flex-direction: column; gap: 0.75rem; }
     .queue-card { border: 1px solid #E7E5E4; border-radius: 1rem; overflow: hidden; background: #FAFAF9; }
@@ -1124,7 +1056,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     textarea { border-radius: 0.75rem; border: 2px solid #E7E5E4; padding: 0.65rem 0.9rem; font-size: 0.95rem; font-family: inherit; width: 100%; box-sizing: border-box; resize: vertical; outline: none; }
     textarea:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
     .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; align-items: center; }
-    .btn { border: none; padding: 0.5rem 1.1rem; border-radius: 999px; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; transition: opacity 0.15s; }
+    .btn { border: none; padding: 0.5rem 1.1rem; border-radius: 0.75rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; transition: opacity 0.15s; }
     .btn:hover { opacity: 0.85; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .approve { background: #2DB344; color: white; }
@@ -1139,8 +1071,10 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     @media (max-width: 600px) { .edit-grid { grid-template-columns: 1fr; } .edit-grid .span-2 { grid-column: span 1; } }
     .edit-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; }
     .edit-grid label.span-2 { grid-column: span 2; }
-    .edit-grid input, .edit-grid textarea, .edit-grid select { border-radius: 0.6rem; border: 2px solid #E7E5E4; padding: 0.5rem 0.75rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; outline: none; }
-    .edit-grid input:focus, .edit-grid textarea:focus, .edit-grid select:focus { border-color: #F5B800; }
+    .edit-grid input, .edit-grid textarea, .edit-grid select { border-radius: 0.6rem; border: 2px solid #E7E5E4; padding: 0.5rem 0.75rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; outline: none; color: #1C1917; transition: border-color 0.15s, box-shadow 0.15s; }
+    .edit-grid input:focus, .edit-grid textarea:focus, .edit-grid select:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
+    .edit-grid select { appearance: none; -webkit-appearance: none; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.65rem center / 16px; padding-right: 2.25rem; cursor: pointer; }
+    .edit-grid select:focus { background-color: white; }
     .edit-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
     .edit-error { color: #E53935; font-size: 0.85rem; margin: 0.5rem 0 0; font-weight: 700; }
     .hc-footer { border-top: 1px dashed #E7E5E4; padding-top: 0.75rem; margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -1166,7 +1100,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     .phase-section.phase-done { background: #FAFAF9; border-radius: 0.75rem; padding: 0.75rem 1rem; border: 1px solid #E7E5E4; border-top: 1px solid #E7E5E4; margin-top: 0.75rem; }
     .phase-heading { font-size: 0.85rem; font-weight: 800; color: #1C1917; margin: 0 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
     .phase-heading-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-    .btn-edit-interview { background: none; border: 1.5px solid #E7E5E4; color: #78716C; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 32px; transition: border-color 0.15s, color 0.15s; }
+    .btn-edit-interview { background: none; border: 1.5px solid #E7E5E4; color: #78716C; border-radius: 0.75rem; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 32px; transition: border-color 0.15s, color 0.15s; }
     .btn-edit-interview:hover { border-color: #F5B800; color: #1C1917; }
     .full-label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; margin-top: 0.75rem; }
     .full-label textarea { border-radius: 0.6rem; border: 2px solid #E7E5E4; padding: 0.5rem 0.75rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; resize: vertical; outline: none; }
@@ -1220,7 +1154,8 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     .rejected-reason { background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.5rem; padding: 0.5rem 0.75rem; margin-bottom: 0.6rem; font-size: 0.85rem; }
     .reason-text { color: #B71C1C; font-weight: 600; }
     .reject-form { background: rgba(229,57,53,0.04); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem; margin-top: 0.5rem; }
-    .reject-select { width: 100%; padding: 0.5rem; border: 1px solid #E7E5E4; border-radius: 0.5rem; font-family: inherit; font-size: 0.9rem; background: white; }
+    .reject-select { appearance: none; -webkit-appearance: none; width: 100%; padding: 0.5rem 2.25rem 0.5rem 0.75rem; border: 2px solid #E7E5E4; border-radius: 0.75rem; font-family: inherit; font-size: 0.9rem; font-weight: 600; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.65rem center / 16px; color: #1C1917; outline: none; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; min-height: 40px; }
+    .reject-select:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); background-color: white; }
     /* Exports tab */
     .exports-header { margin-bottom: 1.5rem; }
     .exports-header h2 { margin: 0 0 0.25rem; font-size: 1.25rem; font-weight: 800; }
@@ -1233,7 +1168,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     .export-name { font-weight: 700; font-size: 0.95rem; color: #1C1917; margin: 0 0 0.1rem; }
     .export-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
     .bulk-report-actions { align-items: center; flex-wrap: wrap; }
-    .btn-export { background: #1C1917; color: white; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
+    .btn-export { background: #1C1917; color: white; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 0.75rem; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
     .btn-export:hover { background: #292524; }
     .btn-export:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-export-csv { background: white; color: #1C1917; border: 1.5px solid #1C1917; }
@@ -1242,7 +1177,7 @@ import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler }
     .btn-report-pdf:hover { background: #14532d; }
     .month-input { border: 1.5px solid #D6D3D1; border-radius: 0.5rem; padding: 0.45rem 0.65rem; font-size: 0.85rem; font-family: inherit; color: #1C1917; }
     .report-download-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 0.75rem 0 0.5rem; }
-    .btn-report { background: #166534; color: white; font-weight: 700; font-size: 0.82rem; padding: 0.45rem 1rem; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
+    .btn-report { background: #166534; color: white; font-weight: 700; font-size: 0.82rem; padding: 0.45rem 1rem; border-radius: 0.75rem; border: none; cursor: pointer; font-family: inherit; min-height: 40px; white-space: nowrap; }
     .btn-report:hover { background: #14532d; }
     .btn-report:disabled { opacity: 0.55; cursor: not-allowed; }
     .income-cat { font-size: 0.72rem; }
@@ -1318,6 +1253,69 @@ export class FacilitatorQueueComponent implements OnInit {
     { value: 'MISSED_CALL', label: 'Missed Call' },
     { value: 'VOICEMAIL', label: 'Voicemail' },
   ];
+
+  readonly cohortFilterOpts = [
+    { value: '8', label: 'Cohort 8' }, { value: '1', label: 'Cohort 1' },
+    { value: '2', label: 'Cohort 2' }, { value: '3', label: 'Cohort 3' },
+    { value: '4', label: 'Cohort 4' }, { value: '5', label: 'Cohort 5' },
+    { value: '6', label: 'Cohort 6' }, { value: '7', label: 'Cohort 7' },
+  ];
+  readonly cohortAddOpts = [
+    { value: 8, label: 'Cohort 8' }, { value: 1, label: 'Cohort 1' },
+    { value: 2, label: 'Cohort 2' }, { value: 3, label: 'Cohort 3' },
+    { value: 4, label: 'Cohort 4' }, { value: 5, label: 'Cohort 5' },
+    { value: 6, label: 'Cohort 6' }, { value: 7, label: 'Cohort 7' },
+  ];
+  readonly genderOpts = [
+    { value: '', label: '— Select —' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Male', label: 'Male' },
+    { value: 'Other', label: 'Other' },
+  ];
+  readonly rejectReasonOpts = [
+    { value: '', label: '— Select a reason —' },
+    { value: 'Previously included in another cohort', label: 'Previously included in another cohort' },
+    { value: 'Outside age range (18–35)', label: 'Outside age range (18–35)' },
+    { value: 'Business not verified', label: 'Business not verified' },
+    { value: 'No-show for interview', label: 'No-show for interview' },
+    { value: 'Duplicate application', label: 'Duplicate application' },
+    { value: 'Other', label: 'Other (specify below)' },
+  ];
+  readonly entryTypeOpts = [
+    { value: 'INCOME', label: 'Income' },
+    { value: 'EXPENSE', label: 'Expense' },
+  ];
+  readonly channelOpts = [
+    { value: 'CASH', label: 'Cash' },
+    { value: 'MARKETPLACE', label: 'Marketplace' },
+  ];
+  readonly categoryOpts = [
+    { group: 'Sales', items: [
+      { value: 'CASH_SALES', label: 'Cash Sales' },
+      { value: 'CREDIT_SALES', label: 'Credit Sale' },
+      { value: 'IN_APP_SALES', label: 'In-App Sales' },
+    ]},
+    { group: 'Expenses', items: [
+      { value: 'COST_OF_GOODS', label: 'Cost of Goods (Direct Cost)' },
+      { value: 'TRANSPORT', label: 'Transport' },
+      { value: 'RUNNER_FEE', label: 'Runner Fee' },
+      { value: 'ELECTRICITY', label: 'Electricity' },
+      { value: 'WAGES', label: 'Wages' },
+      { value: 'AIRTIME_DATA', label: 'Airtime/Data' },
+      { value: 'OTHER_OVERHEAD_1', label: 'Other Overhead 1' },
+      { value: 'OTHER_OVERHEAD_2', label: 'Other Overhead 2' },
+      { value: 'SAVINGS', label: 'Savings' },
+    ]},
+    { group: 'Household Income', items: [
+      { value: 'GRANTS_SASSA', label: 'Grants/SASSA' },
+      { value: 'OTHER_SALARY_WAGES', label: 'Other Salary/Wages' },
+      { value: 'OTHER_HOUSEHOLD', label: 'Other Household' },
+    ]},
+  ];
+  addCommunityOpts   = computed(() => [{ value: '', label: '— Select community —' }, ...this.communities().map(c => ({ value: c.id, label: c.name }))]);
+  filterCommunityOpts = computed(() => [{ value: '', label: 'All communities' },      ...this.communities().map(c => ({ value: c.id, label: c.name }))]);
+  editCommunityOpts   = computed(() => [{ value: '', label: '— keep current —' },     ...this.communities().map(c => ({ value: c.id, label: c.name }))]);
+  readonly categorySelectOpts = [{ value: '', label: '— Select —' }, ...[ 'CASH_SALES','CREDIT_SALES','IN_APP_SALES','GRANTS_SASSA','OTHER_SALARY_WAGES','OTHER_HOUSEHOLD','COST_OF_GOODS','TRANSPORT','RUNNER_FEE','ELECTRICITY','WAGES','AIRTIME_DATA','OTHER_OVERHEAD_1','OTHER_OVERHEAD_2','SAVINGS' ].map(v => ({ value: v, label: v.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) }))];
 
   private readonly stageOrder = [
     'CAPTURED', 'CALLING', 'INTERVIEW_SCHEDULED', 'INTERVIEWED', 'BUSINESS_VERIFICATION', 'APPROVED'

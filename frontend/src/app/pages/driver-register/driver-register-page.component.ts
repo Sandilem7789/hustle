@@ -1,14 +1,15 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService, Community } from '../../services/api.service';
 import { DriverAuthService } from '../../services/driver-auth.service';
+import { AppSelectComponent } from '../../components/app-select/app-select.component';
 
 @Component({
   selector: 'app-driver-register-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AppSelectComponent],
   template: `
     <div class="layout">
       <div class="card" *ngIf="!registered()">
@@ -51,21 +52,12 @@ import { DriverAuthService } from '../../services/driver-auth.service';
 
           <div class="field">
             <label for="vehicleType">Vehicle Type *</label>
-            <select id="vehicleType" [(ngModel)]="vehicleType" name="vehicleType" required>
-              <option value="">— Select vehicle type —</option>
-              <option value="BAKKIE">Bakkie</option>
-              <option value="MOTORBIKE">Motorbike</option>
-              <option value="CAR">Car</option>
-              <option value="BICYCLE">Bicycle</option>
-            </select>
+            <app-select [(ngModel)]="vehicleType" name="vehicleType" [options]="vehicleTypeOpts" placeholder="— Select vehicle type —"></app-select>
           </div>
 
           <div class="field">
             <label for="community">Community *</label>
-            <select id="community" [(ngModel)]="communityId" name="communityId" required>
-              <option value="">— Select your community —</option>
-              <option *ngFor="let c of communities()" [value]="c.id">{{ c.name }}</option>
-            </select>
+            <app-select [(ngModel)]="communityId" name="communityId" [options]="communityOpts()" placeholder="— Select your community —"></app-select>
           </div>
 
           <div class="field">
@@ -110,8 +102,10 @@ import { DriverAuthService } from '../../services/driver-auth.service';
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
     label { font-size: 0.875rem; font-weight: 700; color: #1C1917; display: block; }
-    input[type="text"], input[type="tel"], input[type="password"], select { height: 48px; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; font-family: inherit; font-weight: 600; background: white; color: #1C1917; outline: none; transition: border-color 0.15s; }
+    input[type="text"], input[type="tel"], input[type="password"], select { height: 48px; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; font-family: inherit; font-weight: 600; background: white; color: #1C1917; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
     input:focus, select:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
+    select { appearance: none; -webkit-appearance: none; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 16px; padding-right: 2.5rem; cursor: pointer; }
+    select:focus { background-color: white; }
     .file-input { border: none; padding: 0; font-size: 0.9rem; height: auto; }
     .preview-wrap { margin-top: 0.5rem; }
     .preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 0.75rem; border: 2px solid #E7E5E4; }
@@ -143,6 +137,19 @@ export class DriverRegisterPageComponent implements OnInit {
   communityId = '';
 
   communities = signal<Community[]>([]);
+
+  readonly vehicleTypeOpts = [
+    { value: '', label: '— Select vehicle type —' },
+    { value: 'BAKKIE', label: 'Bakkie' },
+    { value: 'MOTORBIKE', label: 'Motorbike' },
+    { value: 'CAR', label: 'Car' },
+    { value: 'BICYCLE', label: 'Bicycle' },
+  ];
+  communityOpts = computed(() => [
+    { value: '', label: '— Select your community —' },
+    ...this.communities().map(c => ({ value: c.id, label: c.name }))
+  ]);
+
   loading = signal(false);
   uploadLoading = signal(false);
   errorMsg = signal('');

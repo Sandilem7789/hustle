@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ApiService, Community } from '../../services/api.service';
+import { AppSelectComponent } from '../app-select/app-select.component';
 
 function passwordMatch(control: AbstractControl): ValidationErrors | null {
   const pw = control.get('password')?.value;
@@ -12,7 +13,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-registration-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, AppSelectComponent],
   template: `
     <section class="card">
       <header>
@@ -44,10 +45,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
         </label>
         <label>
           <span>Community *</span>
-          <select formControlName="communityName">
-            <option value="" disabled>Select your community…</option>
-            <option *ngFor="let c of communities()" [value]="c.name">{{ c.name }}</option>
-          </select>
+          <app-select formControlName="communityName" [options]="communityOpts()" placeholder="Select your community…"></app-select>
         </label>
         <label class="span-2">
           <span>Business name *</span>
@@ -55,12 +53,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
         </label>
         <label>
           <span>Business type *</span>
-          <select formControlName="businessType">
-            <option value="" disabled>Select type…</option>
-            <option value="Service">Service</option>
-            <option value="Product">Product</option>
-            <option value="Service & Products">Service &amp; Products</option>
-          </select>
+          <app-select formControlName="businessType" [options]="businessTypeOpts" placeholder="Select type…"></app-select>
         </label>
         <label class="span-2">
           <span>Short description *</span>
@@ -158,13 +151,15 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       background: white;
       color: #1C1917;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s;
       min-height: 48px;
     }
     input:focus, textarea:focus, select:focus {
       border-color: #F5B800;
       box-shadow: 0 0 0 3px rgba(245,184,0,0.2);
     }
+    select { appearance: none; -webkit-appearance: none; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 16px; padding-right: 2.5rem; cursor: pointer; }
+    select:focus { background-color: white; }
     .divider {
       display: flex;
       align-items: center;
@@ -212,6 +207,16 @@ export class RegistrationFormComponent implements OnInit {
   private readonly api = inject(ApiService);
 
   communities = signal<Community[]>([]);
+
+  communityOpts = computed(() => [
+    { value: '', label: 'Select your community…' },
+    ...this.communities().map(c => ({ value: c.name, label: c.name }))
+  ]);
+  readonly businessTypeOpts = [
+    { value: 'Service', label: 'Service' },
+    { value: 'Product', label: 'Product' },
+    { value: 'Service & Products', label: 'Service & Products' },
+  ];
 
   ngOnInit(): void {
     this.api.listCommunities().subscribe(c => this.communities.set(c));

@@ -7,11 +7,12 @@ import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, Incom
 import { generateMonthlyReportPdf } from '../../utils/monthly-report.util';
 import { AuthService } from '../../services/auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
+import { AppSelectComponent } from '../../components/app-select/app-select.component';
 
 @Component({
   selector: 'app-hustler-dashboard-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoginGateComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoginGateComponent, AppSelectComponent],
   template: `
     <app-login-gate *ngIf="!auth.isLoggedIn()"
       icon="👤"
@@ -88,28 +89,7 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
             </label>
             <label class="span-2">
               <span>Category</span>
-              <select [(ngModel)]="incomeCategory" [ngModelOptions]="{standalone:true}">
-                <option value="">— Select category —</option>
-                <ng-container *ngIf="logTab() === 'income'">
-                  <option value="CASH_SALES">Cash Sales</option>
-                  <option value="CREDIT_SALES">Credit Sale</option>
-                  <option value="IN_APP_SALES">In-App Sales</option>
-                  <option value="GRANTS_SASSA">Grants / SASSA</option>
-                  <option value="OTHER_SALARY_WAGES">Other Salary / Wages</option>
-                  <option value="OTHER_HOUSEHOLD">Other Household Income</option>
-                </ng-container>
-                <ng-container *ngIf="logTab() === 'expense'">
-                  <option value="COST_OF_GOODS">Cost of Goods (Direct Cost)</option>
-                  <option value="TRANSPORT">Transport</option>
-                  <option value="RUNNER_FEE">Runner Fee</option>
-                  <option value="ELECTRICITY">Electricity</option>
-                  <option value="WAGES">Wages</option>
-                  <option value="AIRTIME_DATA">Airtime / Data</option>
-                  <option value="OTHER_OVERHEAD_1">Other Overhead 1</option>
-                  <option value="OTHER_OVERHEAD_2">Other Overhead 2</option>
-                  <option value="SAVINGS">Savings</option>
-                </ng-container>
-              </select>
+              <app-select [(ngModel)]="incomeCategory" [ngModelOptions]="{standalone:true}" [options]="incomeCategoryOpts()" placeholder="— Select category —"></app-select>
             </label>
             <label class="span-2">
               <span>Notes (optional)</span>
@@ -152,11 +132,7 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
           <div class="history-header">
             <h2>Income history</h2>
             <div class="history-controls">
-              <select [(ngModel)]="historyFilter" (change)="applyFilter()" [ngModelOptions]="{standalone: true}">
-                <option value="week">This week</option>
-                <option value="month">This month</option>
-                <option value="all">All time</option>
-              </select>
+              <app-select [(ngModel)]="historyFilter" (ngModelChange)="applyFilter()" [ngModelOptions]="{standalone: true}" [options]="historyFilterOpts" placeholder="This week"></app-select>
               <button class="outline-btn" (click)="exportCsv('weekly')">↓ Weekly CSV</button>
               <button class="outline-btn" (click)="exportCsv('monthly')">↓ Monthly CSV</button>
               <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input-sm" />
@@ -490,8 +466,10 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
     label { display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.875rem; font-weight: 700; color: #1C1917; }
     label.span-2 { grid-column: span 2; }
     @media (max-width: 600px) { label.span-2 { grid-column: span 1; } }
-    input, textarea, select { border-radius: 0.75rem; border: 2px solid #E7E5E4; padding: 0.65rem 0.9rem; font-size: 1rem; font-family: inherit; font-weight: 600; width: 100%; box-sizing: border-box; background: white; color: #1C1917; outline: none; transition: border-color 0.15s; min-height: 48px; }
+    input, textarea, select { border-radius: 0.75rem; border: 2px solid #E7E5E4; padding: 0.65rem 0.9rem; font-size: 1rem; font-family: inherit; font-weight: 600; width: 100%; box-sizing: border-box; background: white; color: #1C1917; outline: none; transition: border-color 0.15s, box-shadow 0.15s; min-height: 48px; }
     input:focus, textarea:focus, select:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
+    select { appearance: none; -webkit-appearance: none; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 16px; padding-right: 2.5rem; cursor: pointer; }
+    select:focus { background-color: white; }
     .file-input { border: none; padding: 0; font-size: 0.9rem; min-height: unset !important; }
     .preview-wrap { margin-top: 0.5rem; }
     .preview { width: 100%; max-height: 140px; object-fit: cover; border-radius: 0.75rem; }
@@ -682,6 +660,35 @@ export class HustlerDashboardPageComponent implements OnInit {
 
   tab = signal<'income' | 'products' | 'orders'>('income');
   logTab = signal<'income' | 'expense'>('income');
+
+  readonly historyFilterOpts = [
+    { value: 'week', label: 'This week' },
+    { value: 'month', label: 'This month' },
+    { value: 'all', label: 'All time' },
+  ];
+  incomeCategoryOpts = computed(() => this.logTab() === 'income'
+    ? [
+        { value: '', label: '— Select category —' },
+        { value: 'CASH_SALES', label: 'Cash Sales' },
+        { value: 'CREDIT_SALES', label: 'Credit Sale' },
+        { value: 'IN_APP_SALES', label: 'In-App Sales' },
+        { value: 'GRANTS_SASSA', label: 'Grants / SASSA' },
+        { value: 'OTHER_SALARY_WAGES', label: 'Other Salary / Wages' },
+        { value: 'OTHER_HOUSEHOLD', label: 'Other Household Income' },
+      ]
+    : [
+        { value: '', label: '— Select category —' },
+        { value: 'COST_OF_GOODS', label: 'Cost of Goods (Direct Cost)' },
+        { value: 'TRANSPORT', label: 'Transport' },
+        { value: 'RUNNER_FEE', label: 'Runner Fee' },
+        { value: 'ELECTRICITY', label: 'Electricity' },
+        { value: 'WAGES', label: 'Wages' },
+        { value: 'AIRTIME_DATA', label: 'Airtime / Data' },
+        { value: 'OTHER_OVERHEAD_1', label: 'Other Overhead 1' },
+        { value: 'OTHER_OVERHEAD_2', label: 'Other Overhead 2' },
+        { value: 'SAVINGS', label: 'Savings' },
+      ]
+  );
   showAddModal = signal(false);
 
   // ── Income ──────────────────────────────────────────────────────────────────
