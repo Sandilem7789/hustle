@@ -3,7 +3,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService, ProductResponse } from '../../services/api.service';
-import { CustomerAuthService } from '../../services/customer-auth.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
 
 const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'ELECTRONICS', 'OTHER'] as const;
@@ -63,10 +63,10 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
             <p class="muted desc">{{ p.description }}</p>
             <p class="price">R {{ p.price | number:'1.2-2' }}</p>
 
-            <button *ngIf="customerAuth.isLoggedIn()" class="buy-btn" (click)="addToCart(p)">
+            <button *ngIf="unifiedAuth.isLoggedIn()" class="buy-btn" (click)="addToCart(p)">
               🛒 Add to Cart
             </button>
-            <button *ngIf="!customerAuth.isLoggedIn()" class="login-buy-btn" (click)="goToLogin()">
+            <button *ngIf="!unifiedAuth.isLoggedIn()" class="login-buy-btn" (click)="goToLogin()">
               🔑 Login to buy
             </button>
           </div>
@@ -177,7 +177,7 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
 })
 export class CommunityHubComponent implements OnInit {
   private readonly api = inject(ApiService);
-  readonly customerAuth = inject(CustomerAuthService);
+  readonly unifiedAuth = inject(UnifiedAuthService);
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
 
@@ -224,7 +224,7 @@ export class CommunityHubComponent implements OnInit {
   }
 
   goToLogin(): void {
-    this.router.navigate(['/customer/login']);
+    this.router.navigate(['/login'], { queryParams: { return: '/marketplace' } });
   }
 
   goToBusiness(businessId: string): void {

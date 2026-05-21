@@ -1,103 +1,248 @@
-<!-- Site Header -->
-<header class="site-header">
-  <!-- Logo — links back to marketplace (home) -->
-  <a routerLink="/marketplace" class="site-logo-link" aria-label="Hustle Economy — home">
-    <img
-      src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
-      alt="Hustle Economy — SizoPopa Sonke One Dy!"
-      class="site-logo"
-    />
-  </a>
+<mat-sidenav-container class="app-container" autosize>
 
-  <!-- Desktop nav — same 5 tabs as mobile bottom nav -->
-  <nav class="desktop-nav">
-    <a routerLink="/marketplace" routerLinkActive="active" class="desktop-tab">
-      <span class="desktop-tab-icon">🛒</span>
-      <span class="desktop-tab-label">Market</span>
-    </a>
+  <!-- ── Hamburger Drawer ─────────────────────────────────── -->
+  <mat-sidenav #sidenav mode="over" position="start" class="app-sidenav">
+    <div class="sidenav-header">
+      <img
+        src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
+        alt="Hustle Economy"
+        class="sidenav-logo"
+      />
+      <button type="button" mat-icon-button (click)="sidenav.close()" class="sidenav-close-btn">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
 
-    <a routerLink="/dashboard" routerLinkActive="active"
-       class="desktop-tab" [class.dimmed]="!canHustler()">
-      <span class="desktop-tab-icon">
-        👤<span *ngIf="!canHustler()" class="lock-badge">🔒</span>
-      </span>
-      <span class="desktop-tab-label">Hustler</span>
-    </a>
+    <div *ngIf="unifiedAuth.isLoggedIn()" class="sidenav-user">
+      <mat-icon class="sidenav-user-icon">account_circle</mat-icon>
+      <span>{{ unifiedAuth.displayName() }}</span>
+    </div>
 
-    <a routerLink="/facilitator" routerLinkActive="active"
-       class="desktop-tab" [class.dimmed]="!canFacilitator()">
-      <span class="desktop-tab-icon">
-        🏛️<span *ngIf="!canFacilitator()" class="lock-badge">🔒</span>
-      </span>
-      <span class="desktop-tab-label">Facilitator</span>
-    </a>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/marketplace" (click)="sidenav.close()">
+        <mat-icon matListItemIcon>storefront</mat-icon>
+        <span matListItemTitle>Browse Market</span>
+      </a>
 
-    <a routerLink="/coordinator" routerLinkActive="active"
-       class="desktop-tab" [class.dimmed]="!canCoordinator()">
-      <span class="desktop-tab-icon">
-        🗂️<span *ngIf="!canCoordinator()" class="lock-badge">🔒</span>
-      </span>
-      <span class="desktop-tab-label">Coordinator</span>
-    </a>
+      <ng-container *ngIf="unifiedAuth.isLoggedIn()">
+        <a mat-list-item routerLink="/orders" (click)="sidenav.close()">
+          <mat-icon matListItemIcon>receipt_long</mat-icon>
+          <span matListItemTitle>My Orders</span>
+        </a>
+      </ng-container>
 
-    <a routerLink="/operations" routerLinkActive="active"
-       class="desktop-tab" [class.dimmed]="!canOperations()">
-      <span class="desktop-tab-icon">
-        🗺️<span *ngIf="!canOperations()" class="lock-badge">🔒</span>
-      </span>
-      <span class="desktop-tab-label">Operations</span>
-    </a>
+      <ng-container *ngIf="!unifiedAuth.isLoggedIn()">
+        <a mat-list-item routerLink="/login" (click)="sidenav.close()">
+          <mat-icon matListItemIcon>login</mat-icon>
+          <span matListItemTitle>Login / Register</span>
+        </a>
+      </ng-container>
 
-    <button *ngIf="auth.isLoggedIn()" type="button" class="nav-logout-btn" (click)="logout()">
-      Logout
-    </button>
-  </nav>
-</header>
+      <!-- Application Under Review (pending applicant) -->
+      <ng-container *ngIf="unifiedAuth.hasPendingApplication()">
+        <mat-divider></mat-divider>
+        <div mat-list-item class="pending-app-item">
+          <mat-icon matListItemIcon>hourglass_top</mat-icon>
+          <span matListItemTitle>Application Under Review</span>
+          <span matListItemLine>We'll notify you once approved</span>
+        </div>
+      </ng-container>
 
-<!-- Offline Banner -->
-<app-offline-banner></app-offline-banner>
+      <!-- Join Hustle Economy (logged-in user without a store and no pending application) -->
+      <ng-container *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.hasStore() && !unifiedAuth.hasPendingApplication()">
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/apply" (click)="sidenav.close()" class="join-hustle-item">
+          <mat-icon matListItemIcon>rocket_launch</mat-icon>
+          <span matListItemTitle>Join Hustle Economy</span>
+          <span matListItemLine>Apply to sell on the platform</span>
+        </a>
+      </ng-container>
 
-<!-- Main Content -->
-<main class="page-shell">
-  <router-outlet></router-outlet>
-</main>
+      <!-- View My Store (any user with an approved business profile) -->
+      <ng-container *ngIf="unifiedAuth.hasStore()">
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/dashboard" (click)="sidenav.close()">
+          <mat-icon matListItemIcon>store</mat-icon>
+          <span matListItemTitle>View My Store</span>
+        </a>
+      </ng-container>
 
-<!-- Bottom Navigation (mobile only) — 5 fixed tabs -->
-<nav class="bottom-nav">
-  <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-    <span class="bottom-nav-icon">🛒</span>
-    <span>Market</span>
-  </a>
+      <!-- Staff Portal -->
+      <ng-container *ngIf="unifiedAuth.isStaff()">
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/facilitator" (click)="sidenav.close()">
+          <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
+          <span matListItemTitle>Facilitator Portal</span>
+        </a>
+        <ng-container *ngIf="unifiedAuth.isCoordinator()">
+          <a mat-list-item routerLink="/coordinator" (click)="sidenav.close()">
+            <mat-icon matListItemIcon>manage_accounts</mat-icon>
+            <span matListItemTitle>Coordinator Portal</span>
+          </a>
+          <a mat-list-item routerLink="/operations" (click)="sidenav.close()">
+            <mat-icon matListItemIcon>map</mat-icon>
+            <span matListItemTitle>Operations</span>
+          </a>
+        </ng-container>
+      </ng-container>
 
-  <a routerLink="/dashboard" routerLinkActive="active"
-     class="bottom-nav-item" [class.dimmed]="!canHustler()">
-    <span class="bottom-nav-icon">
-      👤<span *ngIf="!canHustler()" class="lock-badge">🔒</span>
-    </span>
-    <span>Hustler</span>
-  </a>
+      <!-- Driver -->
+      <ng-container *ngIf="isDriver()">
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/driver" (click)="sidenav.close()">
+          <mat-icon matListItemIcon>local_shipping</mat-icon>
+          <span matListItemTitle>Driver Dashboard</span>
+        </a>
+      </ng-container>
 
-  <a routerLink="/facilitator" routerLinkActive="active"
-     class="bottom-nav-item" [class.dimmed]="!canFacilitator()">
-    <span class="bottom-nav-icon">
-      🏛️<span *ngIf="!canFacilitator()" class="lock-badge">🔒</span>
-    </span>
-    <span>Facilitator</span>
-  </a>
+      <!-- Logout -->
+      <ng-container *ngIf="unifiedAuth.isLoggedIn() || isDriver()">
+        <mat-divider></mat-divider>
+        <a mat-list-item (click)="logout(); sidenav.close()" class="logout-item">
+          <mat-icon matListItemIcon>logout</mat-icon>
+          <span matListItemTitle>Logout</span>
+        </a>
+      </ng-container>
+    </mat-nav-list>
+  </mat-sidenav>
 
-  <a routerLink="/coordinator" routerLinkActive="active"
-     class="bottom-nav-item" [class.dimmed]="!canCoordinator()">
-    <span class="bottom-nav-icon">
-      🗂️<span *ngIf="!canCoordinator()" class="lock-badge">🔒</span>
-    </span>
-    <span>Coordinator</span>
-  </a>
+  <!-- ── Main Content Area ────────────────────────────────── -->
+  <mat-sidenav-content>
 
-  <a routerLink="/operations" routerLinkActive="active"
-     class="bottom-nav-item" [class.dimmed]="!canOperations()">
-    <span class="bottom-nav-icon">
-      🗺️<span *ngIf="!canOperations()" class="lock-badge">🔒</span>
-    </span>
-    <span>Operations</span>
-  </a>
-</nav>
+    <!-- Top Toolbar -->
+    <mat-toolbar class="app-toolbar">
+      <button type="button" mat-icon-button (click)="sidenav.toggle()" aria-label="Open menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <a routerLink="/marketplace" class="toolbar-logo-link" aria-label="Hustle Economy home">
+        <img
+          src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
+          alt="Hustle Economy"
+          class="toolbar-logo"
+        />
+      </a>
+
+      <span class="toolbar-spacer"></span>
+
+      <button
+        *ngIf="unifiedAuth.isLoggedIn()"
+        type="button"
+        mat-icon-button
+        routerLink="/checkout"
+        aria-label="Cart"
+      >
+        <mat-icon>shopping_cart</mat-icon>
+      </button>
+
+      <button
+        *ngIf="!unifiedAuth.isLoggedIn()"
+        type="button"
+        mat-button
+        routerLink="/login"
+        class="toolbar-login-btn"
+      >
+        Login
+      </button>
+    </mat-toolbar>
+
+    <!-- Rainbow accent strip -->
+    <div class="toolbar-rainbow"></div>
+
+    <!-- Offline Banner -->
+    <app-offline-banner></app-offline-banner>
+
+    <!-- Page Content -->
+    <main class="page-shell">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- ── Adaptive Bottom Nav ──────────────────────────── -->
+
+    <!-- Public / not logged in -->
+    <nav class="bottom-nav" *ngIf="!unifiedAuth.isLoggedIn() && !isDriver()">
+      <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🛒</span>
+        <span>Market</span>
+      </a>
+      <a routerLink="/login" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">👤</span>
+        <span>Login</span>
+      </a>
+    </nav>
+
+    <!-- Customer (no hustle role yet) -->
+    <nav class="bottom-nav"
+         *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.isHustler() && !unifiedAuth.isStaff()">
+      <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🛒</span>
+        <span>Market</span>
+      </a>
+      <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">📦</span>
+        <span>Orders</span>
+      </a>
+      <a routerLink="/apply" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🏪</span>
+        <span>Sell</span>
+      </a>
+      <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
+        <span class="bottom-nav-icon">☰</span>
+        <span>Menu</span>
+      </button>
+    </nav>
+
+    <!-- Hustler -->
+    <nav class="bottom-nav" *ngIf="unifiedAuth.isHustler()">
+      <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🛒</span>
+        <span>Market</span>
+      </a>
+      <a routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🏪</span>
+        <span>My Store</span>
+      </a>
+      <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">📦</span>
+        <span>Orders</span>
+      </a>
+      <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
+        <span class="bottom-nav-icon">☰</span>
+        <span>Menu</span>
+      </button>
+    </nav>
+
+    <!-- Staff (Facilitator / Coordinator) -->
+    <nav class="bottom-nav" *ngIf="unifiedAuth.isStaff()">
+      <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🛒</span>
+        <span>Market</span>
+      </a>
+      <a *ngIf="unifiedAuth.hasStore()" routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🏪</span>
+        <span>My Store</span>
+      </a>
+      <a routerLink="/facilitator" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🏛️</span>
+        <span>Facilitator</span>
+      </a>
+      <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
+        <span class="bottom-nav-icon">☰</span>
+        <span>Menu</span>
+      </button>
+    </nav>
+
+    <!-- Driver -->
+    <nav class="bottom-nav" *ngIf="isDriver()">
+      <a routerLink="/driver" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🚚</span>
+        <span>Dashboard</span>
+      </a>
+      <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
+        <span class="bottom-nav-icon">☰</span>
+        <span>Menu</span>
+      </button>
+    </nav>
+
+  </mat-sidenav-content>
+</mat-sidenav-container>

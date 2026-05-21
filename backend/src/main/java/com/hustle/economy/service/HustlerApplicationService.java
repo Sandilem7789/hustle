@@ -3,13 +3,8 @@ package com.hustle.economy.service;
 import com.hustle.economy.dto.HustlerApplicationRequest;
 import com.hustle.economy.dto.HustlerDecisionRequest;
 import com.hustle.economy.dto.HustlerProfileUpdateRequest;
-import com.hustle.economy.entity.ApplicationStatus;
-import com.hustle.economy.entity.BusinessProfile;
-import com.hustle.economy.entity.Community;
-import com.hustle.economy.entity.HustlerApplication;
-import com.hustle.economy.repository.BusinessProfileRepository;
-import com.hustle.economy.repository.CommunityRepository;
-import com.hustle.economy.repository.HustlerApplicationRepository;
+import com.hustle.economy.entity.*;
+import com.hustle.economy.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,20 +22,20 @@ public class HustlerApplicationService {
     private final HustlerApplicationRepository applicationRepository;
     private final CommunityRepository communityRepository;
     private final BusinessProfileRepository businessProfileRepository;
+    private final AppUserRepository appUserRepository;
     private final org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder =
             new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
 
     @Transactional
-    public HustlerApplication createApplication(HustlerApplicationRequest request) {
+    public HustlerApplication createApplication(HustlerApplicationRequest request, AppUser appUser) {
         Community community = resolveCommunity(request.getCommunityId(), request.getCommunityName());
 
-        HustlerApplication application = HustlerApplication.builder()
+        HustlerApplication.HustlerApplicationBuilder builder = HustlerApplication.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .idNumber(request.getIdNumber())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .community(community)
                 .businessName(request.getBusinessName())
                 .businessType(request.getBusinessType())
@@ -53,8 +48,16 @@ public class HustlerApplicationService {
                 .longitude(request.getLongitude())
                 .status(ApplicationStatus.PENDING)
                 .submittedAt(OffsetDateTime.now())
-                .build();
-        return applicationRepository.save(application);
+                .appUser(appUser);
+
+        // If submitting standalone (no linked account), encode the provided password
+        if (appUser == null && request.getPassword() != null) {
+            builder.passwordHash(passwordEncoder.encode(request.getPassword()));
+        } else if (appUser != null) {
+            builder.passwordHash(appUser.getPasswordHash());
+        }
+
+        return applicationRepository.save(builder.build());
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +81,12 @@ public class HustlerApplicationService {
 
         if (nextStatus == ApplicationStatus.APPROVED) {
             upsertBusinessProfile(application);
+            // Grant HUSTLER role to the linked AppUser if present
+            if (application.getAppUser() != null) {
+                AppUser user = application.getAppUser();
+                user.getRoles().add(AppUserRole.HUSTLER);
+                appUserRepository.save(user);
+            }
         }
 
         return application;

@@ -76,4 +76,8 @@ public class HustlerApplication {
     private OffsetDateTime submittedAt;
 
     private OffsetDateTime decidedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "app_user_id")
+    private AppUser appUser;
 }

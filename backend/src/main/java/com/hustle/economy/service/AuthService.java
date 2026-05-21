@@ -22,62 +22,55 @@ public class AuthService {
     private final HustlerApplicationRepository applicationRepository;
     private final BusinessProfileRepository businessProfileRepository;
     private final HustlerSessionRepository sessionRepository;
+    private final AppUserSessionRepository appUserSessionRepository;
+    private final AppUserRepository appUserRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-
-    @Transactional
-    public AuthResponse login(AuthRequest request) {
-        HustlerApplication application = applicationRepository.findFirstByPhoneOrderBySubmittedAtDesc(request.getPhone())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No account found for this phone number"));
-
-        if (application.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), application.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password");
-        }
-
-        if (application.getStatus() == ApplicationStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your application is pending facilitator approval");
-        }
-        if (application.getStatus() == ApplicationStatus.REJECTED) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your application was not approved");
-        }
-
-        BusinessProfile profile = businessProfileRepository.findByApplication_Id(application.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Business profile not found"));
-
-        String token = UUID.randomUUID().toString().replace("-", "");
-        sessionRepository.save(HustlerSession.builder()
-                .token(token)
-                .businessProfile(profile)
-                .createdAt(OffsetDateTime.now())
-                .build());
-
-        return AuthResponse.builder()
-                .token(token)
-                .businessProfileId(profile.getId().toString())
-                .businessName(profile.getBusinessName())
-                .firstName(application.getFirstName())
-                .lastName(application.getLastName())
-                .businessType(profile.getBusinessType())
-                .role(application.getRole() != null ? application.getRole().name() : UserRole.HUSTLER.name())
-                .build();
-    }
 
     @Transactional(readOnly = true)
     public BusinessProfile requireAuth(String token) {
+        // Check new unified sessions first
+        var appSession = appUserSessionRepository.findByToken(token);
+        if (appSession.isPresent()) {
+            String phone = appSession.get().getUser().getPhone();
+            // Only look for APPROVED applications — a pending test application must not block the coordinator
+            HustlerApplication application = applicationRepository
+                    .findFirstByPhoneAndStatusOrderBySubmittedAtDesc(phone, ApplicationStatus.APPROVED)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Not a hustler account"));
+            return businessProfileRepository.findByApplication_Id(application.getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Business profile not found"));
+        }
+        // Fall back to legacy hustler sessions
         HustlerSession session = sessionRepository.findByToken(token)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
         return session.getBusinessProfile();
     }
 
     @Transactional(readOnly = true)
     public BusinessProfile requireRole(String token, UserRole... allowedRoles) {
-        HustlerSession session = sessionRepository.findByToken(token)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
-        BusinessProfile profile = session.getBusinessProfile();
-        UserRole role = profile.getApplication().getRole() != null
-                ? profile.getApplication().getRole()
-                : UserRole.HUSTLER;
-        boolean allowed = Arrays.asList(allowedRoles).contains(role);
-        if (!allowed) {
+        BusinessProfile profile = requireAuth(token);
+
+        // Determine role from AppUser if present, else from HustlerApplication
+        UserRole role;
+        var appSession = appUserSessionRepository.findByToken(token);
+        if (appSession.isPresent()) {
+            AppUser user = appSession.get().getUser();
+            role = user.getRoles().stream()
+                    .map(r -> switch (r) {
+                        case FACILITATOR -> UserRole.FACILITATOR;
+                        case COORDINATOR -> UserRole.COORDINATOR;
+                        default -> UserRole.HUSTLER;
+                    })
+                    .filter(r -> r != UserRole.HUSTLER || user.getRoles().contains(AppUserRole.HUSTLER))
+                    .findFirst()
+                    .orElse(UserRole.HUSTLER);
+        } else {
+            role = profile.getApplication().getRole() != null
+                    ? profile.getApplication().getRole()
+                    : UserRole.HUSTLER;
+        }
+
+        if (!Arrays.asList(allowedRoles).contains(role)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
         return profile;

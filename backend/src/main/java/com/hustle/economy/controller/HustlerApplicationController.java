@@ -4,10 +4,12 @@ import com.hustle.economy.dto.HustlerApplicationRequest;
 import com.hustle.economy.dto.HustlerApplicationResponse;
 import com.hustle.economy.dto.HustlerDecisionRequest;
 import com.hustle.economy.dto.HustlerProfileUpdateRequest;
+import com.hustle.economy.entity.AppUser;
 import com.hustle.economy.entity.UserRole;
 import com.hustle.economy.mapper.HustlerApplicationMapper;
 import com.hustle.economy.service.AuthService;
 import com.hustle.economy.service.HustlerApplicationService;
+import com.hustle.economy.service.UnifiedAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +26,18 @@ public class HustlerApplicationController {
     private final HustlerApplicationService hustlerApplicationService;
     private final HustlerApplicationMapper hustlerApplicationMapper;
     private final AuthService authService;
+    private final UnifiedAuthService unifiedAuthService;
 
     @PostMapping
-    public ResponseEntity<HustlerApplicationResponse> createApplication(@RequestBody @Valid HustlerApplicationRequest request) {
-        return ResponseEntity.ok(hustlerApplicationMapper.toResponse(hustlerApplicationService.createApplication(request)));
+    public ResponseEntity<HustlerApplicationResponse> createApplication(
+            @RequestBody @Valid HustlerApplicationRequest request,
+            @RequestHeader(value = "X-Auth-Token", required = false) String token) {
+        AppUser appUser = (token != null && !token.isBlank())
+                ? unifiedAuthService.requireAuth(token)
+                : null;
+        return ResponseEntity.ok(
+                hustlerApplicationMapper.toResponse(
+                        hustlerApplicationService.createApplication(request, appUser)));
     }
 
     @GetMapping

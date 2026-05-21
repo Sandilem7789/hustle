@@ -1,160 +1,137 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   App Shell — Header + Bottom Nav
-   Styled to carry the Hustle Economy logo's warmth and energy.
+   App Shell — Material Sidenav + Toolbar + Adaptive Bottom Nav
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Site Header ────────────────────────────────────────────────────────── */
-.site-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 68px;
-  padding: 0 1rem;
+/* ─── Full-height container ──────────────────────────────────────────────── */
+.app-container {
+  height: 100vh;
+}
+
+/* ─── Top Toolbar ────────────────────────────────────────────────────────── */
+.app-toolbar {
   background: #FFFFFF;
+  color: #1C1917;
   border-bottom: 1px solid #E7E5E4;
+  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.07);
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.07);
+  height: 64px;
+  padding: 0 0.5rem;
 }
 
-/* Rainbow strip under the header — echoes the multi-color logo */
-.site-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+.toolbar-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  margin-left: 0.25rem;
+}
+
+.toolbar-logo {
+  height: 44px;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
+  display: block;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-login-btn {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #F5B800;
+}
+
+/* Rainbow accent strip below toolbar */
+.toolbar-rainbow {
   height: 3px;
-  background: linear-gradient(to right,
-    #F5B800,
-    #00A896,
-    #E91E8C,
-    #2DB344,
-    #F06820,
-    #1B6FD4,
-    #8B2FC9
+  background: linear-gradient(
+    to right,
+    #F5B800, #00A896, #E91E8C,
+    #2DB344, #F06820, #1B6FD4, #8B2FC9
   );
 }
 
-/* ─── Logo Image ─────────────────────────────────────────────────────────── */
-.site-logo-link {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  flex-shrink: 0;
+/* ─── Hamburger Sidenav ───────────────────────────────────────────────────── */
+.app-sidenav {
+  width: 280px;
+  background: #FFFFFF;
 }
 
-.site-logo {
-  height: 48px;
+.sidenav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0.75rem 0.75rem;
+  border-bottom: 1px solid #E7E5E4;
+}
+
+.sidenav-logo {
+  height: 42px;
   width: auto;
-  max-width: 220px;   /* prevent it overflowing on very small phones */
-  display: block;
+  max-width: 160px;
   object-fit: contain;
 }
 
-/* ─── Desktop Nav ─────────────────────────────────────────────────────────── */
-.desktop-nav {
-  display: none;
-  align-items: stretch;
-  gap: 0.125rem;
-  height: 100%;
-}
-
-/* Tab items — vertical layout matching the mobile bottom nav language */
-.desktop-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 0 0.875rem;
-  color: #A8A29E;
-  text-decoration: none;
-  font-family: inherit;
-  font-size: 0.625rem;
-  font-weight: 700;
-  position: relative;
-  transition: color 0.15s;
-  min-width: 56px;
-}
-
-.desktop-tab-icon {
-  font-size: 1.25rem;
-  line-height: 1;
-  position: relative;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.desktop-tab-label {
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-/* Active state — yellow bar at the bottom of the tab (mirrors top-bar on mobile) */
-.desktop-tab.active {
-  color: #1C1917;
-  font-weight: 800;
-}
-
-.desktop-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 3px;
-  border-radius: 999px 999px 0 0;
-  background: #F5B800;
-}
-
-.desktop-tab.active .desktop-tab-icon {
-  transform: scale(1.12);
-}
-
-/* Press animation */
-.desktop-tab:active .desktop-tab-icon {
-  transform: scale(0.82);
-  transition: transform 0.06s ease-in;
-}
-
-/* Dimmed / locked tabs */
-.desktop-tab.dimmed {
-  opacity: 0.32;
-  cursor: default;
-}
-
-.desktop-tab.dimmed.active::after { display: none; }
-.desktop-tab.dimmed .desktop-tab-icon { transform: none !important; }
-
-.nav-logout-btn {
-  background: none;
-  border: 1.5px solid #E7E5E4;
+.sidenav-close-btn {
   color: #78716C;
-  border-radius: 999px;
-  padding: 0.3rem 0.875rem;
-  font-size: 0.75rem;
-  font-weight: 800;
-  cursor: pointer;
-  font-family: inherit;
-  align-self: center;
-  margin-left: 0.25rem;
-  transition: border-color 0.15s, color 0.15s;
 }
 
-.nav-logout-btn:hover {
-  border-color: #E53935;
-  color: #E53935;
+.sidenav-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem 0.5rem;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: #1C1917;
+  border-bottom: 1px solid #F5F5F4;
 }
 
-/* ─── Main Page Shell ─────────────────────────────────────────────────────── */
+.sidenav-user-icon {
+  color: #A8A29E;
+  font-size: 1.5rem;
+}
+
+/* Join Hustle Economy — highlighted item */
+.join-hustle-item {
+  color: #F5B800 !important;
+  font-weight: 700;
+}
+
+.logout-item {
+  color: #EF4444 !important;
+}
+
+/* Application Under Review — muted informational state */
+.pending-app-item {
+  color: #78716C !important;
+  font-style: italic;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ─── Main Content Area ───────────────────────────────────────────────────── */
 .page-shell {
-  min-height: calc(100vh - 60px);
   padding-bottom: 72px;
+  min-height: calc(100vh - 64px - 3px);
 }
 
-/* ─── Bottom Navigation ───────────────────────────────────────────────────── */
+/* Page entrance animation */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.page-shell > *:not(router-outlet) {
+  animation: pageEnter 0.22s ease-out both;
+  will-change: transform, opacity;
+}
+
+/* ─── Adaptive Bottom Nav ─────────────────────────────────────────────────── */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -166,7 +143,6 @@
   box-shadow: 0 -3px 16px rgba(28, 25, 23, 0.07);
   display: flex;
   z-index: 100;
-  /* Safe area for notched phones */
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
@@ -185,9 +161,17 @@
   font-family: inherit;
   transition: color 0.15s;
   position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
-/* Active indicator — yellow dot above the icon */
+.bottom-nav-item.active {
+  color: #1C1917;
+  font-weight: 800;
+}
+
 .bottom-nav-item.active::before {
   content: '';
   position: absolute;
@@ -200,11 +184,6 @@
   background: #F5B800;
 }
 
-.bottom-nav-item.active {
-  color: #1C1917;
-  font-weight: 800;
-}
-
 .bottom-nav-icon {
   font-size: 1.375rem;
   line-height: 1;
@@ -215,7 +194,6 @@
   transform: scale(1.1);
 }
 
-/* Native press feel — squish down fast, spring back via transition */
 .bottom-nav-item:active .bottom-nav-icon {
   transform: scale(0.78);
   transition: transform 0.06s ease-in;
@@ -225,70 +203,16 @@
   background: rgba(245, 184, 0, 0.08);
 }
 
-/* Dimmed / inaccessible tabs */
-.bottom-nav-item.dimmed {
-  opacity: 0.32;
-  cursor: default;
-}
-
-/* Suppress active-state styling on locked tabs */
-.bottom-nav-item.dimmed.active,
-.bottom-nav-item.dimmed:hover {
-  color: #A8A29E;
-  font-weight: 700;
-  background: none;
-}
-
-.bottom-nav-item.dimmed.active::before {
-  display: none;
-}
-
-.bottom-nav-item.dimmed .bottom-nav-icon {
-  transform: none !important;
-}
-
-/* Small lock overlay on the tab icon */
-.lock-badge {
-  position: absolute;
-  font-size: 0.55rem;
-  bottom: -2px;
-  right: -4px;
-  line-height: 1;
-  filter: grayscale(1);
-}
-
-/* ─── Page entrance animation (fires when router swaps components) ────────── */
-@keyframes pageEnter {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-shell > *:not(router-outlet) {
-  animation: pageEnter 0.22s ease-out both;
-  will-change: transform, opacity;
-}
-
 /* ─── Desktop Overrides ───────────────────────────────────────────────────── */
 @media (min-width: 768px) {
-  .site-header {
+  .app-toolbar {
     height: 72px;
-    padding: 0 2rem;
-    justify-content: space-between;
+    padding: 0 1rem;
   }
 
-  .site-logo {
-    height: 55px;
-    max-width: 286px;
-  }
-
-  .desktop-nav {
-    display: flex;
+  .toolbar-logo {
+    height: 52px;
+    max-width: 240px;
   }
 
   .bottom-nav {
