@@ -30,13 +30,18 @@ public class UnifiedAuthService {
 
     @Transactional
     public UnifiedAuthResponse register(UnifiedRegisterRequest request) {
-        if (appUserRepository.existsByPhone(request.getPhone())) {
+        String phone = normalizePhone(request.getPhone());
+        if (appUserRepository.existsByPhone(phone)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this phone number already exists");
         }
 
+        // Discard email if it looks like a phone number (common user mistake)
+        String email = (request.getEmail() != null && request.getEmail().contains("@"))
+                ? request.getEmail() : null;
+
         AppUser user = appUserRepository.save(AppUser.builder()
-                .phone(request.getPhone())
-                .email(request.getEmail())
+                .phone(phone)
+                .email(email)
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -45,12 +50,12 @@ public class UnifiedAuthService {
                 .build());
 
         // Also create a Customer record so existing customer endpoints still work
-        Customer customer = customerRepository.findByPhone(request.getPhone()).orElseGet(() ->
+        Customer customer = customerRepository.findByPhone(phone).orElseGet(() ->
                 customerRepository.save(Customer.builder()
                         .firstName(request.getFirstName())
                         .lastName(request.getLastName())
-                        .phone(request.getPhone())
-                        .email(request.getEmail())
+                        .phone(phone)
+                        .email(email)
                         .passwordHash(user.getPasswordHash())
                         .createdAt(OffsetDateTime.now())
                         .build())
@@ -77,21 +82,23 @@ public class UnifiedAuthService {
 
     @Transactional
     public UnifiedAuthResponse login(AuthRequest request) {
+        String phone = normalizePhone(request.getPhone());
+
         // 1. Check AppUser (new unified users)
-        Optional<AppUser> appUserOpt = appUserRepository.findByPhone(request.getPhone());
+        Optional<AppUser> appUserOpt = appUserRepository.findByPhone(phone);
         if (appUserOpt.isPresent()) {
             return loginAsAppUser(appUserOpt.get(), request.getPassword());
         }
 
         // 2. Fallback: existing Customer (registered before unified auth)
-        Optional<Customer> customerOpt = customerRepository.findByPhone(request.getPhone());
+        Optional<Customer> customerOpt = customerRepository.findByPhone(phone);
         if (customerOpt.isPresent()) {
             return loginAsExistingCustomer(customerOpt.get(), request.getPassword());
         }
 
         // 3. Fallback: existing HustlerApplication (registered before unified auth)
         Optional<HustlerApplication> appOpt = hustlerApplicationRepository
-                .findFirstByPhoneOrderBySubmittedAtDesc(request.getPhone());
+                .findFirstByPhoneOrderBySubmittedAtDesc(phone);
         if (appOpt.isPresent()) {
             return loginAsExistingHustler(appOpt.get(), request.getPassword());
         }
@@ -330,5 +337,17 @@ public class UnifiedAuthService {
 
     private String generateToken() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    /**
+     * Normalises South African phone numbers to local 10-digit format (0XXXXXXXXX).
+     * Handles: +27XXXXXXXXX → 0XXXXXXXXX, 27XXXXXXXXX → 0XXXXXXXXX, strips spaces/dashes.
+     */
+    static String normalizePhone(String phone) {
+        if (phone == null) return null;
+        String digits = phone.replaceAll("[\\s\\-()]", "");
+        if (digits.startsWith("+27")) return "0" + digits.substring(3);
+        if (digits.startsWith("27") && digits.length() == 11) return "0" + digits.substring(2);
+        return digits;
     }
 }
