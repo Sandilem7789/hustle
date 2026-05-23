@@ -6,7 +6,21 @@ import { ApiService, ProductResponse } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
 
-const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'ELECTRONICS', 'OTHER'] as const;
+const CATEGORIES = [
+  { value: 'ALL',         label: 'All' },
+  { value: 'FAST_FOOD',   label: 'Fast Food' },
+  { value: 'GROCERY',     label: 'Grocery' },
+  { value: 'CLOTHING',    label: 'Clothing' },
+  { value: 'SERVICES',    label: 'Services' },
+  { value: 'CRAFTS',      label: 'Crafts & Art' },
+  { value: 'AGRI',        label: 'Agri & Livestock' },
+  { value: 'ELECTRONICS', label: 'Electronics' },
+  { value: 'OTHER',       label: 'Other' },
+] as const;
+
+const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
+  CATEGORIES.map(c => [c.value, c.label])
+);
 
 @Component({
   selector: 'app-community-hub',
@@ -33,10 +47,10 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
         <button
           *ngFor="let cat of categories"
           class="cat-btn"
-          [class.cat-active]="selectedCategory() === cat"
-          (click)="selectCategory(cat)"
+          [class.cat-active]="selectedCategory() === cat.value"
+          (click)="selectCategory(cat.value)"
         >
-          {{ cat }}
+          {{ cat.label }}
         </button>
       </div>
 
@@ -70,7 +84,7 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
             <div class="no-img" *ngIf="!p.mediaUrl">
               {{ p.name.charAt(0).toUpperCase() }}
             </div>
-            <span *ngIf="p.category" class="card-cat-badge">{{ p.category }}</span>
+            <span *ngIf="p.category" class="card-cat-badge">{{ catLabel(p.category) }}</span>
           </div>
 
           <!-- Info — ~35% of card -->
@@ -110,7 +124,7 @@ const CATEGORIES = ['ALL', 'FOOD', 'CLOTHING', 'SERVICES', 'CRAFTS', 'AGRI', 'EL
         </div>
         <button class="detail-close" (click)="closeDetail()" aria-label="Close">✕</button>
         <span *ngIf="selectedProduct()!.category" class="detail-cat-badge">
-          {{ selectedProduct()!.category }}
+          {{ catLabel(selectedProduct()!.category!) }}
         </span>
       </div>
 
@@ -644,6 +658,10 @@ export class CommunityHubComponent implements OnInit {
       next: list => { this.products.set(list); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
+  }
+
+  catLabel(value: string): string {
+    return CATEGORY_LABELS[value] ?? value;
   }
 
   openDetail(product: ProductResponse): void {

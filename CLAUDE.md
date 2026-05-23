@@ -79,18 +79,19 @@ KwaNgwenya, KwaNibela, KwaMakhasa, KwaJobe, KwaMnqobokazi
 The marketplace uses **radio buttons** to switch between top-level categories. Only one category is active at a time. Community filter pills remain visible across all categories.
 
 ### Category definitions
-| Category | Subcategories / Notes |
-|----------|-----------------------|
-| **Food** | Fast food, home-cooked meals, snacks, fresh produce |
-| **Clothing** | New, second-hand, traditional/cultural wear |
-| **Services** | Hair, repairs, cleaning, tutoring, transport, etc. |
-| **Crafts & Art** | Handmade goods, décor, beadwork |
-| **Agri & Livestock** | Vegetables, eggs, poultry, livestock |
-| **Electronics** | Phones, accessories, small appliances |
-| **Other** | Catch-all for listings that don't fit above |
+| Category | Value | Notes |
+|----------|-------|-------|
+| **Fast Food** | `FAST_FOOD` | Prepared meals, takeaways, snacks, home-cooked food |
+| **Grocery** | `GROCERY` | Fresh produce, staples, dry goods |
+| **Clothing** | `CLOTHING` | New, second-hand, traditional/cultural wear |
+| **Services** | `SERVICES` | Hair, repairs, cleaning, tutoring, transport, etc. |
+| **Crafts & Art** | `CRAFTS` | Handmade goods, décor, beadwork |
+| **Agri & Livestock** | `AGRI` | Vegetables, eggs, poultry, livestock |
+| **Electronics** | `ELECTRONICS` | Phones, accessories, small appliances |
+| **Other** | `OTHER` | Catch-all for listings that don't fit above |
 
 ### Delivery distance rules
-- **Fast food / perishable food**: maximum delivery radius **60 km** — enforce on both backend and frontend
+- **Fast Food (`FAST_FOOD`) and Grocery (`GROCERY`)**: maximum delivery radius **60 km** — enforce on both backend and frontend
 - **All other categories**: no distance cap (driver availability determines feasibility)
 - Distance is calculated as straight-line (haversine) between seller GPS coordinates and customer delivery coordinates
 - If an order exceeds the distance cap, the checkout must block and show a clear message: *"This seller cannot deliver to your location. You can collect in person."*

@@ -93,6 +93,13 @@ export class UnifiedAuthService {
     return user;
   }
 
+  markApplicationPending(): void {
+    const current = this._user();
+    if (!current) return;
+    const updated = { ...current, applicationStatus: 'PENDING' };
+    this.persist(updated);
+  }
+
   logout(): void {
     localStorage.removeItem(STORAGE_KEY);
     this._user.set(null);

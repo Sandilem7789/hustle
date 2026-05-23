@@ -61,7 +61,8 @@ public class OrderService {
                 && hustlerProfile.getLatitude() != null && hustlerProfile.getLongitude() != null) {
 
             boolean hasFood = loadedProducts.stream()
-                    .anyMatch(p -> p.getCategory() == ProductCategory.FOOD);
+                    .anyMatch(p -> p.getCategory() == ProductCategory.FAST_FOOD
+                               || p.getCategory() == ProductCategory.GROCERY);
 
             if (hasFood) {
                 double distance = HaversineUtil.distanceKm(

@@ -712,6 +712,9 @@ export class RegistrationFormComponent implements OnInit {
         this.loading.set(false);
         this.showTerms.set(false);
         this.form.reset();
+        if (this.unifiedAuth.isLoggedIn()) {
+          this.unifiedAuth.markApplicationPending();
+        }
         this.showSuccessModal.set(true);
       },
       error: (err: { error?: { message?: string } }) => {

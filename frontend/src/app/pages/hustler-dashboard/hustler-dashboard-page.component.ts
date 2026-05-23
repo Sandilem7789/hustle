@@ -260,7 +260,7 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
                 <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" loading="lazy" />
                 <div class="product-body">
                   <h3>{{ p.name }}</h3>
-                  <span *ngIf="p.category" class="product-cat-badge">{{ p.category | titlecase }}</span>
+                  <span *ngIf="p.category" class="product-cat-badge">{{ getCategoryLabel(p.category) }}</span>
                   <p class="muted">{{ p.description }}</p>
                   <p class="price">R {{ p.price | number:'1.2-2' }}</p>
                 </div>
@@ -901,7 +901,8 @@ export class HustlerDashboardPageComponent implements OnInit {
 
   readonly productCategoryOpts = [
     { value: '',            label: '— Select category —' },
-    { value: 'FOOD',        label: 'Food' },
+    { value: 'FAST_FOOD',   label: 'Fast Food' },
+    { value: 'GROCERY',     label: 'Grocery' },
     { value: 'CLOTHING',    label: 'Clothing' },
     { value: 'SERVICES',    label: 'Services' },
     { value: 'CRAFTS',      label: 'Crafts & Art' },
@@ -909,6 +910,10 @@ export class HustlerDashboardPageComponent implements OnInit {
     { value: 'ELECTRONICS', label: 'Electronics' },
     { value: 'OTHER',       label: 'Other' },
   ];
+
+  getCategoryLabel(value: string): string {
+    return this.productCategoryOpts.find(o => o.value === value)?.label ?? value;
+  }
 
   newProductCategory = '';
   editCategory = '';
