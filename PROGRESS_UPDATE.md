@@ -1,7 +1,7 @@
 # Hustle WebApp - Progress Update
 
 ## Summary
-The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully functional locally. All core features are live: hustler registration with auth, full facilitator applicant pipeline (Phases 1–7), hustler dashboard with income tracking and product management, community marketplace, customer checkout, and coordinator view. The most recent sprint completed the full facilitator pipeline — applicant capture through account activation, monthly check-ins, coordinator view, admin exports (CSV + Excel), rejection reason tracking, and seeding of 102 KwaNgwenya cohort-8 applicants.
+The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully functional locally and auto-deploys to the VPS on every push to `main`. All core features are live: unified auth (all roles via one endpoint), hustler dashboard with income tracking and product management, full facilitator applicant pipeline (Phases 1–7) with exports and monthly check-ins, community marketplace with search and business pages, coordinator view, and GitHub Actions CI/CD. The most recent sprint added unified authentication with SA phone normalization, marketplace UX improvements (2-col grid, search, business page), mobile polish (pinch-to-zoom off, custom select, tighter margins), and monthly report enhancements (per-column colour, In-App Sales channel).
 
 ---
 
@@ -30,6 +30,9 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 - Login response now includes `businessType` — stored in `AuthState` and shown as badge on dashboard
 - Registration error messages are now specific (e.g. "Registration failed: Phone number already registered") instead of generic
 - `AuthService` (Angular) with signal-based state, `localStorage` persistence
+- **Unified auth** (`UnifiedAuthService`) — single `/api/auth/login` and `/api/auth/register` endpoint handles all roles (Hustler, Customer, Facilitator, Coordinator); falls back to legacy `Customer` and `HustlerApplication` tables so old accounts still work
+- **SA phone normalization** — `+27XXXXXXXXX`, `27XXXXXXXXX`, and local `0XXXXXXXXX` formats all accepted on login and register; stored in the canonical `0XX` form
+- **Email guard on register** — if the email field contains no `@` (common user mistake of typing a phone number there) the value is silently discarded rather than saved as a broken email
 
 ### Hustler Dashboard (`/dashboard`)
 - Redirects to `/register` if not logged in
@@ -135,6 +138,27 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 - Export reports: Interview Shortlist, Approved Applicants, Full Pipeline, Monthly Visit Report, Active Hustlers
 - All exports respect the active community/cohort filter; filenames include cohort number and month
 
+### Monthly Report PDF
+- Per-column colour coding on the monthly income/expense report PDF
+- **In-App Sales** income channel added as a column in the monthly report (alongside Cash)
+- Report bar styling applied consistently across Hustler, Facilitator, and Coordinator views
+
+### Marketplace Improvements
+- **Search bar** — full-text filter across product name, description, and shop name
+- **2-column mobile grid** — product cards display in a 2-col layout on mobile (single column was too sparse)
+- **Business page** — dedicated business/seller profile page; community filter pills and hero banner removed from the main marketplace listing view
+- Collapsible income history rows in the Hustler dashboard with a compact inline edit button (less vertical scroll)
+
+### Mobile UX Polish
+- **Pinch-to-zoom disabled** — `viewport` meta updated to `user-scalable=no` so the app behaves like a native app on iOS/Android
+- `AppSelectComponent` — custom select component replacing all native `<select>` elements for consistent mobile styling and touch behaviour
+- Facilitator and Coordinator pages: excess accumulated top/bottom margins removed for a tighter mobile layout
+- Map fixes: scroll-conflict between Leaflet map and page scroll resolved; missing tile layer and broken marker icon paths corrected; image upload endpoint re-wired after nginx path change
+
+### CI / Deployment
+- **GitHub Actions VPS auto-deploy** — push to `main` triggers the `deploy.yml` workflow which SSHs into `148.230.79.29` and runs `docker compose -f docker-compose.prod.yml up --build -d` automatically
+- `workflow_dispatch` trigger added so deploys can also be kicked off manually from the GitHub Actions UI
+
 ### KwaNgwenya Applicant Seeding
 - `DataInitializer` seeds 102 cohort-8 KwaNgwenya applicants on first startup (idempotent — skipped if any applicants already exist for the community)
 - Data sourced from community intake CSV; call status mapped to `CallStatus` enum; age flags auto-set outside 18–35 range
@@ -202,7 +226,7 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 | **Automated tests & CI** | Backend integration tests + Playwright e2e specs exist in the repo, but they aren’t being run anywhere. Execute them locally, capture the results in `tests/TEST_RESULTS.md`, and add a GitHub Action so every PR runs both suites. |
 | **Role-aware auth** | Coordinator-only actions (interview scheduling, applicant reinstatement, sensitive edits) currently sit behind shared facilitator auth. Introduce coordinator accounts + JWT/session claims and gate the Angular routes/components accordingly. |
 | **Pagination** | All list endpoints return full result sets. Add if dataset grows large. |
-| **VPS deployment** | Currently running on localhost only. Docker Compose is production-ready once pointed at a server. |
+| **VPS deployment** | GitHub Actions auto-deploys to `148.230.79.29` on push to `main` via `docker-compose.prod.yml`. HTTPS / Traefik TLS termination still manual. |
 
 ---
 
@@ -214,20 +238,27 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 4. **PWA/offline sprint** — finish `@angular/pwa`, cache the hustler dashboard shell, and pipe income/product mutations through `offline-queue.service.ts` so hustlers can log data while offline.
 5. **Docs + onboarding sync** — update README + PROGRESS with the new facilitator pipeline, brand system, and testing story so new contributors land on accurate instructions.
 
-## Recent Commits (April 2026)
+## Recent Commits (May 2026)
 
 | Commit | Description |
 |--------|-------------|
-| *(pending)* | feat: facilitator pipeline phases 1–7, exports tab, rejection reason, KwaNgwenya seeding |
-| `97b6a29` | feat: brand design overhaul — styles, logo, and tailwind config updates |
-| `378f15a` | fix: logo not loading and docker-compose version warning |
-| `ee1c714` | feat: complete brand design overhaul across all dashboards and pages |
-| `e22c6f6` | feat: redesign hustler dashboard UI with hero banner, financial cards, and product modal |
-| `012b754` | feat: implement phases 1-5 — marketplace, customers, orders, drivers, offline |
+| `2b3dc3e` | fix: normalize SA phone numbers on login/register and validate email format |
+| `9fae523` | feat: unify login (UnifiedAuthService — all roles via one endpoint) |
+| `cabdec4` | fix: reduce accumulated margins on facilitator mobile view |
+| `52b1cd5` | feat: collapsible income history rows with compact edit button |
+| `9a13418` | fix: disable pinch-to-zoom to behave like a native app |
+| `6cfda5e` | feat: apply report bar style to facilitator and coordinator views |
+| `cb17ed5` | feat: marketplace search, 2-col mobile grid, PDF bar, collapsible history |
+| `6232f07` | fix: map scroll conflict, missing tiles, and marker icons |
+| `c20b12f` | fix: image upload, map tiles, and marker icons |
+| `892a710` | feat: replace all native selects with custom AppSelectComponent |
+| `ce5953a` | feat: remove marketplace hero/community filters and add business page |
+| `5135a65` | feat: add GitHub Actions VPS auto-deploy and In-App Sales to monthly report |
+| `41a074a` | feat: add per-column colour coding to monthly report PDF |
 
 ---
 
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-05-22
 **Branch**: `main`
 **Repo**: https://github.com/Sandilem7789/hustle
 

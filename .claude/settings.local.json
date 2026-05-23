@@ -66,7 +66,14 @@
       "Bash(docker --version)",
       "Bash(echo \"Docker Compose started in background \\(PID $!\\)\")",
       "Bash(git *)",
-      "Bash(gh auth *)"
+      "Bash(gh auth *)",
+      "Bash(grep \"\\\\.ts$\")",
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\sandi\\\\Documents\\\\Coding\\\\HustleWebApp\\\\hustle\\\\backend\\\\src\\\\main\\\\java\\\\com\\\\hustle\\\\economy\\\\\" -Recurse -Directory | Select-Object -ExpandProperty FullName)",
+      "Bash(python -m json.tool)",
+      "Bash(Remove-Item *)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:4173\" -UseBasicParsing -TimeoutSec 10; \"Frontend: $\\($r.StatusCode\\)\" } catch { \"Frontend: ERROR - $_\" })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:8080/api/hustlers\" -UseBasicParsing -TimeoutSec 10; \"Backend: $\\($r.StatusCode\\)\" } catch { if \\($_.Exception.Response\\) { \"Backend: $\\([int]$_.Exception.Response.StatusCode\\) \\(up\\)\" } else { \"Backend: ERROR - $_\" } })"
     ]
   }
 }

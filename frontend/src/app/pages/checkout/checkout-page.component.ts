@@ -1,9 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
-import { CustomerAuthService } from '../../services/customer-auth.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
 
 @Component({
@@ -14,21 +14,21 @@ import { CartService } from '../../services/cart.service';
     <div class="layout">
 
       <!-- Guard: not logged in -->
-      <div class="card" *ngIf="!customerAuth.isLoggedIn()">
+      <div class="card" *ngIf="!unifiedAuth.isLoggedIn()">
         <h2>Please log in to checkout</h2>
         <p class="muted">You need a customer account to place an order.</p>
-        <a routerLink="/customer/login" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Go to Login</a>
+        <a routerLink="/login" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Go to Login</a>
       </div>
 
       <!-- Empty cart -->
-      <div class="card" *ngIf="customerAuth.isLoggedIn() && cart.items().length === 0">
+      <div class="card" *ngIf="unifiedAuth.isLoggedIn() && cart.items().length === 0">
         <h2>Your cart is empty</h2>
         <p class="muted">Browse the marketplace to find products you love.</p>
         <a routerLink="/marketplace" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Shop Now</a>
       </div>
 
       <!-- Checkout Form -->
-      <ng-container *ngIf="customerAuth.isLoggedIn() && cart.items().length > 0">
+      <ng-container *ngIf="unifiedAuth.isLoggedIn() && cart.items().length > 0">
 
         <div class="card">
           <h2 class="section-title">Your Cart</h2>
@@ -178,7 +178,7 @@ import { CartService } from '../../services/cart.service';
   `
 })
 export class CheckoutPageComponent {
-  readonly customerAuth = inject(CustomerAuthService);
+  readonly unifiedAuth = inject(UnifiedAuthService);
   readonly cart = inject(CartService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
@@ -206,18 +206,19 @@ export class CheckoutPageComponent {
         this.locationCoords.set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         this.gettingLocation.set(false);
       },
-      (err) => {
+      () => {
         this.locationError.set('Could not get your location. Please enter address manually.');
         this.gettingLocation.set(false);
-      }
+      },
+      { timeout: 10000, maximumAge: 60000 }
     );
   }
 
   placeOrder(): void {
     this.errorMsg.set('');
 
-    if (!this.customerAuth.isLoggedIn()) {
-      this.router.navigate(['/customer/login']);
+    if (!this.unifiedAuth.isLoggedIn()) {
+      this.router.navigate(['/login']);
       return;
     }
 
@@ -248,7 +249,7 @@ export class CheckoutPageComponent {
     };
 
     this.loading.set(true);
-    this.api.placeOrder(payload, this.customerAuth.getToken()!).subscribe({
+    this.api.placeOrder(payload, this.unifiedAuth.getToken()!).subscribe({
       next: () => {
         this.cart.clear();
         this.router.navigate(['/orders']);
