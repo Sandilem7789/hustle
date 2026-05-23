@@ -12,6 +12,7 @@ import { DriverDashboardPageComponent } from './pages/driver-dashboard/driver-da
 import { DriverLoginPageComponent } from './pages/driver-login/driver-login-page.component';
 import { DriverRegisterPageComponent } from './pages/driver-register/driver-register-page.component';
 import { RegistrationFormComponent } from './components/registration-form/registration-form.component';
+import { NotificationsPageComponent } from './pages/notifications/notifications-page.component';
 
 export const routes: Routes = [
   // Public landing
@@ -29,8 +30,9 @@ export const routes: Routes = [
   { path: 'dashboard', component: HustlerDashboardPageComponent },
 
   // Customer
-  { path: 'checkout', component: CheckoutPageComponent },
-  { path: 'orders',   component: CustomerOrdersPageComponent },
+  { path: 'checkout',       component: CheckoutPageComponent },
+  { path: 'orders',         component: CustomerOrdersPageComponent },
+  { path: 'notifications',  component: NotificationsPageComponent },
 
   // Staff portals
   { path: 'facilitator', component: FacilitatorPageComponent },

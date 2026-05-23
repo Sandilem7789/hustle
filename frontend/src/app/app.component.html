@@ -14,8 +14,13 @@
     </div>
 
     <div *ngIf="unifiedAuth.isLoggedIn()" class="sidenav-user">
-      <mat-icon class="sidenav-user-icon">account_circle</mat-icon>
-      <span>{{ unifiedAuth.displayName() }}</span>
+      <button type="button" class="avatar-btn" (click)="triggerAvatarUpload()" title="Change profile picture">
+        <img *ngIf="avatarUrl()" [src]="avatarUrl()" alt="Profile picture" class="avatar-img" />
+        <mat-icon *ngIf="!avatarUrl()" class="sidenav-user-icon">account_circle</mat-icon>
+        <span class="avatar-edit-badge"><mat-icon>photo_camera</mat-icon></span>
+      </button>
+      <input #avatarInput type="file" accept="image/*" class="avatar-file-input" aria-label="Upload profile picture" (change)="onAvatarSelected($event)" />
+      <span class="sidenav-user-name">{{ unifiedAuth.displayName() }}</span>
     </div>
 
     <mat-nav-list>
@@ -28,6 +33,11 @@
         <a mat-list-item routerLink="/orders" (click)="sidenav.close()">
           <mat-icon matListItemIcon>receipt_long</mat-icon>
           <span matListItemTitle>My Orders</span>
+        </a>
+        <a mat-list-item routerLink="/notifications" (click)="sidenav.close()">
+          <mat-icon matListItemIcon>notifications</mat-icon>
+          <span matListItemTitle>Notifications</span>
+          <span matListItemLine>Application updates &amp; messages</span>
         </a>
       </ng-container>
 
@@ -182,9 +192,9 @@
         <span class="bottom-nav-icon">📦</span>
         <span>Orders</span>
       </a>
-      <a routerLink="/apply" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏪</span>
-        <span>Sell</span>
+      <a routerLink="/notifications" routerLinkActive="active" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🔔</span>
+        <span>Alerts</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
         <span class="bottom-nav-icon">☰</span>

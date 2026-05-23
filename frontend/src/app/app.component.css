@@ -85,17 +85,79 @@
 .sidenav-user {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1rem 0.5rem;
-  font-weight: 700;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem 0.75rem;
   font-size: 0.9375rem;
   color: #1C1917;
   border-bottom: 1px solid #F5F5F4;
 }
 
+.sidenav-user-name {
+  font-weight: 700 !important;
+  font-family: 'Nunito', system-ui, sans-serif !important;
+  color: #1C1917;
+}
+
 .sidenav-user-icon {
   color: #A8A29E;
-  font-size: 1.5rem;
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+}
+
+/* ─── Avatar button ───────────────────────────────────────────────────────── */
+.avatar-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-height: unset;
+  border-radius: 50%;
+  border: 2px solid #E7E5E4;
+  background: #F5F0E8;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  transition: border-color 0.15s;
+}
+
+.avatar-btn:hover { border-color: #F5B800; }
+
+.avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F5B800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.avatar-edit-badge mat-icon {
+  font-size: 11px;
+  width: 11px;
+  height: 11px;
+  color: #1C1917;
+  line-height: 11px;
+}
+
+.avatar-file-input {
+  display: none;
 }
 
 /* Join Hustle Economy — highlighted item */
@@ -203,6 +265,29 @@
 
 .bottom-nav-item:active {
   background: rgba(245, 184, 0, 0.08);
+}
+
+/* ─── Sidenav font — match main screen (Nunito, not bold) ────────────────── */
+.app-sidenav,
+.app-sidenav .mdc-list-item,
+.app-sidenav .mdc-list-item__primary-text,
+.app-sidenav .mdc-list-item__secondary-text,
+.app-sidenav .mdc-list-item__content,
+.app-sidenav .mat-list-item,
+.app-sidenav .mat-nav-list a {
+  font-family: 'Nunito', system-ui, sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.app-sidenav .sidenav-user {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Preserve coloured special items — just remove their bold */
+.app-sidenav .join-hustle-item,
+.app-sidenav .logout-item {
+  font-weight: 400 !important;
 }
 
 /* ─── Desktop Overrides ───────────────────────────────────────────────────── */

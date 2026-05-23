@@ -260,6 +260,7 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
                 <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" loading="lazy" />
                 <div class="product-body">
                   <h3>{{ p.name }}</h3>
+                  <span *ngIf="p.category" class="product-cat-badge">{{ p.category | titlecase }}</span>
                   <p class="muted">{{ p.description }}</p>
                   <p class="price">R {{ p.price | number:'1.2-2' }}</p>
                 </div>
@@ -283,6 +284,15 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
                   <label>
                     <span>Price (ZAR) *</span>
                     <input type="number" min="0" step="0.01" [value]="editPrice" (input)="editPrice = +$any($event.target).value" />
+                  </label>
+                  <label>
+                    <span>Category</span>
+                    <app-select
+                      [(ngModel)]="editCategory"
+                      [ngModelOptions]="{standalone: true}"
+                      [options]="productCategoryOpts"
+                      placeholder="— Select category —">
+                    </app-select>
                   </label>
                   <label>
                     <span>Replace image</span>
@@ -371,6 +381,15 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
               <input type="number" min="0" step="0.01" formControlName="price" placeholder="0.00" />
             </label>
             <label>
+              <span>Category *</span>
+              <app-select
+                [(ngModel)]="newProductCategory"
+                [ngModelOptions]="{standalone: true}"
+                [options]="productCategoryOpts"
+                placeholder="— Select category —">
+              </app-select>
+            </label>
+            <label>
               <span>Product image</span>
               <input type="file" accept="image/*" (change)="onFileChange($event)" class="file-input" />
               <div *ngIf="imagePreview()" class="preview-wrap">
@@ -378,7 +397,7 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
               </div>
               <small *ngIf="uploadLoading()">Uploading…</small>
             </label>
-            <button class="primary" type="submit" [disabled]="productForm.invalid || addLoading() || uploadLoading()">
+            <button class="primary" type="submit" [disabled]="productForm.invalid || !newProductCategory || addLoading() || uploadLoading()">
               {{ addLoading() ? 'Adding…' : 'Add to marketplace' }}
             </button>
             <p *ngIf="addError()" class="error">{{ addError() }}</p>
@@ -630,6 +649,7 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
     .product-img { width: 100%; height: 150px; object-fit: cover; display: block; }
     .product-body { padding: 0.9rem 0.9rem 0.4rem; }
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; font-weight: 800; color: #1C1917; }
+    .product-cat-badge { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.68rem; font-weight: 800; padding: 0.1rem 0.5rem; border-radius: 999px; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
     .price { font-weight: 800; color: #2DB344; margin-top: 0.4rem; }
     .card-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.3rem; }
     .edit-btn   { background: rgba(28,25,23,0.75); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; min-height: unset; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -879,6 +899,20 @@ export class HustlerDashboardPageComponent implements OnInit {
   saveLoading = signal(false);
   saveError = signal('');
 
+  readonly productCategoryOpts = [
+    { value: '',            label: '— Select category —' },
+    { value: 'FOOD',        label: 'Food' },
+    { value: 'CLOTHING',    label: 'Clothing' },
+    { value: 'SERVICES',    label: 'Services' },
+    { value: 'CRAFTS',      label: 'Crafts & Art' },
+    { value: 'AGRI',        label: 'Agri & Livestock' },
+    { value: 'ELECTRONICS', label: 'Electronics' },
+    { value: 'OTHER',       label: 'Other' },
+  ];
+
+  newProductCategory = '';
+  editCategory = '';
+
   productForm = this.fb.group({
     name:        ['', Validators.required],
     description: ['', Validators.required],
@@ -1123,12 +1157,14 @@ export class HustlerDashboardPageComponent implements OnInit {
       name: this.productForm.value.name!,
       description: this.productForm.value.description!,
       price: this.productForm.value.price!,
-      mediaUrl: this.pendingImageUrl() ?? undefined
+      mediaUrl: this.pendingImageUrl() ?? undefined,
+      category: this.newProductCategory || undefined,
     };
     this.api.createProduct(payload, this.auth.getToken()!).subscribe({
       next: (p) => {
         this.products.update(l => [p, ...l]);
         this.productForm.reset();
+        this.newProductCategory = '';
         this.imagePreview.set(null);
         this.pendingImageUrl.set(null);
         this.addLoading.set(false);
@@ -1156,6 +1192,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.editName = p.name;
     this.editDescription = p.description;
     this.editPrice = Number(p.price);
+    this.editCategory = p.category ?? '';
     this.editPendingImageUrl = null;
     this.saveError.set('');
   }
@@ -1180,7 +1217,8 @@ export class HustlerDashboardPageComponent implements OnInit {
       name: this.editName,
       description: this.editDescription,
       price: this.editPrice,
-      mediaUrl: this.editPendingImageUrl ?? p.mediaUrl
+      mediaUrl: this.editPendingImageUrl ?? p.mediaUrl,
+      category: this.editCategory || undefined,
     };
     this.api.updateProduct(p.id, payload, this.auth.getToken()!).subscribe({
       next: (updated) => {

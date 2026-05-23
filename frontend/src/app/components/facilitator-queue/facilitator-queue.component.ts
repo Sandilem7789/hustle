@@ -133,6 +133,52 @@ import { AppSelectComponent } from '../app-select/app-select.component';
           </div>
         </div>
 
+        <!-- ── App-submitted applicants inbox ── -->
+        <div class="app-inbox" *ngIf="pendingAppApplicants().length > 0">
+          <div class="app-inbox-header">
+            <span class="app-inbox-title">📱 Applied via App</span>
+            <span class="app-inbox-badge">{{ pendingAppApplicants().length }} new</span>
+          </div>
+          <article
+            *ngFor="let app of pendingAppApplicants()"
+            class="app-inbox-card"
+            [class.expanded]="expandedAppApplicant() === app.id">
+
+            <div class="app-inbox-summary" (click)="toggleAppApplicant(app.id)">
+              <div class="ac-main">
+                <div class="ac-name-row">
+                  <h3>{{ app.firstName }} {{ app.lastName }}</h3>
+                  <span class="app-source-badge">New — App</span>
+                </div>
+                <p class="muted small">{{ app.businessType }}<span *ngIf="app.community?.name"> · {{ app.community?.name }}</span></p>
+                <p class="muted small">{{ app.phone || '—' }}</p>
+              </div>
+              <div class="ac-right">
+                <span class="muted small">{{ app.submittedAt | date:'d MMM' }}</span>
+                <span class="chevron">{{ expandedAppApplicant() === app.id ? '▲' : '▼' }}</span>
+              </div>
+            </div>
+
+            <div class="app-inbox-detail" *ngIf="expandedAppApplicant() === app.id" (click)="$event.stopPropagation()">
+              <div class="detail-grid">
+                <div class="detail-field"><span class="field-label">Business Name</span><p>{{ app.businessName }}</p></div>
+                <div class="detail-field"><span class="field-label">Business Type</span><p>{{ app.businessType }}</p></div>
+                <div class="detail-field"><span class="field-label">Community</span><p>{{ app.community?.name || '—' }}</p></div>
+                <div class="detail-field"><span class="field-label">Email</span><p>{{ app.email || '—' }}</p></div>
+                <div class="detail-field span-2"><span class="field-label">Description</span><p>{{ app.description || '—' }}</p></div>
+                <div class="detail-field span-2"><span class="field-label">Target Customers</span><p>{{ app.targetCustomers || '—' }}</p></div>
+                <div class="detail-field span-2"><span class="field-label">Operating Area</span><p>{{ app.operatingArea || '—' }}</p></div>
+              </div>
+              <p class="app-inbox-note">This applicant must still go through the full pipeline (Calling → Interview → Verification) before approval. Import them to start the process.</p>
+              <div class="actions">
+                <button class="btn btn-import-pipeline" (click)="importToPipeline(app)">
+                  ↑ Import to Pipeline
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+
         <!-- Stage filter tabs -->
         <div class="stage-scroll">
           <div class="stage-tabs">
@@ -1292,6 +1338,23 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     }
     .income-cat { font-size: 0.72rem; }
 
+    /* ── App Inbox (app-submitted pending applicants) ────────────────────── */
+    .app-inbox { background: rgba(0,168,150,0.04); border: 1.5px solid rgba(0,168,150,0.25); border-radius: 1rem; padding: 1rem; margin-bottom: 1.25rem; }
+    .app-inbox-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .app-inbox-title { font-weight: 800; font-size: 0.95rem; color: #00746A; }
+    .app-inbox-badge { background: #00A898; color: white; font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.55rem; border-radius: 999px; }
+    .app-inbox-card { border: 1px solid rgba(0,168,150,0.2); border-radius: 0.75rem; overflow: hidden; background: white; margin-bottom: 0.5rem; }
+    .app-inbox-card:last-child { margin-bottom: 0; }
+    .app-inbox-card.expanded { border-color: #00A898; box-shadow: 0 0 0 2px rgba(0,168,150,0.15); }
+    .app-inbox-summary { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.85rem 1rem; cursor: pointer; gap: 1rem; }
+    @media (max-width: 600px) { .app-inbox-summary { padding: 0.65rem 0.75rem; } }
+    .app-inbox-summary:hover { background: rgba(0,168,150,0.04); }
+    .app-inbox-detail { border-top: 1px solid rgba(0,168,150,0.15); padding: 1rem; }
+    @media (max-width: 600px) { .app-inbox-detail { padding: 0.75rem; } }
+    .app-source-badge { background: rgba(0,168,150,0.12); color: #00746A; font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.55rem; border-radius: 999px; display: inline-block; }
+    .app-inbox-note { font-size: 0.82rem; color: #78716C; margin: 0.75rem 0 0.5rem; line-height: 1.5; }
+    .btn-import-pipeline { background: #00A898; color: white; font-weight: 800; }
+
     .btn-schedule { background: rgba(0,168,150,0.1); color: #00746A; border: 1px solid rgba(0,168,150,0.3); font-weight: 700; }
     .schedule-row { margin-bottom: 0.5rem; }
     .schedule-form { background: rgba(0,168,150,0.04); border: 1px solid rgba(0,168,150,0.2); border-radius: 0.75rem; padding: 0.75rem; margin-bottom: 0.5rem; }
@@ -1448,9 +1511,32 @@ export class FacilitatorQueueComponent implements OnInit {
     );
   });
 
+  pendingAppApplicants = computed(() => this.applications().filter(a => a.status === 'PENDING'));
+
+  // ── App-inbox state (app-submitted applications) ─────────────────────────
+  expandedAppApplicant = signal<string | null>(null);
+
   stageCount(stage: string): number {
     const list = this.applicants();
     return stage ? list.filter(a => a.pipelineStage === stage).length : list.length;
+  }
+
+  toggleAppApplicant(id: string): void {
+    this.expandedAppApplicant.update(cur => cur === id ? null : id);
+  }
+
+  importToPipeline(app: HustlerApplication): void {
+    this.newApplicant = {
+      cohortNumber: 8,
+      firstName: app.firstName,
+      lastName: app.lastName,
+      phone: app.phone ?? '',
+      email: app.email ?? '',
+      typeOfHustle: app.businessType,
+      communityId: app.community?.id ?? '',
+    };
+    this.expandedAppApplicant.set(null);
+    this.showAddForm.set(true);
   }
 
   categoryLabel(cat: string): string {
@@ -2039,6 +2125,7 @@ export class FacilitatorQueueComponent implements OnInit {
     this.api.listCommunities().subscribe(c => this.communities.set(c));
     this.loadHustlers();
     this.loadApplicants();
+    this.load();
   }
 
   loadHustlers(): void {

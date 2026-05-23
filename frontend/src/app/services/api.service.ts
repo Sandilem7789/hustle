@@ -505,6 +505,11 @@ export interface ProductRequest {
   category?: string;
 }
 
+export interface ProductOption {
+  name: string;
+  values: string[];
+}
+
 export interface ProductResponse {
   id: string;
   name: string;
@@ -515,6 +520,7 @@ export interface ProductResponse {
   businessName: string;
   createdAt: string;
   category?: string;
+  options?: ProductOption[];
 }
 
 // Keep backwards compat alias
