@@ -73,7 +73,13 @@
       "Bash(python -m json.tool)",
       "Bash(Remove-Item *)",
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:4173\" -UseBasicParsing -TimeoutSec 10; \"Frontend: $\\($r.StatusCode\\)\" } catch { \"Frontend: ERROR - $_\" })",
-      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:8080/api/hustlers\" -UseBasicParsing -TimeoutSec 10; \"Backend: $\\($r.StatusCode\\)\" } catch { if \\($_.Exception.Response\\) { \"Backend: $\\([int]$_.Exception.Response.StatusCode\\) \\(up\\)\" } else { \"Backend: ERROR - $_\" } })"
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:8080/api/hustlers\" -UseBasicParsing -TimeoutSec 10; \"Backend: $\\($r.StatusCode\\)\" } catch { if \\($_.Exception.Response\\) { \"Backend: $\\([int]$_.Exception.Response.StatusCode\\) \\(up\\)\" } else { \"Backend: ERROR - $_\" } })",
+      "PowerShell(try { $f = Invoke-WebRequest -Uri 'http://localhost:4173' -UseBasicParsing -TimeoutSec 10; \"Frontend: $\\($f.StatusCode\\)\" } catch { \"Frontend error: $\\($_.Exception.Message\\)\" }; try { $b = Invoke-WebRequest -Uri 'http://localhost:8080/api/hustlers' -UseBasicParsing -TimeoutSec 10; \"Backend: $\\($b.StatusCode\\)\" } catch { \"Backend: $\\($_.Exception.Response.StatusCode.value__\\)\" })",
+      "Bash(git fetch *)",
+      "Bash(git status *)",
+      "Bash(git rev-list *)",
+      "Bash(git pull *)",
+      "Bash(docker compose *)"
     ]
   }
 }
