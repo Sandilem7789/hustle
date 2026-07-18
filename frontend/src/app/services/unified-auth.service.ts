@@ -120,7 +120,7 @@ export class UnifiedAuthService {
   private bridgeLegacyServices(user: UnifiedUser): void {
     // Bridge the hustler/staff auth for the hustler dashboard and facilitator pages
     if (user.businessProfileId) {
-      const legacyRole = user.roles.find(r =>
+      const legacyRole = user.roles?.find(r =>
         r === 'FACILITATOR' || r === 'COORDINATOR'
       ) ?? 'HUSTLER';
 
