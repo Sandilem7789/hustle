@@ -49,7 +49,7 @@
     },
     {
       "name": "api-profile",
-      "urls": ["/api/hustlers/**", "/api/auth/**"],
+      "urls": ["/api/hustlers/**"],
       "cacheConfig": {
         "maxSize": 20,
         "maxAge": "30m",
