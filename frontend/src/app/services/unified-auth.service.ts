@@ -66,7 +66,7 @@ export class UnifiedAuthService {
   });
 
   hasRole(role: string): boolean {
-    return this._user()?.roles.includes(role) ?? false;
+    return this._user()?.roles?.includes(role) ?? false;
   }
 
   getToken(): string | null {
