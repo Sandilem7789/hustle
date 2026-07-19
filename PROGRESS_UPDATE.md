@@ -171,6 +171,22 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 ### Community Seeding
 - `DataInitializer` seeds 5 KwaZulu-Natal communities on startup: KwaNgwenya, KwaNibela, KwaMakhasa, KwaJobe, KwaMnqobokazi
 
+### Survey Engine (Baseline / Growth Plan / Profile)
+Configurable survey templates so facilitators can edit question sets without a code deploy, plus hustler-facing notifications and an in-app fill-in flow.
+
+**Backend:**
+- `SurveyTemplate` (type: `BASELINE`/`GROWTH_PLAN`/`PROFILE`, name, description, active) → `SurveyQuestion` (ordered, stable `fieldKey`, `questionType`, JSON `options`, required, soft-delete via `active`) → `SurveyAssignment` (template × hustler, status `ASSIGNED`→`IN_PROGRESS`→`SUBMITTED`→`REVIEWED`) → `SurveyAnswer` (per question, upserted on save)
+- `Notification` entity (generic, `businessProfile` recipient) — a `SURVEY_ASSIGNED` notification is created automatically for every hustler a survey is assigned to
+- Facilitator: full CRUD on templates and questions (add/edit/reorder/deactivate); questions are never hard-deleted once answered, only soft-deleted, so historical responses stay readable
+- Facilitator: assign a template to one hustler or bulk by community; search assignments by status/type/community; read raw answers per assignment
+- Hustler: list own assignments, load a template's questions to render the form, save progress or submit (locks in `fieldKey → answerText` for the external n8n document-generation pipeline via `GET /api/survey-assignments/{id}/answers`)
+- Hustler: list/read notifications, mark as read
+
+**Frontend:**
+- New **Surveys** tab in the Facilitator Queue (`FacilitatorSurveysComponent`) with Templates / Assign / Responses subviews — question builder with up/down reordering, options editor for choice questions, community or single-hustler bulk assignment, and a response viewer showing question text paired with each answer
+- `/surveys/:id` route (`SurveyFormPageComponent`) — hustler-facing form that renders the right input per `questionType` (text, textarea, number, date, single/multi choice), pre-fills in-progress answers, and supports save-progress vs. final submit
+- Notifications page (`/notifications`) now lists real notifications instead of a static placeholder; tapping an unread one marks it read and navigates to its `linkPath`
+
 ### Backend API Summary
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -207,6 +223,18 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 | POST | `/api/facilitator/hustlers/{id}/checkins` | Record monthly check-in (upserts for current month) |
 | GET | `/api/facilitator/hustlers` | List all active hustlers with month financials + missed check-in flag |
 | PATCH | `/api/facilitator/hustlers/{id}/active` | Toggle hustler active/inactive |
+| GET/POST | `/api/survey-templates` | List / create survey templates (facilitator) |
+| PUT/PATCH | `/api/survey-templates/{id}`, `/{id}/active` | Update / activate-deactivate a template (facilitator) |
+| GET/POST | `/api/survey-templates/{templateId}/questions` | List / add questions on a template (facilitator) |
+| PUT/PATCH | `.../questions/{id}`, `/reorder`, `/{id}/active` | Edit, reorder, or soft-delete a question (facilitator) |
+| POST | `/api/survey-assignments` | Assign a template to one hustler or bulk by community (facilitator) |
+| GET | `/api/survey-assignments?status=&templateType=&communityId=` | Search assignments (facilitator) |
+| GET | `/api/survey-assignments/{id}` | Get template + questions (+ answers) to render/review a survey |
+| POST | `/api/survey-assignments/{id}/answers` | Save progress or submit answers (hustler) |
+| GET | `/api/survey-assignments/{id}/answers` | Flat `{fieldKey: answerText}` export for the n8n pipeline (facilitator) |
+| GET | `/api/hustlers/me/survey-assignments` | Hustler's own assigned surveys |
+| GET | `/api/hustlers/me/notifications` | Hustler's own notifications |
+| PATCH | `/api/notifications/{id}/read` | Mark a notification as read |
 
 ---
 

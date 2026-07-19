@@ -6,19 +6,26 @@ import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, Facili
 import { MapPickerComponent } from '../map-picker/map-picker.component';
 import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler } from '../../utils/monthly-report.util';
 import { AppSelectComponent } from '../app-select/app-select.component';
+import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-surveys.component';
 
 @Component({
   selector: 'app-facilitator-queue',
   standalone: true,
-  imports: [CommonModule, FormsModule, MapPickerComponent, AppSelectComponent],
+  imports: [CommonModule, FormsModule, MapPickerComponent, AppSelectComponent, FacilitatorSurveysComponent],
   template: `
     <section class="card">
       <!-- TOP TABS -->
       <div class="top-tabs">
         <button [class.active]="fTab() === 'pipeline'" (click)="fTab.set('pipeline')">Pipeline</button>
         <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Active<br>Hustlers</button>
+        <button [class.active]="fTab() === 'surveys'" (click)="fTab.set('surveys')">Surveys</button>
         <button [class.active]="fTab() === 'exports'" (click)="fTab.set('exports')">Exports</button>
       </div>
+
+      <!-- ===== SURVEYS TAB ===== -->
+      <ng-container *ngIf="fTab() === 'surveys'">
+        <app-facilitator-surveys></app-facilitator-surveys>
+      </ng-container>
 
       <!-- ===== PIPELINE TAB ===== -->
       <ng-container *ngIf="fTab() === 'pipeline'">
@@ -1390,7 +1397,7 @@ export class FacilitatorQueueComponent implements OnInit {
   @Input() coordinatorMode = false;
 
   // Top-level tab
-  fTab = signal<'pipeline' | 'hustlers' | 'exports'>('pipeline');
+  fTab = signal<'pipeline' | 'hustlers' | 'surveys' | 'exports'>('pipeline');
 
   // ── Pipeline state ──────────────────────────────────────────────────────
   showAddForm = signal(false);

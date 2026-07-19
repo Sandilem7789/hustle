@@ -335,6 +335,95 @@ export class ApiService {
       headers: { 'X-Auth-Token': token }
     });
   }
+
+  // ─── Survey Templates ───────────────────────────────────────────────────
+  listSurveyTemplates(): Observable<SurveyTemplateResponse[]> {
+    return this.http.get<SurveyTemplateResponse[]>(`${this.baseUrl}/api/survey-templates`, { headers: this.ah() });
+  }
+
+  createSurveyTemplate(payload: SurveyTemplateRequest): Observable<SurveyTemplateResponse> {
+    return this.http.post<SurveyTemplateResponse>(`${this.baseUrl}/api/survey-templates`, payload, { headers: this.ah() });
+  }
+
+  updateSurveyTemplate(id: string, payload: SurveyTemplateRequest): Observable<SurveyTemplateResponse> {
+    return this.http.put<SurveyTemplateResponse>(`${this.baseUrl}/api/survey-templates/${id}`, payload, { headers: this.ah() });
+  }
+
+  setSurveyTemplateActive(id: string, active: boolean): Observable<SurveyTemplateResponse> {
+    return this.http.patch<SurveyTemplateResponse>(`${this.baseUrl}/api/survey-templates/${id}/active`, { active }, { headers: this.ah() });
+  }
+
+  // ─── Survey Questions ───────────────────────────────────────────────────
+  listSurveyQuestions(templateId: string): Observable<SurveyQuestionResponse[]> {
+    return this.http.get<SurveyQuestionResponse[]>(`${this.baseUrl}/api/survey-templates/${templateId}/questions`, { headers: this.ah() });
+  }
+
+  createSurveyQuestion(templateId: string, payload: SurveyQuestionRequest): Observable<SurveyQuestionResponse> {
+    return this.http.post<SurveyQuestionResponse>(`${this.baseUrl}/api/survey-templates/${templateId}/questions`, payload, { headers: this.ah() });
+  }
+
+  updateSurveyQuestion(templateId: string, questionId: string, payload: SurveyQuestionRequest): Observable<SurveyQuestionResponse> {
+    return this.http.put<SurveyQuestionResponse>(`${this.baseUrl}/api/survey-templates/${templateId}/questions/${questionId}`, payload, { headers: this.ah() });
+  }
+
+  reorderSurveyQuestions(templateId: string, orderedQuestionIds: string[]): Observable<SurveyQuestionResponse[]> {
+    return this.http.patch<SurveyQuestionResponse[]>(`${this.baseUrl}/api/survey-templates/${templateId}/questions/reorder`, { orderedQuestionIds }, { headers: this.ah() });
+  }
+
+  setSurveyQuestionActive(templateId: string, questionId: string, active: boolean): Observable<SurveyQuestionResponse> {
+    return this.http.patch<SurveyQuestionResponse>(`${this.baseUrl}/api/survey-templates/${templateId}/questions/${questionId}/active`, { active }, { headers: this.ah() });
+  }
+
+  // ─── Survey Assignments (Facilitator) ───────────────────────────────────
+  assignSurvey(payload: SurveyAssignRequest): Observable<SurveyAssignmentResponse[]> {
+    return this.http.post<SurveyAssignmentResponse[]>(`${this.baseUrl}/api/survey-assignments`, payload, { headers: this.ah() });
+  }
+
+  searchSurveyAssignments(status?: string, templateType?: string, communityId?: string): Observable<SurveyAssignmentResponse[]> {
+    const params: Record<string, string> = {};
+    if (status) params['status'] = status;
+    if (templateType) params['templateType'] = templateType;
+    if (communityId) params['communityId'] = communityId;
+    return this.http.get<SurveyAssignmentResponse[]>(`${this.baseUrl}/api/survey-assignments`, {
+      params: Object.keys(params).length ? params : undefined, headers: this.ah()
+    });
+  }
+
+  getSurveyAssignmentAnswers(id: string): Observable<Record<string, string>> {
+    return this.http.get<Record<string, string>>(`${this.baseUrl}/api/survey-assignments/${id}/answers`, { headers: this.ah() });
+  }
+
+  // ─── Survey Assignments (Hustler) ───────────────────────────────────────
+  getMySurveyAssignments(token: string): Observable<SurveyAssignmentResponse[]> {
+    return this.http.get<SurveyAssignmentResponse[]>(`${this.baseUrl}/api/hustlers/me/survey-assignments`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  getSurveyAssignment(id: string, token: string): Observable<SurveyAssignmentDetailResponse> {
+    return this.http.get<SurveyAssignmentDetailResponse>(`${this.baseUrl}/api/survey-assignments/${id}`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  saveSurveyAnswers(id: string, payload: { answers: Record<string, string>; submit: boolean }, token: string): Observable<SurveyAssignmentResponse> {
+    return this.http.post<SurveyAssignmentResponse>(`${this.baseUrl}/api/survey-assignments/${id}/answers`, payload, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  // ─── Notifications ──────────────────────────────────────────────────────
+  getMyNotifications(token: string): Observable<NotificationResponse[]> {
+    return this.http.get<NotificationResponse[]>(`${this.baseUrl}/api/hustlers/me/notifications`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  markNotificationRead(id: string, token: string): Observable<NotificationResponse> {
+    return this.http.patch<NotificationResponse>(`${this.baseUrl}/api/notifications/${id}/read`, {}, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
 }
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
@@ -720,4 +809,90 @@ export interface IncomeSummary {
   monthIncome: number;
   monthExpenses: number;
   monthProfit: number;
+}
+
+// ─── Surveys & Notifications ──────────────────────────────────────────────
+
+export type SurveyType = 'BASELINE' | 'GROWTH_PLAN' | 'PROFILE';
+export type SurveyQuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SINGLE_CHOICE' | 'MULTI_CHOICE';
+export type SurveyAssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'SUBMITTED' | 'REVIEWED';
+
+export interface SurveyTemplateRequest {
+  type: SurveyType;
+  name: string;
+  description?: string;
+  active?: boolean;
+}
+
+export interface SurveyTemplateResponse {
+  id: string;
+  type: SurveyType;
+  name: string;
+  description?: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface SurveyQuestionRequest {
+  questionText: string;
+  fieldKey?: string;
+  questionType: SurveyQuestionType;
+  options?: string[];
+  required: boolean;
+  helpText?: string;
+}
+
+export interface SurveyQuestionResponse {
+  id: string;
+  templateId: string;
+  orderIndex: number;
+  questionText: string;
+  fieldKey: string;
+  questionType: SurveyQuestionType;
+  options?: string[];
+  required: boolean;
+  helpText?: string;
+  active: boolean;
+}
+
+export interface SurveyAssignRequest {
+  templateId: string;
+  businessProfileIds?: string[];
+  communityId?: string;
+  dueDate?: string;
+}
+
+export interface SurveyAssignmentResponse {
+  id: string;
+  templateId: string;
+  templateName: string;
+  templateType: SurveyType;
+  businessProfileId: string;
+  businessName: string;
+  communityName?: string;
+  assignedByUserId: string;
+  assignedAt: string;
+  dueDate?: string;
+  status: SurveyAssignmentStatus;
+}
+
+export interface SurveyAssignmentDetailResponse {
+  id: string;
+  templateId: string;
+  templateName: string;
+  templateType: SurveyType;
+  status: SurveyAssignmentStatus;
+  dueDate?: string;
+  questions: SurveyQuestionResponse[];
+  answers: Record<string, string>;
+}
+
+export interface NotificationResponse {
+  id: string;
+  type: 'SURVEY_ASSIGNED' | 'APPLICATION_REVIEWED' | 'OTHER';
+  title: string;
+  body?: string;
+  linkPath?: string;
+  read: boolean;
+  createdAt: string;
 }

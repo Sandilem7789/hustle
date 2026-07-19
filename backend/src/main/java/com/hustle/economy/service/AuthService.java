@@ -49,13 +49,21 @@ public class AuthService {
     @Transactional(readOnly = true)
     public BusinessProfile requireRole(String token, UserRole... allowedRoles) {
         BusinessProfile profile = requireAuth(token);
+        UserRole role = resolveRole(token, profile);
 
+        if (!Arrays.asList(allowedRoles).contains(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+        return profile;
+    }
+
+    @Transactional(readOnly = true)
+    public UserRole resolveRole(String token, BusinessProfile profile) {
         // Determine role from AppUser if present, else from HustlerApplication
-        UserRole role;
         var appSession = appUserSessionRepository.findByToken(token);
         if (appSession.isPresent()) {
             AppUser user = appSession.get().getUser();
-            role = user.getRoles().stream()
+            return user.getRoles().stream()
                     .map(r -> switch (r) {
                         case FACILITATOR -> UserRole.FACILITATOR;
                         case COORDINATOR -> UserRole.COORDINATOR;
@@ -64,15 +72,16 @@ public class AuthService {
                     .filter(r -> r != UserRole.HUSTLER || user.getRoles().contains(AppUserRole.HUSTLER))
                     .findFirst()
                     .orElse(UserRole.HUSTLER);
-        } else {
-            role = profile.getApplication().getRole() != null
-                    ? profile.getApplication().getRole()
-                    : UserRole.HUSTLER;
         }
+        return profile.getApplication().getRole() != null
+                ? profile.getApplication().getRole()
+                : UserRole.HUSTLER;
+    }
 
-        if (!Arrays.asList(allowedRoles).contains(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
-        return profile;
+    @Transactional(readOnly = true)
+    public UUID resolveAppUserId(String token) {
+        return appUserSessionRepository.findByToken(token)
+                .map(session -> session.getUser().getId())
+                .orElse(null);
     }
 }

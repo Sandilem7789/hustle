@@ -13,6 +13,7 @@ import { DriverLoginPageComponent } from './pages/driver-login/driver-login-page
 import { DriverRegisterPageComponent } from './pages/driver-register/driver-register-page.component';
 import { RegistrationFormComponent } from './components/registration-form/registration-form.component';
 import { NotificationsPageComponent } from './pages/notifications/notifications-page.component';
+import { SurveyFormPageComponent } from './pages/survey-form/survey-form-page.component';
 
 export const routes: Routes = [
   // Public landing
@@ -33,6 +34,7 @@ export const routes: Routes = [
   { path: 'checkout',       component: CheckoutPageComponent },
   { path: 'orders',         component: CustomerOrdersPageComponent },
   { path: 'notifications',  component: NotificationsPageComponent },
+  { path: 'surveys/:id',    component: SurveyFormPageComponent },
 
   // Staff portals
   { path: 'facilitator', component: FacilitatorPageComponent },
