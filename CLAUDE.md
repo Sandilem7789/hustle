@@ -52,6 +52,15 @@ docker-compose.yml — PostgreSQL (5432), backend (8080), frontend (4173)
 - `http://148.230.79.29:4173`
 - `http://148.230.79.29`
 
+Note: the production Netlify frontend does **not** need to be in this list — `netlify.toml` proxies `/api/*` to the backend as a same-origin rewrite (status 200), so the browser never makes a cross-origin request.
+
+### Deployment topology
+- **Frontend (production)**: Netlify (`hustleconomy.netlify.app`), auto-deploys from `main` via Netlify's own GitHub integration. `netlify.toml` rewrites `/api/*` → the VPS backend.
+- **Backend (production)**: Hostinger VPS (`srv1144757.hstgr.cloud` / `148.230.79.29`), directory `~/hustle-backend`, routed through Traefik (labels in `docker-compose.prod.yml`) with TLS via Let's Encrypt (`mytlschallenge` resolver). Runs `docker-compose.prod.yml` — distinct from the dev `docker-compose.yml` (no frontend/nginx service; Traefik handles routing instead).
+- **Backend auto-deploy**: `.github/workflows/deploy-vps.yml` triggers on push to `main` — SSHes into the VPS (`VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY` repo secrets), `git pull origin main`, then `docker compose -f docker-compose.prod.yml up --build -d`. This requires the VPS to accept inbound SSH from GitHub's runner IP ranges (these rotate — don't try to allowlist specific IPs, open port 22 broadly and rely on key-only auth instead).
+- **Local dev**: `docker-compose.yml` (Postgres 5432, backend 8080, frontend/nginx 4173) — fully separate stack from production, no Traefik.
+- Uploaded images persist to a named volume (`uploads_data` → `/app/uploads`) in **both** dev and prod compose files — do not remove this volume mount, images are lost on container recreation without it. Optionally backed by Cloudflare R2 (S3-compatible) instead of local disk when `R2_ACCESS_KEY`/`R2_SECRET_KEY` are set (`R2Config.java` — bean is conditional on the key being present; falls back to local disk otherwise).
+
 ---
 
 ## Roles & Access
@@ -62,10 +71,9 @@ docker-compose.yml — PostgreSQL (5432), backend (8080), frontend (4173)
 | **Customer** | Browse marketplace, create account, place orders, track deliveries |
 | **Driver** | Accept delivery jobs, view map route to customer, mark delivery complete |
 | **Facilitator** | Review hustler applications, approve/reject/revoke, edit business details (not phone/email) |
-| **Coordinator** | *(Planned)* Edit phone/email and sensitive fields on any profile |
+| **Coordinator** | Wraps the Facilitator queue (`/coordinator`) with elevated access — edit phone/email and other sensitive fields, schedule interviews directly from `CAPTURED`/`CALLING` stage |
 
-Auth uses session tokens (`X-Auth-Token` header, `hustler_sessions` table). Passwords are BCrypt-hashed.  
-Roles are stored per user and must be checked server-side on every protected endpoint.
+Auth is unified through `UnifiedAuthService` / `AppUser` (`app_users` table, roles in `app_user_roles`). A single login/register flow (`POST /api/auth/login`, `POST /api/auth/register`) issues an app session token (`X-Auth-Token`, `app_user_sessions`) and a bridged customer token (`X-Customer-Token`, `customer_sessions`) for marketplace/checkout compatibility. Legacy per-role tables (`Customer`, `HustlerApplication`) still exist and are checked as login fallbacks for accounts created before unification — `UnifiedAuthService.login()` tries `AppUser` first, then `Customer`, then `HustlerApplication`, migrating the account into `AppUser` on successful login. Passwords are BCrypt-hashed. Roles are stored per user (`AppUserRole`: `CUSTOMER`, `HUSTLER`, `FACILITATOR`, `COORDINATOR`, `DRIVER`) and must be checked server-side on every protected endpoint.
 
 ---
 
@@ -208,7 +216,7 @@ Implementation:
 - Profile edits by facilitator: `PATCH /api/hustlers/{id}/profile` — never includes `phone` or `email`
 - Product limit: 40 per hustler (enforced backend + frontend)
 - Income channels: `CASH`, `MARKETPLACE`
-- Images: `POST /api/uploads`, served via `GET /api/uploads/{filename}`, stored in Docker volume `uploads_data`
+- Images: `POST /api/uploads`, served via `GET /api/uploads/{filename}` — local disk (`/app/uploads`, Docker volume `uploads_data`) by default, or Cloudflare R2 when `R2_ACCESS_KEY`/`R2_SECRET_KEY` are set (see Deployment topology above)
 - Distance validation: `POST /api/orders/validate-distance` — accepts seller ID + delivery coordinates, returns pass/fail + distance in km
 
 ### Planned endpoints (do not build speculatively — implement per sprint)
@@ -272,6 +280,7 @@ Implementation:
 - OpenStreetMap/Leaflet choice — do not swap to Google Maps (cost/API key reasons)
 - The 60 km fast-food delivery cap — deliberate safety and freshness rule
 - Driver GPS coordinates and customer delivery addresses — treat as PII at all times
+- The `uploads_data` volume mount in either compose file — removing it silently wipes all product images on the next container recreation
 
 ---
 
@@ -279,16 +288,12 @@ Implementation:
 
 Implement only when explicitly requested in the current session:
 
-- Coordinator dashboard
 - WhatsApp Business API — invoice and notification sending
 - Payments: Peach Payments (primary), Ozow/Stitch EFT, PayFast prototype
-- Customer accounts and checkout pipeline
-- Driver registration, dispatch, and dashboard with map
-- Marketplace category radio buttons and distance enforcement
-- PWA + offline mode (IndexedDB + background sync + service worker)
+- Driver registration, dispatch, and dashboard with map (driver/session/delivery-job entities exist; full dispatch flow and driver dashboard UI not confirmed complete)
+- PWA offline data strategy — service worker asset caching is already live (`ngsw-config.json`, `provideServiceWorker`); IndexedDB offline data queues + background sync per dashboard are still not built. When editing `ngsw-config.json`, never match POST-only endpoints (e.g. `/api/auth/**`) in a `dataGroup` — Angular's service worker only handles GET cleanly there and will break those requests
 - Barcode/QR scanner for marketplace income
 - Pagination on list endpoints
-- VPS/production deployment (Nginx HTTPS config)
 - B2B purchase order fields and reporting
 
 ---
