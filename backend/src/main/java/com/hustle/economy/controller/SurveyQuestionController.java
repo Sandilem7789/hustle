@@ -70,4 +70,14 @@ public class SurveyQuestionController {
         boolean active = Boolean.TRUE.equals(body.get("active"));
         return ResponseEntity.ok(questionService.setActive(questionId, active));
     }
+
+    @DeleteMapping("/{questionId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable UUID templateId,
+            @PathVariable UUID questionId,
+            @RequestHeader("X-Auth-Token") String token) {
+        authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
+        questionService.delete(questionId);
+        return ResponseEntity.noContent().build();
+    }
 }

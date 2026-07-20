@@ -78,15 +78,32 @@ import { AppSelectComponent } from '../app-select/app-select.component';
               <ol class="question-list" *ngIf="questionsLoading() !== t.id">
                 <li *ngIf="(questionsByTemplate[t.id]?.length ?? 0) === 0" class="muted small">No questions yet.</li>
                 <li *ngFor="let q of questionsByTemplate[t.id]; let i = index" class="question-row" [class.inactive]="!q.active">
-                  <div class="q-order-btns">
-                    <button type="button" (click)="moveQuestion(t.id, i, -1)" [disabled]="i === 0">↑</button>
-                    <button type="button" (click)="moveQuestion(t.id, i, 1)" [disabled]="i === (questionsByTemplate[t.id]?.length ?? 0) - 1">↓</button>
+                  <div class="q-row-top">
+                    <div class="q-order-btns">
+                      <button type="button" (click)="moveQuestion(t.id, i, -1)" [disabled]="i === 0">↑</button>
+                      <button type="button" (click)="moveQuestion(t.id, i, 1)" [disabled]="i === (questionsByTemplate[t.id]?.length ?? 0) - 1">↓</button>
+                    </div>
+                    <div class="q-main" (click)="startEditQuestion(t.id, q)">
+                      <p class="q-text">{{ q.questionText }}<span class="req" *ngIf="q.required"> *</span></p>
+                      <p class="muted small">{{ q.questionType | titlecase }} &middot; key: {{ q.fieldKey }}<span *ngIf="!q.active"> &middot; inactive</span></p>
+                    </div>
+                    <div class="q-row-actions">
+                      <button type="button" class="link-btn" (click)="setQuestionActive(t.id, q, !q.active)">{{ q.active ? 'Deactivate' : 'Activate' }}</button>
+                      <button type="button" class="link-btn link-btn-danger" (click)="confirmDeleteQuestion(q.id)">Delete</button>
+                    </div>
                   </div>
-                  <div class="q-main" (click)="startEditQuestion(t.id, q)">
-                    <p class="q-text">{{ q.questionText }}<span class="req" *ngIf="q.required"> *</span></p>
-                    <p class="muted small">{{ q.questionType | titlecase }} &middot; key: {{ q.fieldKey }}<span *ngIf="!q.active"> &middot; inactive</span></p>
+
+                  <div class="q-confirm-row" *ngIf="confirmingDeleteId() === q.id">
+                    <p class="confirm-msg">Delete this question? This can't be undone.</p>
+                    <div class="confirm-actions">
+                      <button type="button" class="btn btn-danger-solid" (click)="deleteQuestion(t.id, q.id)" [disabled]="questionDeleting() === q.id">
+                        {{ questionDeleting() === q.id ? 'Deleting…' : 'Yes, delete' }}
+                      </button>
+                      <button type="button" class="btn btn-secondary" (click)="confirmingDeleteId.set(null)">Cancel</button>
+                    </div>
                   </div>
-                  <button type="button" class="link-btn" (click)="setQuestionActive(t.id, q, !q.active)">{{ q.active ? 'Deactivate' : 'Activate' }}</button>
+
+                  <p class="q-delete-error" *ngIf="questionDeleteError[q.id]">{{ questionDeleteError[q.id] }}</p>
                 </li>
               </ol>
 
@@ -266,10 +283,11 @@ import { AppSelectComponent } from '../app-select/app-select.component';
 
     .question-list { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
     .question-row {
-      display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.7rem;
+      display: flex; flex-direction: column; gap: 0.5rem; padding: 0.6rem 0.7rem;
       border: 1.5px solid #E7E5E4; border-radius: 0.75rem;
     }
     .question-row.inactive { opacity: 0.55; }
+    .q-row-top { display: flex; align-items: center; gap: 0.6rem; }
     .q-order-btns { display: flex; flex-direction: column; gap: 0.2rem; }
     .q-order-btns button {
       width: 26px; height: 22px; border: 1px solid #E7E5E4; background: white; border-radius: 0.4rem;
@@ -279,6 +297,17 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .q-main { flex: 1; min-width: 0; cursor: pointer; }
     .q-text { margin: 0; font-size: 0.875rem; font-weight: 700; color: #1C1917; }
     .req { color: #E53935; }
+    .q-row-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; flex-shrink: 0; }
+    .link-btn-danger { color: #E53935; }
+
+    .q-confirm-row {
+      background: rgba(229,57,53,0.06); border: 1.5px solid rgba(229,57,53,0.3); border-radius: 0.7rem;
+      padding: 0.65rem 0.75rem;
+    }
+    .confirm-msg { margin: 0 0 0.5rem; font-size: 0.8rem; font-weight: 700; color: #1C1917; }
+    .confirm-actions { display: flex; gap: 0.5rem; }
+    .btn-danger-solid { background: #E53935; color: white; padding: 0.55rem 1rem; font-size: 0.8rem; min-height: 40px; }
+    .q-delete-error { margin: 0; font-size: 0.78rem; font-weight: 700; color: #E53935; }
 
     .filters-row { display: flex; flex-direction: column; gap: 0.5rem; }
     .status-badge {
@@ -354,6 +383,9 @@ export class FacilitatorSurveysComponent implements OnInit {
   optionsText = '';
   questionSaving = signal(false);
   questionError = signal('');
+  confirmingDeleteId = signal<string | null>(null);
+  questionDeleting = signal<string | null>(null);
+  questionDeleteError: Record<string, string> = {};
 
   // ── Assign ───────────────────────────────────────────────────────────────
   communities = signal<Community[]>([]);
@@ -428,10 +460,12 @@ export class FacilitatorSurveysComponent implements OnInit {
     if (this.expandedTemplate() === id) {
       this.expandedTemplate.set(null);
       this.questionFormTemplateId.set(null);
+      this.confirmingDeleteId.set(null);
       return;
     }
     this.expandedTemplate.set(id);
     this.questionFormTemplateId.set(null);
+    this.confirmingDeleteId.set(null);
     if (!this.questionsByTemplate[id]) {
       this.loadQuestions(id);
     }
@@ -510,6 +544,28 @@ export class FacilitatorSurveysComponent implements OnInit {
 
   setQuestionActive(templateId: string, q: SurveyQuestionResponse, active: boolean): void {
     this.api.setSurveyQuestionActive(templateId, q.id, active).subscribe(() => this.loadQuestions(templateId));
+  }
+
+  confirmDeleteQuestion(questionId: string): void {
+    delete this.questionDeleteError[questionId];
+    this.confirmingDeleteId.set(questionId);
+  }
+
+  deleteQuestion(templateId: string, questionId: string): void {
+    this.questionDeleting.set(questionId);
+    this.api.deleteSurveyQuestion(templateId, questionId).subscribe({
+      next: () => {
+        this.questionDeleting.set(null);
+        this.confirmingDeleteId.set(null);
+        delete this.questionDeleteError[questionId];
+        this.loadQuestions(templateId);
+      },
+      error: (err) => {
+        this.questionDeleting.set(null);
+        this.confirmingDeleteId.set(null);
+        this.questionDeleteError[questionId] = err?.error?.message || 'Could not delete this question.';
+      }
+    });
   }
 
   moveQuestion(templateId: string, index: number, dir: -1 | 1): void {

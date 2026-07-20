@@ -374,6 +374,10 @@ export class ApiService {
     return this.http.patch<SurveyQuestionResponse>(`${this.baseUrl}/api/survey-templates/${templateId}/questions/${questionId}/active`, { active }, { headers: this.ah() });
   }
 
+  deleteSurveyQuestion(templateId: string, questionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/survey-templates/${templateId}/questions/${questionId}`, { headers: this.ah() });
+  }
+
   // ─── Survey Assignments (Facilitator) ───────────────────────────────────
   assignSurvey(payload: SurveyAssignRequest): Observable<SurveyAssignmentResponse[]> {
     return this.http.post<SurveyAssignmentResponse[]>(`${this.baseUrl}/api/survey-assignments`, payload, { headers: this.ah() });

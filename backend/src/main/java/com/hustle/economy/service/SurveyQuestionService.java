@@ -7,6 +7,7 @@ import com.hustle.economy.entity.SurveyQuestion;
 import com.hustle.economy.entity.SurveyQuestionType;
 import com.hustle.economy.entity.SurveyTemplate;
 import com.hustle.economy.mapper.SurveyMapper;
+import com.hustle.economy.repository.SurveyAnswerRepository;
 import com.hustle.economy.repository.SurveyQuestionRepository;
 import com.hustle.economy.repository.SurveyTemplateRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -27,6 +28,7 @@ public class SurveyQuestionService {
 
     private final SurveyQuestionRepository questionRepository;
     private final SurveyTemplateRepository templateRepository;
+    private final SurveyAnswerRepository answerRepository;
     private final SurveyMapper mapper;
 
     @Transactional(readOnly = true)
@@ -103,5 +105,19 @@ public class SurveyQuestionService {
                 .orElseThrow(() -> new EntityNotFoundException("Survey question not found"));
         question.setActive(active);
         return mapper.toResponse(questionRepository.save(question));
+    }
+
+    // True hard-delete — only permitted when nobody has answered this question yet.
+    @Transactional
+    public void delete(UUID questionId) {
+        SurveyQuestion question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new EntityNotFoundException("Survey question not found"));
+
+        if (answerRepository.existsByQuestion_Id(questionId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This question already has responses — deactivate it instead of deleting.");
+        }
+
+        questionRepository.delete(question);
     }
 }
