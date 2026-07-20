@@ -88,6 +88,7 @@ import { AppSelectComponent } from '../app-select/app-select.component';
                       <p class="muted small">{{ q.questionType | titlecase }} &middot; key: {{ q.fieldKey }}<span *ngIf="!q.active"> &middot; inactive</span></p>
                     </div>
                     <div class="q-row-actions">
+                      <button type="button" class="link-btn" (click)="startEditQuestion(t.id, q)">Edit</button>
                       <button type="button" class="link-btn" (click)="setQuestionActive(t.id, q, !q.active)">{{ q.active ? 'Deactivate' : 'Activate' }}</button>
                       <button type="button" class="link-btn link-btn-danger" (click)="confirmDeleteQuestion(q.id)">Delete</button>
                     </div>
