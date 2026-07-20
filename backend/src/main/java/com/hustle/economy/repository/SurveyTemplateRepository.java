@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface SurveyTemplateRepository extends JpaRepository<SurveyTemplate, UUID> {
     List<SurveyTemplate> findByActiveTrue();
     List<SurveyTemplate> findByTypeAndActiveTrue(SurveyType type);
+    boolean existsByType(SurveyType type);
 }

@@ -5,6 +5,8 @@ import com.hustle.economy.repository.ApplicantRepository;
 import com.hustle.economy.repository.BusinessProfileRepository;
 import com.hustle.economy.repository.CommunityRepository;
 import com.hustle.economy.repository.HustlerApplicationRepository;
+import com.hustle.economy.repository.SurveyQuestionRepository;
+import com.hustle.economy.repository.SurveyTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -22,6 +24,8 @@ public class DataInitializer implements ApplicationRunner {
     private final ApplicantRepository applicantRepository;
     private final HustlerApplicationRepository applicationRepository;
     private final BusinessProfileRepository businessProfileRepository;
+    private final SurveyTemplateRepository surveyTemplateRepository;
+    private final SurveyQuestionRepository surveyQuestionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Value("${STAFF_PHONE}")
@@ -65,6 +69,7 @@ public class DataInitializer implements ApplicationRunner {
         applicationRepository.backfillNullRoles();
         seedStaffAccount();
         seedKwaNgwenyaApplicants();
+        seedSurveyTemplates();
     }
 
     private void seedStaffAccount() {
@@ -263,6 +268,72 @@ public class DataInitializer implements ApplicationRunner {
                     .ageFlag(ageFlag)
                     .capturedBy("Sandile Mathenjwa")
                     .createdAt(now)
+                    .build());
+        }
+    }
+
+    // ── Default survey templates ────────────────────────────────────────────
+    // Columns: fieldKey, questionText, questionType, required
+    // Note: no PROFILE template — that document is generated from existing
+    // BusinessProfile/Applicant/BaselineSurveyResponse data, not a separate survey.
+    private static final Object[][] BASELINE_QUESTIONS = {
+        {"company_description",       "Give a brief description of your business — what it sells or does, and who it serves.",                       SurveyQuestionType.TEXTAREA, true},
+        {"ownership_structure",       "How is the business owned? Are there any partners or people who help run it?",                                 SurveyQuestionType.TEXTAREA, true},
+        {"market",                    "Who are your customers, and who are your main competitors?",                                                    SurveyQuestionType.TEXTAREA, true},
+        {"governance_structures",     "How do you currently manage the business day-to-day? (e.g. record keeping, bank account, decision-making)",     SurveyQuestionType.TEXTAREA, true},
+        {"skills_gap",                "What skills do you feel you're missing to run this business well?",                                             SurveyQuestionType.TEXTAREA, true},
+        {"reason_for_participating",  "Why do you want to be part of the Hustle Economy programme?",                                                   SurveyQuestionType.TEXTAREA, true},
+        {"key_business_challenges",   "What are the biggest challenges facing your business right now?",                                                SurveyQuestionType.TEXTAREA, true},
+        {"short_term_goal",           "What's one goal you want to achieve in the next few months?",                                                    SurveyQuestionType.TEXTAREA, true},
+        {"medium_term_goal",          "What's a goal for the next year?",                                                                               SurveyQuestionType.TEXTAREA, true},
+        {"long_term_goal",            "Where do you want this business to be in 3-5 years?",                                                            SurveyQuestionType.TEXTAREA, true},
+    };
+
+    private static final Object[][] GROWTH_PLAN_QUESTIONS = {
+        {"business_focus_description",     "Briefly describe your business and its focus — what does it sell, and to who?",             SurveyQuestionType.TEXTAREA, true},
+        {"current_financial_status",       "What is the current financial status of your business?",                                    SurveyQuestionType.TEXTAREA, true},
+        {"seed_capital_breakdown",         "List the items you plan to buy with the seed capital and their approximate cost.",           SurveyQuestionType.TEXTAREA, true},
+        {"purchase_location",              "Where will you purchase these items?",                                                       SurveyQuestionType.TEXT,     true},
+        {"revenue_increase_explanation",   "How will this seed capital increase your revenue? Who will buy from you as a result?",       SurveyQuestionType.TEXTAREA, true},
+        {"expense_increase_explanation",   "Will this seed capital increase your expenses? (e.g. extra rent, electricity, insurance)",   SurveyQuestionType.TEXTAREA, false},
+        {"challenges_to_address",          "What challenges will this seed capital help you address?",                                   SurveyQuestionType.TEXTAREA, true},
+        {"projected_revenue",              "Projected monthly revenue after receiving seed capital (R)",                                 SurveyQuestionType.NUMBER,   true},
+        {"projected_expenses",             "Projected monthly expenses after receiving seed capital (R)",                                SurveyQuestionType.NUMBER,   true},
+        {"projected_profit",               "Projected monthly profit after receiving seed capital (R)",                                  SurveyQuestionType.NUMBER,   true},
+    };
+
+    private void seedSurveyTemplates() {
+        seedSurveyTemplate(SurveyType.BASELINE, "Baseline Survey", BASELINE_QUESTIONS);
+        seedSurveyTemplate(SurveyType.GROWTH_PLAN, "Growth Plan Survey", GROWTH_PLAN_QUESTIONS);
+    }
+
+    private void seedSurveyTemplate(SurveyType type, String name, Object[][] questions) {
+        // Only seed if no template of this type exists yet — a facilitator may have since edited/deactivated it.
+        if (surveyTemplateRepository.existsByType(type)) return;
+
+        OffsetDateTime now = OffsetDateTime.now();
+        SurveyTemplate template = surveyTemplateRepository.save(SurveyTemplate.builder()
+                .type(type)
+                .name(name)
+                .active(true)
+                .createdAt(now)
+                .build());
+
+        int orderIndex = 0;
+        for (Object[] row : questions) {
+            String fieldKey                  = (String) row[0];
+            String questionText              = (String) row[1];
+            SurveyQuestionType questionType  = (SurveyQuestionType) row[2];
+            boolean required                 = (boolean) row[3];
+
+            surveyQuestionRepository.save(SurveyQuestion.builder()
+                    .template(template)
+                    .orderIndex(orderIndex++)
+                    .questionText(questionText)
+                    .fieldKey(fieldKey)
+                    .questionType(questionType)
+                    .required(required)
+                    .active(true)
                     .build());
         }
     }
