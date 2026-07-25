@@ -113,8 +113,22 @@ import { AppSelectComponent } from '../app-select/app-select.component';
                   <label class="span-2"><span class="field-label">Question text</span>
                     <input type="text" [(ngModel)]="questionForm.questionText" [ngModelOptions]="{standalone:true}" />
                   </label>
-                  <label *ngIf="!editingQuestionId()"><span class="field-label">Field key (stable, e.g. company_description)</span>
-                    <input type="text" [(ngModel)]="questionForm.fieldKey" [ngModelOptions]="{standalone:true}" />
+                  <ng-container *ngIf="!editingQuestionId()">
+                    <label><span class="field-label">Field key (stable identifier)</span>
+                      <select [(ngModel)]="fieldKeyChoice" [ngModelOptions]="{standalone:true}" (ngModelChange)="onFieldKeyChoiceChange()">
+                        <option value="" disabled>— Select a field key —</option>
+                        <option *ngFor="let k of fieldKeyOptionsCache[t.id]" [value]="k" [disabled]="usedFieldKeys(t.id).includes(k)">
+                          {{ k }}{{ usedFieldKeys(t.id).includes(k) ? ' (already used)' : '' }}
+                        </option>
+                        <option value="__custom__">Other (custom)</option>
+                      </select>
+                    </label>
+                    <label *ngIf="fieldKeyChoice === '__custom__'"><span class="field-label">Custom field key</span>
+                      <input type="text" [(ngModel)]="questionForm.fieldKey" [ngModelOptions]="{standalone:true}" />
+                    </label>
+                  </ng-container>
+                  <label *ngIf="editingQuestionId()"><span class="field-label">Field key</span>
+                    <p class="static-field-value">{{ editingFieldKey() }}</p>
                   </label>
                   <label><span class="field-label">Answer type</span>
                     <app-select [(ngModel)]="questionForm.questionType" [ngModelOptions]="{standalone:true}" [options]="questionTypeOpts"></app-select>
@@ -250,11 +264,15 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
     .form-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8125rem; font-weight: 700; color: #1C1917; }
     .field-label { font-size: 0.75rem; font-weight: 800; color: #78716C; text-transform: uppercase; letter-spacing: 0.03em; }
-    .form-grid input[type="text"], .form-grid input[type="date"], .form-grid textarea {
+    .form-grid input[type="text"], .form-grid input[type="date"], .form-grid textarea, .form-grid select {
       border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0.65rem 0.85rem; font-size: 0.95rem;
-      font-family: inherit; font-weight: 600; min-height: 44px; color: #1C1917; background: #FAFAF9; outline: none;
+      font-family: inherit; font-weight: 600; min-height: 48px; color: #1C1917; background: #FAFAF9; outline: none;
     }
-    .form-grid input:focus, .form-grid textarea:focus { border-color: #F5B800; background: white; }
+    .form-grid input:focus, .form-grid textarea:focus, .form-grid select:focus { border-color: #F5B800; background: white; }
+    .static-field-value {
+      margin: 0; padding: 0.65rem 0.85rem; border-radius: 0.75rem; min-height: 44px; box-sizing: border-box;
+      background: #F5F5F4; color: #57534E; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center;
+    }
     .checkbox-label { flex-direction: row !important; align-items: center; gap: 0.5rem !important; }
     .checkbox-label input { width: 18px; height: 18px; }
     .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
@@ -387,6 +405,9 @@ export class FacilitatorSurveysComponent implements OnInit {
   confirmingDeleteId = signal<string | null>(null);
   questionDeleting = signal<string | null>(null);
   questionDeleteError: Record<string, string> = {};
+  fieldKeyChoice = '';
+  fieldKeyOptionsCache: Partial<Record<string, string[]>> = {};
+  editingFieldKey = signal('');
 
   // ── Assign ───────────────────────────────────────────────────────────────
   communities = signal<Community[]>([]);
@@ -486,12 +507,15 @@ export class FacilitatorSurveysComponent implements OnInit {
     this.editingQuestionId.set(null);
     this.questionForm = { questionType: 'TEXT', required: false };
     this.optionsText = '';
+    this.fieldKeyChoice = '';
     this.questionError.set('');
+    this.loadFieldKeyOptions(templateId);
   }
 
   startEditQuestion(templateId: string, q: SurveyQuestionResponse): void {
     this.questionFormTemplateId.set(templateId);
     this.editingQuestionId.set(q.id);
+    this.editingFieldKey.set(q.fieldKey);
     this.questionForm = { questionText: q.questionText, questionType: q.questionType, required: q.required, helpText: q.helpText };
     this.optionsText = (q.options ?? []).join('\n');
     this.questionError.set('');
@@ -500,6 +524,22 @@ export class FacilitatorSurveysComponent implements OnInit {
   cancelQuestionForm(): void {
     this.questionFormTemplateId.set(null);
     this.editingQuestionId.set(null);
+  }
+
+  loadFieldKeyOptions(templateId: string): void {
+    if (this.fieldKeyOptionsCache[templateId]) return;
+    this.api.getAvailableFieldKeys(templateId).subscribe({
+      next: (keys) => { this.fieldKeyOptionsCache[templateId] = keys; },
+      error: () => { this.fieldKeyOptionsCache[templateId] = []; }
+    });
+  }
+
+  usedFieldKeys(templateId: string): string[] {
+    return (this.questionsByTemplate[templateId] ?? []).map(q => q.fieldKey);
+  }
+
+  onFieldKeyChoiceChange(): void {
+    this.questionForm.fieldKey = this.fieldKeyChoice === '__custom__' ? '' : this.fieldKeyChoice;
   }
 
   saveQuestion(t: SurveyTemplateResponse): void {

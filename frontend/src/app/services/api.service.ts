@@ -353,6 +353,10 @@ export class ApiService {
     return this.http.patch<SurveyTemplateResponse>(`${this.baseUrl}/api/survey-templates/${id}/active`, { active }, { headers: this.ah() });
   }
 
+  getAvailableFieldKeys(templateId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/api/survey-templates/${templateId}/available-field-keys`, { headers: this.ah() });
+  }
+
   // ─── Survey Questions ───────────────────────────────────────────────────
   listSurveyQuestions(templateId: string): Observable<SurveyQuestionResponse[]> {
     return this.http.get<SurveyQuestionResponse[]>(`${this.baseUrl}/api/survey-templates/${templateId}/questions`, { headers: this.ah() });

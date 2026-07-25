@@ -6,6 +6,7 @@ import com.hustle.economy.entity.SurveyTemplate;
 import com.hustle.economy.entity.SurveyType;
 import com.hustle.economy.mapper.SurveyMapper;
 import com.hustle.economy.repository.SurveyTemplateRepository;
+import com.hustle.economy.survey.SurveyFieldKeys;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -66,5 +67,12 @@ public class SurveyTemplateService {
                 .orElseThrow(() -> new EntityNotFoundException("Survey template not found"));
         template.setActive(active);
         return mapper.toResponse(templateRepository.save(template));
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> availableFieldKeys(UUID id) {
+        SurveyTemplate template = templateRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Survey template not found"));
+        return SurveyFieldKeys.fieldKeysFor(template.getType());
     }
 }

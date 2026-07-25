@@ -55,4 +55,12 @@ public class SurveyTemplateController {
         boolean active = Boolean.TRUE.equals(body.get("active"));
         return ResponseEntity.ok(templateService.setActive(id, active));
     }
+
+    @GetMapping("/{id}/available-field-keys")
+    public ResponseEntity<List<String>> availableFieldKeys(
+            @PathVariable UUID id,
+            @RequestHeader("X-Auth-Token") String token) {
+        authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
+        return ResponseEntity.ok(templateService.availableFieldKeys(id));
+    }
 }
