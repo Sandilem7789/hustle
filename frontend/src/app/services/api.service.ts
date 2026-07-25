@@ -401,6 +401,10 @@ export class ApiService {
     return this.http.get<Record<string, string>>(`${this.baseUrl}/api/survey-assignments/${id}/answers`, { headers: this.ah() });
   }
 
+  generateSurveyReport(id: string): Observable<ReportGenerationResponse> {
+    return this.http.post<ReportGenerationResponse>(`${this.baseUrl}/api/survey-assignments/${id}/generate-report`, {}, { headers: this.ah() });
+  }
+
   // ─── Survey Assignments (Hustler) ───────────────────────────────────────
   getMySurveyAssignments(token: string): Observable<SurveyAssignmentResponse[]> {
     return this.http.get<SurveyAssignmentResponse[]>(`${this.baseUrl}/api/hustlers/me/survey-assignments`, {
@@ -893,6 +897,10 @@ export interface SurveyAssignmentDetailResponse {
   dueDate?: string;
   questions: SurveyQuestionResponse[];
   answers: Record<string, string>;
+}
+
+export interface ReportGenerationResponse {
+  reportText: string;
 }
 
 export interface NotificationResponse {

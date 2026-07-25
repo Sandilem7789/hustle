@@ -9,6 +9,7 @@ import {
 } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { AppSelectComponent } from '../app-select/app-select.component';
+import { generateSurveyReportPdf } from '../../utils/survey-report.util';
 
 @Component({
   selector: 'app-facilitator-surveys',
@@ -220,6 +221,15 @@ import { AppSelectComponent } from '../app-select/app-select.component';
                   <p class="answer-text">{{ d.answers[q.id] || '—' }}</p>
                 </div>
               </ng-container>
+
+              <div class="rc-report">
+                <button type="button" class="btn btn-primary" *ngIf="a.status === 'SUBMITTED' || a.status === 'REVIEWED'"
+                        (click)="generateReport(a)" [disabled]="reportGenerating() === a.id">
+                  {{ reportGenerating() === a.id ? 'Generating…' : 'Generate PDF' }}
+                </button>
+                <p class="muted small" *ngIf="a.status !== 'SUBMITTED' && a.status !== 'REVIEWED'">PDF available once this survey is submitted.</p>
+                <p class="error-msg" *ngIf="reportError[a.id]">{{ reportError[a.id] }}</p>
+              </div>
             </div>
           </article>
         </div>
@@ -337,6 +347,7 @@ import { AppSelectComponent } from '../app-select/app-select.component';
     .status-badge.st-in_progress { background: rgba(245,184,0,0.15); color: #92620A; }
     .answer-row { padding: 0.6rem 0; border-bottom: 1px solid #F5F5F4; }
     .answer-row:last-child { border-bottom: none; }
+    .rc-report { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #F5F5F4; }
     .answer-text { margin: 0.2rem 0 0; font-size: 0.875rem; color: #57534E; }
 
     @media (min-width: 640px) {
@@ -434,6 +445,8 @@ export class FacilitatorSurveysComponent implements OnInit {
   expandedResponse = signal<string | null>(null);
   responseDetail = signal<SurveyAssignmentDetailResponse | null>(null);
   responseDetailLoading = signal(false);
+  reportGenerating = signal<string | null>(null);
+  reportError: Record<string, string> = {};
 
   filterCommunityOpts = computed(() =>
     [{ value: '', label: 'All communities' }, ...this.communities().map(c => ({ value: c.id, label: c.name }))]);
@@ -697,6 +710,25 @@ export class FacilitatorSurveysComponent implements OnInit {
     this.api.getSurveyAssignment(a.id, this.auth.getToken()!).subscribe({
       next: (d) => { this.responseDetail.set(d); this.responseDetailLoading.set(false); },
       error: () => this.responseDetailLoading.set(false)
+    });
+  }
+
+  generateReport(a: SurveyAssignmentResponse): void {
+    delete this.reportError[a.id];
+    this.reportGenerating.set(a.id);
+    this.api.generateSurveyReport(a.id).subscribe({
+      next: (res) => {
+        this.reportGenerating.set(null);
+        generateSurveyReportPdf(res.reportText, {
+          businessName: a.businessName,
+          templateName: a.templateName,
+          templateType: a.templateType,
+        });
+      },
+      error: (err) => {
+        this.reportGenerating.set(null);
+        this.reportError[a.id] = err?.error?.message || 'Could not generate report.';
+      }
     });
   }
 }

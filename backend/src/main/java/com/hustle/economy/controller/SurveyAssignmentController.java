@@ -63,7 +63,18 @@ public class SurveyAssignmentController {
             @RequestBody @Valid SurveyAnswerSubmitRequest request,
             @RequestHeader("X-Auth-Token") String token) {
         BusinessProfile profile = authService.requireAuth(token);
-        return ResponseEntity.ok(assignmentService.saveAnswers(id, profile.getId(), request));
+        UserRole role = authService.resolveRole(token, profile);
+        boolean isStaff = role == UserRole.FACILITATOR || role == UserRole.COORDINATOR;
+        // Staff (facilitators/coordinators) can edit any hustler's answers - no ownership check.
+        return ResponseEntity.ok(assignmentService.saveAnswers(id, isStaff ? null : profile.getId(), request));
+    }
+
+    @PostMapping("/{id}/generate-report")
+    public ResponseEntity<ReportGenerationResponse> generateReport(
+            @PathVariable UUID id,
+            @RequestHeader("X-Auth-Token") String token) {
+        authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
+        return ResponseEntity.ok(assignmentService.generateReport(id));
     }
 
     @GetMapping("/{id}/answers")

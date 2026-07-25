@@ -27,6 +27,7 @@ public class SurveyAssignmentService {
     private final SurveyQuestionRepository questionRepository;
     private final SurveyAnswerRepository answerRepository;
     private final NotificationService notificationService;
+    private final N8nWebhookService n8nWebhookService;
     private final SurveyMapper mapper;
 
     @Transactional
@@ -124,7 +125,27 @@ public class SurveyAssignmentService {
         });
 
         assignment.setStatus(request.isSubmit() ? SurveyAssignmentStatus.SUBMITTED : SurveyAssignmentStatus.IN_PROGRESS);
-        return mapper.toResponse(assignmentRepository.save(assignment));
+        SurveyAssignment saved = assignmentRepository.save(assignment);
+        return mapper.toResponse(saved);
+    }
+
+    /**
+     * Facilitator-triggered: kick off AI report drafting for this assignment via n8n.
+     * Only allowed once the hustler has actually submitted (or a facilitator has reviewed),
+     * so a facilitator can read/edit the answers first before spending an API call.
+     */
+    @Transactional
+    public ReportGenerationResponse generateReport(UUID assignmentId) {
+        SurveyAssignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new EntityNotFoundException("Survey assignment not found"));
+
+        if (assignment.getStatus() == SurveyAssignmentStatus.ASSIGNED
+                || assignment.getStatus() == SurveyAssignmentStatus.IN_PROGRESS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This survey hasn't been submitted yet");
+        }
+
+        String reportText = n8nWebhookService.triggerReportGeneration(assignment.getId(), assignment.getTemplate().getType());
+        return ReportGenerationResponse.builder().reportText(reportText).build();
     }
 
     @Transactional(readOnly = true)

@@ -179,11 +179,14 @@ Configurable survey templates so facilitators can edit question sets without a c
 - `Notification` entity (generic, `businessProfile` recipient) — a `SURVEY_ASSIGNED` notification is created automatically for every hustler a survey is assigned to
 - Facilitator: full CRUD on templates and questions (add/edit/reorder/deactivate); questions are never hard-deleted once answered, only soft-deleted, so historical responses stay readable
 - Facilitator: assign a template to one hustler or bulk by community; search assignments by status/type/community; read raw answers per assignment
+- Facilitator: question fieldKey is chosen from the template's canonical list (`GET /api/survey-templates/{id}/available-field-keys`, backed by a shared `SurveyFieldKeys` registry also used to seed BASELINE/GROWTH_PLAN templates) instead of free-typed, with an "Other (custom)" escape hatch — prevents typos that would silently break the document-generation pipeline; fieldKey is immutable once a question is created
 - Hustler: list own assignments, load a template's questions to render the form, save progress or submit (locks in `fieldKey → answerText` for the external n8n document-generation pipeline via `GET /api/survey-assignments/{id}/answers`)
+- Facilitator: `POST /api/survey-assignments/{id}/generate-report` triggers the n8n report-generation webhook for a submitted assignment and returns the generated `reportText` synchronously (n8n must respond to the webhook call with `{ "reportText": "..." }`); blocked with 400 until the survey is submitted. Configured via `N8N_WEBHOOK_URL`/`N8N_WEBHOOK_SECRET` env vars — disabled (503) when unset.
 - Hustler: list/read notifications, mark as read
 
 **Frontend:**
 - New **Surveys** tab in the Facilitator Queue (`FacilitatorSurveysComponent`) with Templates / Assign / Responses subviews — question builder with up/down reordering, options editor for choice questions, community or single-hustler bulk assignment, and a response viewer showing question text paired with each answer
+- Responses tab: **Generate PDF** button per submitted/reviewed assignment — calls the n8n report-generation endpoint and renders the returned text into a downloadable PDF client-side (`survey-report.util.ts`, jsPDF)
 - `/surveys/:id` route (`SurveyFormPageComponent`) — hustler-facing form that renders the right input per `questionType` (text, textarea, number, date, single/multi choice), pre-fills in-progress answers, and supports save-progress vs. final submit
 - Notifications page (`/notifications`) now lists real notifications instead of a static placeholder; tapping an unread one marks it read and navigates to its `linkPath`
 
@@ -225,6 +228,7 @@ Configurable survey templates so facilitators can edit question sets without a c
 | PATCH | `/api/facilitator/hustlers/{id}/active` | Toggle hustler active/inactive |
 | GET/POST | `/api/survey-templates` | List / create survey templates (facilitator) |
 | PUT/PATCH | `/api/survey-templates/{id}`, `/{id}/active` | Update / activate-deactivate a template (facilitator) |
+| GET | `/api/survey-templates/{id}/available-field-keys` | Canonical fieldKeys for the template's survey type (facilitator) |
 | GET/POST | `/api/survey-templates/{templateId}/questions` | List / add questions on a template (facilitator) |
 | PUT/PATCH | `.../questions/{id}`, `/reorder`, `/{id}/active` | Edit, reorder, or soft-delete a question (facilitator) |
 | POST | `/api/survey-assignments` | Assign a template to one hustler or bulk by community (facilitator) |
@@ -232,6 +236,7 @@ Configurable survey templates so facilitators can edit question sets without a c
 | GET | `/api/survey-assignments/{id}` | Get template + questions (+ answers) to render/review a survey |
 | POST | `/api/survey-assignments/{id}/answers` | Save progress or submit answers (hustler) |
 | GET | `/api/survey-assignments/{id}/answers` | Flat `{fieldKey: answerText}` export for the n8n pipeline (facilitator) |
+| POST | `/api/survey-assignments/{id}/generate-report` | Trigger n8n report generation, returns `reportText` (facilitator) |
 | GET | `/api/hustlers/me/survey-assignments` | Hustler's own assigned surveys |
 | GET | `/api/hustlers/me/notifications` | Hustler's own notifications |
 | PATCH | `/api/notifications/{id}/read` | Mark a notification as read |
