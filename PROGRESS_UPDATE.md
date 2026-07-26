@@ -182,6 +182,7 @@ Configurable survey templates so facilitators can edit question sets without a c
 - Facilitator: question fieldKey is chosen from the template's canonical list (`GET /api/survey-templates/{id}/available-field-keys`, backed by a shared `SurveyFieldKeys` registry also used to seed BASELINE/GROWTH_PLAN templates) instead of free-typed, with an "Other (custom)" escape hatch — prevents typos that would silently break the document-generation pipeline; fieldKey is immutable once a question is created
 - Hustler: list own assignments, load a template's questions to render the form, save progress or submit (locks in `fieldKey → answerText` for the external n8n document-generation pipeline via `GET /api/survey-assignments/{id}/answers`)
 - Facilitator: `POST /api/survey-assignments/{id}/generate-report` triggers the n8n report-generation webhook for a submitted assignment and returns the generated `reportText` synchronously (n8n must respond to the webhook call with `{ "reportText": "..." }`); blocked with 400 until the survey is submitted. Configured via `N8N_WEBHOOK_URL`/`N8N_WEBHOOK_SECRET` env vars — disabled (503) when unset.
+- n8n side is now live in production: the workflow is published and the webhook responds synchronously with `{ "reportText": "..." }`, gated by an `X-Webhook-Secret` header. Triggered from the Facilitator Queue Responses tab via the Generate PDF button, which renders the returned text into a client-side PDF (see Frontend below).
 - Hustler: list/read notifications, mark as read
 
 **Frontend:**

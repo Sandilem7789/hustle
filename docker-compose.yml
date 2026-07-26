@@ -29,6 +29,8 @@ services:
       PORT: 8080
       STAFF_PHONE: ${STAFF_PHONE}
       STAFF_PASSWORD: ${STAFF_PASSWORD}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-}
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET:-}
     ports:
       - '8080:8080'
     volumes:
