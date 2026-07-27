@@ -181,8 +181,9 @@ Configurable survey templates so facilitators can edit question sets without a c
 - Facilitator: assign a template to one hustler or bulk by community; search assignments by status/type/community; read raw answers per assignment
 - Facilitator: question fieldKey is chosen from the template's canonical list (`GET /api/survey-templates/{id}/available-field-keys`, backed by a shared `SurveyFieldKeys` registry also used to seed BASELINE/GROWTH_PLAN templates) instead of free-typed, with an "Other (custom)" escape hatch — prevents typos that would silently break the document-generation pipeline; fieldKey is immutable once a question is created
 - Hustler: list own assignments, load a template's questions to render the form, save progress or submit (locks in `fieldKey → answerText` for the external n8n document-generation pipeline via `GET /api/survey-assignments/{id}/answers`)
-- Facilitator: `POST /api/survey-assignments/{id}/generate-report` triggers the n8n report-generation webhook for a submitted assignment and returns the generated `reportText` synchronously (n8n must respond to the webhook call with `{ "reportText": "..." }`); blocked with 400 until the survey is submitted. Configured via `N8N_WEBHOOK_URL`/`N8N_WEBHOOK_SECRET` env vars — disabled (503) when unset.
-- n8n side is now live in production: the workflow is published and the webhook responds synchronously with `{ "reportText": "..." }`, gated by an `X-Webhook-Secret` header. Triggered from the Facilitator Queue Responses tab via the Generate PDF button, which renders the returned text into a client-side PDF (see Frontend below).
+- Facilitator: `POST /api/survey-assignments/{id}/generate-report` kicks off the n8n report-generation webhook for a submitted assignment and returns immediately with `{ status: "PENDING" }`; blocked with 400 until the survey is submitted. Configured via `N8N_WEBHOOK_URL`/`N8N_WEBHOOK_SECRET` env vars — disabled (503) when unset.
+- Generation runs asynchronously (`N8nWebhookService.triggerReportGenerationAsync`, `@EnableAsync`) and writes `reportStatus`/`reportText`/`reportError` back onto the `SurveyAssignment` row — the n8n chain (facilitator login + fetch answers + OpenAI + formatting) takes 20-50s, longer than the production frontend's Netlify proxy will hold a single request open, so the frontend polls `GET /api/survey-assignments/{id}/report-status` every 3s (up to ~2 min) instead of waiting on one blocking call. A repeat trigger while a generation is already `PENDING` is a no-op (avoids double-billing the OpenAI call on accidental double-clicks).
+- n8n side is live in production: workflow published, webhook gated by an `X-Webhook-Secret` header, responds with `{ "reportText": "..." }`. Its final formatting step had to be converted from a Python code node to JavaScript — this n8n instance has no Python 3 runtime, so the Python node silently failed on every run.
 - Hustler: list/read notifications, mark as read
 
 **Frontend:**
@@ -237,7 +238,8 @@ Configurable survey templates so facilitators can edit question sets without a c
 | GET | `/api/survey-assignments/{id}` | Get template + questions (+ answers) to render/review a survey |
 | POST | `/api/survey-assignments/{id}/answers` | Save progress or submit answers (hustler) |
 | GET | `/api/survey-assignments/{id}/answers` | Flat `{fieldKey: answerText}` export for the n8n pipeline (facilitator) |
-| POST | `/api/survey-assignments/{id}/generate-report` | Trigger n8n report generation, returns `reportText` (facilitator) |
+| POST | `/api/survey-assignments/{id}/generate-report` | Kick off async n8n report generation, returns `{status:"PENDING"}` (facilitator) |
+| GET | `/api/survey-assignments/{id}/report-status` | Poll report generation status/result (facilitator) |
 | GET | `/api/hustlers/me/survey-assignments` | Hustler's own assigned surveys |
 | GET | `/api/hustlers/me/notifications` | Hustler's own notifications |
 | PATCH | `/api/notifications/{id}/read` | Mark a notification as read |

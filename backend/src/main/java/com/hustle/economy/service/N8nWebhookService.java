@@ -1,6 +1,9 @@
 package com.hustle.economy.service;
 
+import com.hustle.economy.entity.ReportGenerationStatus;
+import com.hustle.economy.entity.SurveyAssignment;
 import com.hustle.economy.entity.SurveyType;
+import com.hustle.economy.repository.SurveyAssignmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +11,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,9 +23,10 @@ import java.util.UUID;
  * Notifies the n8n report-generation workflow when a facilitator clicks
  * "Generate Report" on a submitted survey assignment.
  *
- * This is a synchronous, user-initiated call (not fire-and-forget) - the facilitator
- * clicked a button and expects to know right away whether it worked, so failures are
- * surfaced back to them as a proper error rather than logged and swallowed.
+ * The n8n chain (login + fetch answers + OpenAI call + formatting) routinely takes
+ * 20-50 seconds, which exceeds the Netlify proxy's timeout for the production
+ * frontend - so generation runs asynchronously and the result is written back onto
+ * the assignment for the frontend to poll (see SurveyAssignmentService).
  */
 @Service
 public class N8nWebhookService {
@@ -29,9 +34,11 @@ public class N8nWebhookService {
     private static final Logger log = LoggerFactory.getLogger(N8nWebhookService.class);
 
     private final RestTemplate restTemplate;
+    private final SurveyAssignmentRepository assignmentRepository;
 
-    public N8nWebhookService(RestTemplate restTemplate) {
+    public N8nWebhookService(RestTemplate restTemplate, SurveyAssignmentRepository assignmentRepository) {
         this.restTemplate = restTemplate;
+        this.assignmentRepository = assignmentRepository;
     }
 
     @Value("${n8n.webhook-url}")
@@ -42,6 +49,27 @@ public class N8nWebhookService {
 
     // n8n responds synchronously to the webhook call with the generated report text.
     private record N8nReportResponse(String reportText) {
+    }
+
+    @Async
+    public void triggerReportGenerationAsync(UUID assignmentId, SurveyType templateType) {
+        try {
+            String reportText = triggerReportGeneration(assignmentId, templateType);
+            assignmentRepository.findById(assignmentId).ifPresent(a -> {
+                a.setReportStatus(ReportGenerationStatus.READY);
+                a.setReportText(reportText);
+                a.setReportError(null);
+                assignmentRepository.save(a);
+            });
+        } catch (Exception e) {
+            log.warn("Async n8n report generation failed for assignment {}: {}", assignmentId, e.getMessage());
+            assignmentRepository.findById(assignmentId).ifPresent(a -> {
+                a.setReportStatus(ReportGenerationStatus.FAILED);
+                a.setReportText(null);
+                a.setReportError("Couldn't reach the report-generation service. Try again shortly.");
+                assignmentRepository.save(a);
+            });
+        }
     }
 
     public String triggerReportGeneration(UUID assignmentId, SurveyType templateType) {

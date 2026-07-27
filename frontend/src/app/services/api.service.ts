@@ -405,6 +405,10 @@ export class ApiService {
     return this.http.post<ReportGenerationResponse>(`${this.baseUrl}/api/survey-assignments/${id}/generate-report`, {}, { headers: this.ah() });
   }
 
+  getSurveyReportStatus(id: string): Observable<ReportGenerationResponse> {
+    return this.http.get<ReportGenerationResponse>(`${this.baseUrl}/api/survey-assignments/${id}/report-status`, { headers: this.ah() });
+  }
+
   // ─── Survey Assignments (Hustler) ───────────────────────────────────────
   getMySurveyAssignments(token: string): Observable<SurveyAssignmentResponse[]> {
     return this.http.get<SurveyAssignmentResponse[]>(`${this.baseUrl}/api/hustlers/me/survey-assignments`, {
@@ -900,7 +904,9 @@ export interface SurveyAssignmentDetailResponse {
 }
 
 export interface ReportGenerationResponse {
-  reportText: string;
+  status: 'NONE' | 'PENDING' | 'READY' | 'FAILED';
+  reportText?: string;
+  error?: string;
 }
 
 export interface NotificationResponse {

@@ -717,13 +717,37 @@ export class FacilitatorSurveysComponent implements OnInit {
     delete this.reportError[a.id];
     this.reportGenerating.set(a.id);
     this.api.generateSurveyReport(a.id).subscribe({
-      next: (res) => {
+      next: () => this.pollReportStatus(a, 0),
+      error: (err) => {
         this.reportGenerating.set(null);
-        generateSurveyReportPdf(res.reportText, {
-          businessName: a.businessName,
-          templateName: a.templateName,
-          templateType: a.templateType,
-        });
+        this.reportError[a.id] = err?.error?.message || 'Could not generate report.';
+      }
+    });
+  }
+
+  // The n8n chain (login + fetch + OpenAI + formatting) takes 20-50s, longer than
+  // the production frontend's proxy will wait on a single request - so generation
+  // runs async on the backend and we poll for the result instead.
+  private pollReportStatus(a: SurveyAssignmentResponse, attempt: number): void {
+    const maxAttempts = 40; // ~2 minutes at 3s intervals
+    this.api.getSurveyReportStatus(a.id).subscribe({
+      next: (res) => {
+        if (res.status === 'READY' && res.reportText) {
+          this.reportGenerating.set(null);
+          generateSurveyReportPdf(res.reportText, {
+            businessName: a.businessName,
+            templateName: a.templateName,
+            templateType: a.templateType,
+          });
+        } else if (res.status === 'FAILED') {
+          this.reportGenerating.set(null);
+          this.reportError[a.id] = res.error || 'Could not generate report.';
+        } else if (attempt >= maxAttempts) {
+          this.reportGenerating.set(null);
+          this.reportError[a.id] = 'Still generating — please check back shortly.';
+        } else {
+          setTimeout(() => this.pollReportStatus(a, attempt + 1), 3000);
+        }
       },
       error: (err) => {
         this.reportGenerating.set(null);

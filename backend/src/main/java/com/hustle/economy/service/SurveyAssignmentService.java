@@ -133,6 +133,10 @@ public class SurveyAssignmentService {
      * Facilitator-triggered: kick off AI report drafting for this assignment via n8n.
      * Only allowed once the hustler has actually submitted (or a facilitator has reviewed),
      * so a facilitator can read/edit the answers first before spending an API call.
+     *
+     * Runs asynchronously and returns immediately with a PENDING status - the n8n chain
+     * (login + fetch answers + OpenAI + formatting) takes 20-50s, longer than the production
+     * frontend's proxy will wait, so the frontend polls getReportStatus() for the result.
      */
     @Transactional
     public ReportGenerationResponse generateReport(UUID assignmentId) {
@@ -144,8 +148,29 @@ public class SurveyAssignmentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This survey hasn't been submitted yet");
         }
 
-        String reportText = n8nWebhookService.triggerReportGeneration(assignment.getId(), assignment.getTemplate().getType());
-        return ReportGenerationResponse.builder().reportText(reportText).build();
+        if (assignment.getReportStatus() == ReportGenerationStatus.PENDING) {
+            return ReportGenerationResponse.builder().status(ReportGenerationStatus.PENDING.name()).build();
+        }
+
+        assignment.setReportStatus(ReportGenerationStatus.PENDING);
+        assignment.setReportText(null);
+        assignment.setReportError(null);
+        assignmentRepository.save(assignment);
+
+        n8nWebhookService.triggerReportGenerationAsync(assignment.getId(), assignment.getTemplate().getType());
+        return ReportGenerationResponse.builder().status(ReportGenerationStatus.PENDING.name()).build();
+    }
+
+    @Transactional(readOnly = true)
+    public ReportGenerationResponse getReportStatus(UUID assignmentId) {
+        SurveyAssignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new EntityNotFoundException("Survey assignment not found"));
+
+        return ReportGenerationResponse.builder()
+                .status(assignment.getReportStatus() != null ? assignment.getReportStatus().name() : "NONE")
+                .reportText(assignment.getReportText())
+                .error(assignment.getReportError())
+                .build();
     }
 
     @Transactional(readOnly = true)

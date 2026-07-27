@@ -77,6 +77,14 @@ public class SurveyAssignmentController {
         return ResponseEntity.ok(assignmentService.generateReport(id));
     }
 
+    @GetMapping("/{id}/report-status")
+    public ResponseEntity<ReportGenerationResponse> getReportStatus(
+            @PathVariable UUID id,
+            @RequestHeader("X-Auth-Token") String token) {
+        authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
+        return ResponseEntity.ok(assignmentService.getReportStatus(id));
+    }
+
     @GetMapping("/{id}/answers")
     public ResponseEntity<Map<String, String>> getFlatAnswers(
             @PathVariable UUID id,

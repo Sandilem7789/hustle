@@ -39,4 +39,12 @@ public class SurveyAssignment {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SurveyAssignmentStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private ReportGenerationStatus reportStatus;
+
+    @Column(columnDefinition = "TEXT")
+    private String reportText;
+
+    private String reportError;
 }

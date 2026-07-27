@@ -5,5 +5,7 @@ import lombok.Getter;
 
 @Getter @Builder
 public class ReportGenerationResponse {
+    private String status;
     private String reportText;
+    private String error;
 }
