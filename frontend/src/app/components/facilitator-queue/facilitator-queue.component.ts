@@ -975,23 +975,35 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
           </div>
         </div>
       </ng-container>
-      <!-- ── Password modal (shown once after activation) ── -->
-      <div class="pwd-overlay" *ngIf="generatedPassword()">
-        <div class="pwd-modal">
-          <p class="pwd-title">Login Credentials</p>
+      <!-- ── Credentials modal (shown once after activation) ── -->
+      <div class="pwd-overlay" *ngIf="credentialsMode()">
+        <div class="pwd-modal" *ngIf="credentialsMode() === 'EXISTING_ACCOUNT'; else generatedCreds">
+          <p class="pwd-title">Account Already Exists</p>
           <p class="pwd-name">{{ generatedPasswordMeta().firstName }} {{ generatedPasswordMeta().lastName }}</p>
           <p class="pwd-label">Login username (phone):</p>
           <div class="pwd-box">
             <span class="pwd-value">{{ generatedPasswordMeta().phone }}</span>
           </div>
-          <p class="pwd-label" style="margin-top:0.75rem">Temporary password — shown once only:</p>
-          <div class="pwd-box">
-            <span class="pwd-value">{{ generatedPassword() }}</span>
-            <button class="btn btn-copy" (click)="copyPassword()">{{ copied() ? '✓ Copied' : 'Copy' }}</button>
-          </div>
-          <p class="pwd-warn">Give these credentials to the hustler directly. The password cannot be retrieved after this screen is closed.</p>
-          <button class="btn approve pwd-close" (click)="generatedPassword.set('')">✓ Done — I've sent the password</button>
+          <p class="pwd-warn">This applicant already has an account on the app. They log in with the password they created — no new credentials needed.</p>
+          <button class="btn approve pwd-close" (click)="credentialsMode.set('')">✓ Done</button>
         </div>
+        <ng-template #generatedCreds>
+          <div class="pwd-modal">
+            <p class="pwd-title">Login Credentials</p>
+            <p class="pwd-name">{{ generatedPasswordMeta().firstName }} {{ generatedPasswordMeta().lastName }}</p>
+            <p class="pwd-label">Login username (phone):</p>
+            <div class="pwd-box">
+              <span class="pwd-value">{{ generatedPasswordMeta().phone }}</span>
+            </div>
+            <p class="pwd-label" style="margin-top:0.75rem">Temporary password — shown once only:</p>
+            <div class="pwd-box">
+              <span class="pwd-value">{{ generatedPassword() }}</span>
+              <button class="btn btn-copy" (click)="copyPassword()">{{ copied() ? '✓ Copied' : 'Copy' }}</button>
+            </div>
+            <p class="pwd-warn">Give these credentials to the hustler directly. The password cannot be retrieved after this screen is closed.</p>
+            <button class="btn approve pwd-close" (click)="credentialsMode.set(''); generatedPassword.set('')">✓ Done — I've sent the password</button>
+          </div>
+        </ng-template>
       </div>
     </section>
   `,
@@ -1625,9 +1637,10 @@ export class FacilitatorQueueComponent implements OnInit {
           x.id === a.id ? { ...x, activatedAt: new Date().toISOString() } : x
         ));
         this.activatingId.set(null);
-        // Show the password modal
+        // Show the credentials modal (password box, or an "already has an account" message)
         this.generatedPasswordMeta.set({ firstName: result.firstName, lastName: result.lastName, phone: result.phone });
-        this.generatedPassword.set(result.generatedPassword);
+        this.generatedPassword.set(result.generatedPassword ?? '');
+        this.credentialsMode.set(result.credentialsMode);
         this.copied.set(false);
       },
       error: (err) => {
@@ -1644,7 +1657,8 @@ export class FacilitatorQueueComponent implements OnInit {
       next: (result: ActivateApplicantResponse) => {
         this.resendingCredId.set(null);
         this.generatedPasswordMeta.set({ firstName: result.firstName, lastName: result.lastName, phone: result.phone });
-        this.generatedPassword.set(result.generatedPassword);
+        this.generatedPassword.set(result.generatedPassword ?? '');
+        this.credentialsMode.set(result.credentialsMode);
         this.copied.set(false);
       },
       error: (err) => {
@@ -2145,6 +2159,7 @@ export class FacilitatorQueueComponent implements OnInit {
   // ── Activation state ────────────────────────────────────────────────────
   activatingId = signal<string | null>(null);
   activateErrors: Record<string, string> = {};
+  credentialsMode = signal<'EXISTING_ACCOUNT' | 'GENERATED' | ''>('');
   generatedPassword = signal('');
   generatedPasswordMeta = signal<{ firstName: string; lastName: string; phone: string }>({ firstName: '', lastName: '', phone: '' });
   copied = signal(false);

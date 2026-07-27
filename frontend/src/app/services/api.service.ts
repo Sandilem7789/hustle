@@ -716,7 +716,8 @@ export interface ActivateApplicantResponse {
   firstName: string;
   lastName: string;
   phone: string;
-  generatedPassword: string;
+  generatedPassword: string | null;
+  credentialsMode: 'EXISTING_ACCOUNT' | 'GENERATED';
 }
 
 export interface InterviewRequest {

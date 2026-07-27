@@ -101,9 +101,13 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
   - Once recorded: shows read-only GPS coordinates + photo thumbnails on `APPROVED` stage
 
 ### Account Activation (Phase 5)
-- `POST /api/applicants/{id}/activate` — creates a `HustlerApplication` (APPROVED) + `BusinessProfile` from applicant data, BCrypt-hashes a generated password, sets `activatedAt` timestamp
+- `POST /api/applicants/{id}/activate` — account-aware: normalizes the applicant's phone (shared `PhoneUtils.normalize`) and looks up an existing `AppUser`/`HustlerApplication` first
+  - If the applicant already self-registered in the app (`AppUser` exists for that phone): does **not** generate a password — approves their existing `HustlerApplication` (or links a new one to the `AppUser`) via the same `HustlerApplicationService.decide()` path, grants the `HUSTLER` role, response `credentialsMode: "EXISTING_ACCOUNT"`
+  - Otherwise (true paper applicant, no smartphone): generates a BCrypt-hashed password as before, reusing any existing `HustlerApplication` for that phone instead of creating a duplicate; `credentialsMode: "GENERATED"`
+  - Fixes a bug where activating a pipeline applicant who had already registered via the app created a second, unusable `HustlerApplication` (login always checks `AppUser` first, so the generated password never worked) and left duplicate `HustlerApplication` rows for the same phone
+- `POST /api/applicants/{id}/reset-password` — also account-aware: resets the `AppUser` password hash (what login actually reads) when one exists, keeping the linked `HustlerApplication` hash in sync; falls back to resetting the `HustlerApplication` hash only for applicants with no app account
 - Password is 8 characters from a safe character set (no ambiguous chars: 0/O/1/l/I); shown once in a modal overlay
-- Frontend: "Create Account" button appears at `APPROVED` stage if not yet activated; password modal with Copy button shown once on creation
+- Frontend: "Create Account" button appears at `APPROVED` stage if not yet activated; on `EXISTING_ACCOUNT` the modal shows "This applicant already has an account on the app..." instead of credentials; `GENERATED` still shows the password modal with Copy button
 
 ### Monthly Check-ins (Phase 6)
 - `MonthlyCheckIn` entity linked to `BusinessProfile`; stores visit month (YYYY-MM), visitedBy, notes, and up to 3 photo URLs

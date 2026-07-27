@@ -16,6 +16,10 @@ public class ActivateApplicantResponse {
     private String lastName;
     private String phone;
 
-    // Plain-text password — returned once only, never stored
+    // Plain-text password — returned once only, never stored. Null when credentialsMode is EXISTING_ACCOUNT.
     private String generatedPassword;
+
+    // EXISTING_ACCOUNT: applicant already had an AppUser (registered via the app) — no new password issued.
+    // GENERATED: a brand-new password was created for this applicant.
+    private String credentialsMode;
 }

@@ -5,6 +5,7 @@ import com.hustle.economy.dto.UnifiedAuthResponse;
 import com.hustle.economy.dto.UnifiedRegisterRequest;
 import com.hustle.economy.entity.*;
 import com.hustle.economy.repository.*;
+import com.hustle.economy.util.PhoneUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,7 +31,7 @@ public class UnifiedAuthService {
 
     @Transactional
     public UnifiedAuthResponse register(UnifiedRegisterRequest request) {
-        String phone = normalizePhone(request.getPhone());
+        String phone = PhoneUtils.normalize(request.getPhone());
         if (appUserRepository.existsByPhone(phone)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this phone number already exists");
         }
@@ -82,7 +83,7 @@ public class UnifiedAuthService {
 
     @Transactional
     public UnifiedAuthResponse login(AuthRequest request) {
-        String phone = normalizePhone(request.getPhone());
+        String phone = PhoneUtils.normalize(request.getPhone());
 
         // 1. Check AppUser (new unified users)
         Optional<AppUser> appUserOpt = appUserRepository.findByPhone(phone);
@@ -337,17 +338,5 @@ public class UnifiedAuthService {
 
     private String generateToken() {
         return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    /**
-     * Normalises South African phone numbers to local 10-digit format (0XXXXXXXXX).
-     * Handles: +27XXXXXXXXX → 0XXXXXXXXX, 27XXXXXXXXX → 0XXXXXXXXX, strips spaces/dashes.
-     */
-    static String normalizePhone(String phone) {
-        if (phone == null) return null;
-        String digits = phone.replaceAll("[\\s\\-()]", "");
-        if (digits.startsWith("+27")) return "0" + digits.substring(3);
-        if (digits.startsWith("27") && digits.length() == 11) return "0" + digits.substring(2);
-        return digits;
     }
 }
