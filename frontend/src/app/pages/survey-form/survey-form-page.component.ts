@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService, SurveyAssignmentDetailResponse, SurveyQuestionResponse } from '../../services/api.service';
+import { ActivatedRoute } from '@angular/router';
+import { ApiService, ReportGenerationResponse, SurveyAssignmentDetailResponse, SurveyQuestionResponse } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
+import { generateSurveyReportPdf } from '../../utils/survey-report.util';
 
 @Component({
   selector: 'app-survey-form-page',
@@ -82,6 +83,16 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
             {{ saving() ? 'Submitting…' : 'Submit Survey' }}
           </button>
         </div>
+
+        <div class="card report-card" *ngIf="a.status === 'SUBMITTED' || a.status === 'REVIEWED'">
+          <ng-container *ngIf="reportStatus()?.status === 'READY'; else notReady">
+            <p class="report-note">Your AI-generated report is ready.</p>
+            <button class="btn btn-primary" (click)="downloadReport()">↓ Download Report (PDF)</button>
+          </ng-container>
+          <ng-template #notReady>
+            <p class="report-note">Your AI-generated report isn't ready yet — check back once your facilitator has generated it.</p>
+          </ng-template>
+        </div>
       </ng-container>
     </div>
   `,
@@ -129,6 +140,9 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
     .error-msg { color: #E53935; font-size: 0.85rem; font-weight: 700; margin: 0; text-align: center; }
     .success-msg { color: #00806E; font-size: 0.85rem; font-weight: 700; margin: 0; text-align: center; }
 
+    .report-card { text-align: center; display: flex; flex-direction: column; gap: 0.6rem; }
+    .report-note { margin: 0; font-size: 0.85rem; color: #78716C; }
+
     .actions { display: flex; flex-direction: column; gap: 0.6rem; }
     .btn {
       border: none; border-radius: 999px; padding: 0.875rem; font-size: 0.95rem; font-weight: 800;
@@ -147,7 +161,6 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
 })
 export class SurveyFormPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly api = inject(ApiService);
   readonly auth = inject(AuthService);
 
@@ -156,6 +169,7 @@ export class SurveyFormPageComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly successMsg = signal('');
+  readonly reportStatus = signal<ReportGenerationResponse | null>(null);
 
   answers: Record<string, string> = {};
   private multiAnswers: Record<string, string[]> = {};
@@ -180,6 +194,9 @@ export class SurveyFormPageComponent implements OnInit {
             this.multiAnswers[q.id] = this.safeParseArray(detail.answers[q.id]);
           });
         this.loading.set(false);
+        if (detail.status === 'SUBMITTED' || detail.status === 'REVIEWED') {
+          this.fetchReportStatus(detail.id);
+        }
       },
       error: (err) => {
         this.error.set(err?.error?.message || 'Could not load this survey.');
@@ -196,6 +213,24 @@ export class SurveyFormPageComponent implements OnInit {
     } catch {
       return [];
     }
+  }
+
+  private fetchReportStatus(assignmentId: string): void {
+    this.api.getSurveyReportStatus(assignmentId).subscribe({
+      next: (res) => this.reportStatus.set(res),
+      error: () => {}
+    });
+  }
+
+  downloadReport(): void {
+    const a = this.assignment();
+    const reportText = this.reportStatus()?.reportText;
+    if (!a || !reportText) return;
+    generateSurveyReportPdf(reportText, {
+      businessName: this.auth.state()?.businessName ?? 'My Business',
+      templateName: a.templateName,
+      templateType: a.templateType,
+    });
   }
 
   isChecked(questionId: string, option: string): boolean {
@@ -229,8 +264,8 @@ export class SurveyFormPageComponent implements OnInit {
         this.saving.set(false);
         this.assignment.update(cur => cur ? { ...cur, status: updated.status } : cur);
         this.successMsg.set(submit ? 'Survey submitted. Thank you!' : 'Progress saved.');
-        if (submit) {
-          setTimeout(() => this.router.navigate(['/dashboard']), 1200);
+        if (updated.status === 'SUBMITTED' || updated.status === 'REVIEWED') {
+          this.fetchReportStatus(a.id);
         }
       },
       error: (err) => {

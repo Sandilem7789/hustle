@@ -162,9 +162,8 @@ public class SurveyAssignmentService {
     }
 
     @Transactional(readOnly = true)
-    public ReportGenerationResponse getReportStatus(UUID assignmentId) {
-        SurveyAssignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new EntityNotFoundException("Survey assignment not found"));
+    public ReportGenerationResponse getReportStatus(UUID assignmentId, UUID requesterBusinessProfileId) {
+        SurveyAssignment assignment = loadOwned(assignmentId, requesterBusinessProfileId);
 
         return ReportGenerationResponse.builder()
                 .status(assignment.getReportStatus() != null ? assignment.getReportStatus().name() : "NONE")

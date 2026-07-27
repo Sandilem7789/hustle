@@ -81,8 +81,10 @@ public class SurveyAssignmentController {
     public ResponseEntity<ReportGenerationResponse> getReportStatus(
             @PathVariable UUID id,
             @RequestHeader("X-Auth-Token") String token) {
-        authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
-        return ResponseEntity.ok(assignmentService.getReportStatus(id));
+        BusinessProfile profile = authService.requireAuth(token);
+        UserRole role = authService.resolveRole(token, profile);
+        boolean isStaff = role == UserRole.FACILITATOR || role == UserRole.COORDINATOR;
+        return ResponseEntity.ok(assignmentService.getReportStatus(id, isStaff ? null : profile.getId()));
     }
 
     @GetMapping("/{id}/answers")
