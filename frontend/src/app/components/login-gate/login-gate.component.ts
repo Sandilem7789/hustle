@@ -1,8 +1,7 @@
-import { Component, Input, signal, inject } from '@angular/core';
+import { Component, Input, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ApiService } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
 
 @Component({
   selector: 'app-login-gate',
@@ -16,7 +15,7 @@ import { AuthService } from '../../services/auth.service';
         <p class="gate-sub">{{ subtitle }}</p>
 
         <div *ngIf="alreadyLoggedIn()" class="gate-notice">
-          Signed in as <strong>{{ auth.state()?.businessName }}</strong> ({{ auth.state()?.role | titlecase }}).
+          Signed in as <strong>{{ auth.user()?.firstName }} {{ auth.user()?.lastName }}</strong> ({{ currentRoleLabel() | titlecase }}).
           Sign in with a different account to continue.
         </div>
 
@@ -150,8 +149,7 @@ export class LoginGateComponent {
   @Input() icon = '🔒';
   @Input() requiredRoles: string[] = [];
 
-  readonly auth = inject(AuthService);
-  private readonly api = inject(ApiService);
+  readonly auth = inject(UnifiedAuthService);
   private readonly fb = inject(FormBuilder);
 
   readonly loading = signal(false);
@@ -159,40 +157,32 @@ export class LoginGateComponent {
 
   readonly alreadyLoggedIn = () => this.auth.isLoggedIn();
 
+  readonly currentRoleLabel = computed(() => {
+    const roles = this.auth.user()?.roles ?? [];
+    return roles.find(r => r === 'FACILITATOR' || r === 'COORDINATOR' || r === 'HUSTLER') ?? roles[0] ?? '';
+  });
+
   readonly form = this.fb.group({
     phone: ['', [Validators.required]],
     password: ['', [Validators.required]]
   });
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) return;
     this.loading.set(true);
     this.error.set('');
     const { phone, password } = this.form.value;
 
-    this.api.login(phone!, password!).subscribe({
-      next: (res) => {
-        const role = res.role ?? '';
-        if (this.requiredRoles.length > 0 && !this.requiredRoles.includes(role)) {
-          this.error.set(`This account (${role || 'unknown role'}) does not have access to this section.`);
-          this.loading.set(false);
-          return;
-        }
-        this.auth.login({
-          token: res.token,
-          businessProfileId: res.businessProfileId,
-          businessName: res.businessName,
-          firstName: res.firstName,
-          lastName: res.lastName,
-          businessType: res.businessType,
-          role: res.role
-        });
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err?.error?.message || 'Invalid phone or password.');
-        this.loading.set(false);
+    try {
+      const user = await this.auth.login({ phone: phone!, password: password! });
+      if (this.requiredRoles.length > 0 && !this.requiredRoles.some(r => user.roles?.includes(r))) {
+        const role = user.roles?.[0] || 'unknown role';
+        this.error.set(`This account (${role}) does not have access to this section.`);
       }
-    });
+    } catch (err: any) {
+      this.error.set(err?.error?.message || 'Invalid phone or password.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 }

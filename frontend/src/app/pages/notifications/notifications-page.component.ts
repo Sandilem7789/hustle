@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService, NotificationResponse } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 
 @Component({
@@ -98,7 +98,7 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
   `
 })
 export class NotificationsPageComponent implements OnInit {
-  readonly auth = inject(AuthService);
+  readonly auth = inject(UnifiedAuthService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 
@@ -106,7 +106,9 @@ export class NotificationsPageComponent implements OnInit {
   readonly loading = signal(false);
 
   ngOnInit(): void {
-    if (this.auth.isLoggedIn()) {
+    // Notifications only exist for hustler/facilitator/coordinator business profiles today —
+    // a customer or a still-pending applicant has none, so there's nothing to fetch for them.
+    if (this.auth.isLoggedIn() && this.auth.hasStore()) {
       this.load();
     }
   }
