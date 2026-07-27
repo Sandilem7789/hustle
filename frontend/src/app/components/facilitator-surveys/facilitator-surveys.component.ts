@@ -222,14 +222,21 @@ import { generateSurveyReportPdf } from '../../utils/survey-report.util';
                 </div>
               </ng-container>
 
-              <div class="rc-report">
-                <button type="button" class="btn btn-primary" *ngIf="a.status === 'SUBMITTED' || a.status === 'REVIEWED'"
-                        (click)="generateReport(a)" [disabled]="reportGenerating() === a.id">
-                  {{ reportGenerating() === a.id ? 'Generating…' : 'Generate PDF' }}
-                </button>
-                <p class="muted small" *ngIf="a.status !== 'SUBMITTED' && a.status !== 'REVIEWED'">PDF available once this survey is submitted.</p>
+              <div class="rc-report" *ngIf="a.status === 'SUBMITTED' || a.status === 'REVIEWED'">
+                <ng-container *ngIf="reportReady[a.id]; else generateBtn">
+                  <button type="button" class="btn btn-primary" (click)="downloadReport(a)">↓ Download PDF</button>
+                  <button type="button" class="link-btn" (click)="generateReport(a)" [disabled]="reportGenerating() === a.id">
+                    {{ reportGenerating() === a.id ? 'Regenerating…' : 'Regenerate' }}
+                  </button>
+                </ng-container>
+                <ng-template #generateBtn>
+                  <button type="button" class="btn btn-primary" (click)="generateReport(a)" [disabled]="reportGenerating() === a.id">
+                    {{ reportGenerating() === a.id ? 'Generating…' : 'Generate PDF' }}
+                  </button>
+                </ng-template>
                 <p class="error-msg" *ngIf="reportError[a.id]">{{ reportError[a.id] }}</p>
               </div>
+              <p class="muted small" *ngIf="a.status !== 'SUBMITTED' && a.status !== 'REVIEWED'">PDF available once this survey is submitted.</p>
             </div>
           </article>
         </div>
@@ -447,6 +454,7 @@ export class FacilitatorSurveysComponent implements OnInit {
   responseDetailLoading = signal(false);
   reportGenerating = signal<string | null>(null);
   reportError: Record<string, string> = {};
+  reportReady: Record<string, string> = {};
 
   filterCommunityOpts = computed(() =>
     [{ value: '', label: 'All communities' }, ...this.communities().map(c => ({ value: c.id, label: c.name }))]);
@@ -711,10 +719,22 @@ export class FacilitatorSurveysComponent implements OnInit {
       next: (d) => { this.responseDetail.set(d); this.responseDetailLoading.set(false); },
       error: () => this.responseDetailLoading.set(false)
     });
+
+    if (a.status === 'SUBMITTED' || a.status === 'REVIEWED') {
+      this.api.getSurveyReportStatus(a.id).subscribe({
+        next: (res) => {
+          if (res.status === 'READY' && res.reportText) {
+            this.reportReady[a.id] = res.reportText;
+          }
+        },
+        error: () => {}
+      });
+    }
   }
 
   generateReport(a: SurveyAssignmentResponse): void {
     delete this.reportError[a.id];
+    delete this.reportReady[a.id];
     this.reportGenerating.set(a.id);
     this.api.generateSurveyReport(a.id).subscribe({
       next: () => this.pollReportStatus(a, 0),
@@ -722,6 +742,16 @@ export class FacilitatorSurveysComponent implements OnInit {
         this.reportGenerating.set(null);
         this.reportError[a.id] = err?.error?.message || 'Could not generate report.';
       }
+    });
+  }
+
+  downloadReport(a: SurveyAssignmentResponse): void {
+    const reportText = this.reportReady[a.id];
+    if (!reportText) return;
+    generateSurveyReportPdf(reportText, {
+      businessName: a.businessName,
+      templateName: a.templateName,
+      templateType: a.templateType,
     });
   }
 
@@ -734,6 +764,7 @@ export class FacilitatorSurveysComponent implements OnInit {
       next: (res) => {
         if (res.status === 'READY' && res.reportText) {
           this.reportGenerating.set(null);
+          this.reportReady[a.id] = res.reportText;
           generateSurveyReportPdf(res.reportText, {
             businessName: a.businessName,
             templateName: a.templateName,

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler, ApplicantResponse, ApplicantRequest, CohortCapResponse, InterviewResponse, InterviewRequest, BusinessVerificationResponse, BusinessVerificationRequest, ActivateApplicantResponse, MonthlyCheckInResponse, MonthlyCheckInRequest, IncomeEntryResponse, IncomeEntryRequest } from '../../services/api.service';
 import { MapPickerComponent } from '../map-picker/map-picker.component';
 import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler } from '../../utils/monthly-report.util';
+import { generateBulkSurveyReportPdf } from '../../utils/survey-report.util';
 import { AppSelectComponent } from '../app-select/app-select.component';
 import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-surveys.component';
 
@@ -933,6 +934,41 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
                 <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="report-month-input" />
                 <button class="report-dl-btn" (click)="downloadBulkMonthlyReports()" [disabled]="bulkReportDownloading()">
                   {{ bulkReportDownloading() ? 'Generating…' : '↓ PDF' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="export-section">
+          <p class="export-section-title">Survey Reports</p>
+          <p class="muted small">Combines only already-generated AI reports for hustlers who have one; anyone not yet generated is skipped.</p>
+          <div class="export-cards">
+            <div class="report-bar report-bar-bulk">
+              <div class="report-bar-left">
+                <span class="report-bar-icon">📄</span>
+                <div>
+                  <p class="report-bar-title">Baseline Reports — All Hustlers</p>
+                  <p class="report-bar-sub">One PDF combining every already-generated Baseline survey report</p>
+                </div>
+              </div>
+              <div class="report-bar-right">
+                <button class="report-dl-btn" (click)="downloadAllSurveyReports('BASELINE')" [disabled]="bulkBaselineDownloading()">
+                  {{ bulkBaselineDownloading() ? 'Generating…' : '↓ PDF' }}
+                </button>
+              </div>
+            </div>
+            <div class="report-bar report-bar-bulk">
+              <div class="report-bar-left">
+                <span class="report-bar-icon">📄</span>
+                <div>
+                  <p class="report-bar-title">Growth Plan Reports — All Hustlers</p>
+                  <p class="report-bar-sub">One PDF combining every already-generated Growth Plan survey report</p>
+                </div>
+              </div>
+              <div class="report-bar-right">
+                <button class="report-dl-btn" (click)="downloadAllSurveyReports('GROWTH_PLAN')" [disabled]="bulkGrowthPlanDownloading()">
+                  {{ bulkGrowthPlanDownloading() ? 'Generating…' : '↓ PDF' }}
                 </button>
               </div>
             </div>
@@ -1923,6 +1959,8 @@ export class FacilitatorQueueComponent implements OnInit {
   reportMonth = new Date().toISOString().slice(0, 7);
   reportDownloading = signal<string | null>(null);
   bulkReportDownloading = signal(false);
+  bulkBaselineDownloading = signal(false);
+  bulkGrowthPlanDownloading = signal(false);
   incomeSavingId = signal<string | null>(null);
   incomeErrors: Record<string, string> = {};
 
@@ -2033,6 +2071,33 @@ export class FacilitatorQueueComponent implements OnInit {
         error: () => { if (--remaining === 0) { generateBulkMonthlyReportPdf(collected, this.reportMonth); this.bulkReportDownloading.set(false); } },
       });
     }
+  }
+
+  downloadAllSurveyReports(templateType: 'BASELINE' | 'GROWTH_PLAN'): void {
+    const downloading = templateType === 'BASELINE' ? this.bulkBaselineDownloading : this.bulkGrowthPlanDownloading;
+    downloading.set(true);
+    this.api.searchSurveyAssignments(undefined, templateType).subscribe({
+      next: (assignments) => {
+        if (!assignments.length) { downloading.set(false); return; }
+        let remaining = assignments.length;
+        const collected: { reportText: string; meta: { businessName: string; templateName: string; templateType: string } }[] = [];
+        for (const a of assignments) {
+          this.api.getSurveyReportStatus(a.id).subscribe({
+            next: (res) => {
+              if (res.status === 'READY' && res.reportText) {
+                collected.push({
+                  reportText: res.reportText,
+                  meta: { businessName: a.businessName, templateName: a.templateName, templateType: a.templateType },
+                });
+              }
+              if (--remaining === 0) { generateBulkSurveyReportPdf(collected, templateType); downloading.set(false); }
+            },
+            error: () => { if (--remaining === 0) { generateBulkSurveyReportPdf(collected, templateType); downloading.set(false); } },
+          });
+        }
+      },
+      error: () => downloading.set(false),
+    });
   }
 
   submitCheckIn(h: FacilitatorHustler): void {

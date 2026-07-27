@@ -11,8 +11,7 @@ const DARK: [number, number, number] = [28, 25, 23];
 const MID_GRAY: [number, number, number] = [87, 83, 78];
 const LT_GRAY: [number, number, number] = [231, 229, 228];
 
-export function generateSurveyReportPdf(reportText: string, meta: SurveyReportMeta): void {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+function renderSurveyReport(doc: jsPDF, reportText: string, meta: SurveyReportMeta): void {
   const LM = 15, RM = 195, W = RM - LM, PAGE_BOTTOM = 280;
   let y = 18;
 
@@ -38,7 +37,24 @@ export function generateSurveyReportPdf(reportText: string, meta: SurveyReportMe
     }
     y += lineHeight / 2;
   }
+}
 
+export function generateSurveyReportPdf(reportText: string, meta: SurveyReportMeta): void {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  renderSurveyReport(doc, reportText, meta);
   const safeName = meta.businessName.replace(/\s+/g, '_');
   doc.save(`survey-report-${safeName}-${meta.templateType.toLowerCase()}.pdf`);
+}
+
+export function generateBulkSurveyReportPdf(
+  reports: { reportText: string; meta: SurveyReportMeta }[],
+  templateTypeLabel: string,
+): void {
+  if (!reports.length) return;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  for (let i = 0; i < reports.length; i++) {
+    if (i > 0) doc.addPage();
+    renderSurveyReport(doc, reports[i].reportText, reports[i].meta);
+  }
+  doc.save(`survey-reports-${templateTypeLabel.toLowerCase()}-all.pdf`);
 }
