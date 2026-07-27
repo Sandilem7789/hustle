@@ -99,6 +99,7 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
   - Leaflet map allows manual pin placement as fallback
   - Photo upload grid (3 slots) with thumbnail preview and remove button
   - Once recorded: shows read-only GPS coordinates + photo thumbnails on `APPROVED` stage
+- Fixed: `POST/GET /api/applicants/{id}/verification` returned 500 (`LazyInitializationException` on `BusinessVerification.photoUrls`) whenever the response was serialized outside the original Hibernate session — the DB write actually succeeded, only the response body failed to build. `BusinessVerificationService.toResponse()` now copies the `@ElementCollection` into a plain `ArrayList` while still inside the `@Transactional` method. Same fix applied to `MonthlyCheckInService.toResponse()`, which had the identical latent bug.
 
 ### Account Activation (Phase 5)
 - `POST /api/applicants/{id}/activate` — account-aware: normalizes the applicant's phone (shared `PhoneUtils.normalize`) and looks up an existing `AppUser`/`HustlerApplication` first

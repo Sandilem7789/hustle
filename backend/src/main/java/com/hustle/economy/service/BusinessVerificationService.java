@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -64,7 +65,10 @@ public class BusinessVerificationService {
                 .visitDate(v.getVisitDate())
                 .latitude(v.getLatitude())
                 .longitude(v.getLongitude())
-                .photoUrls(v.getPhotoUrls())
+                // Materialize the lazy @ElementCollection here, inside the transaction — assigning the
+                // raw Hibernate proxy instead throws LazyInitializationException when Jackson serializes
+                // the response after the session has already closed.
+                .photoUrls(v.getPhotoUrls() != null ? new ArrayList<>(v.getPhotoUrls()) : new ArrayList<>())
                 .notes(v.getNotes())
                 .outcome(v.getOutcome() != null ? v.getOutcome().name() : null)
                 .verifiedBy(v.getVerifiedBy())

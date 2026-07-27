@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,7 +65,10 @@ public class MonthlyCheckInService {
                 .id(c.getId())
                 .businessProfileId(c.getBusinessProfile().getId())
                 .visitMonth(c.getVisitMonth())
-                .photoUrls(c.getPhotoUrls())
+                // Materialize the lazy @ElementCollection here, inside the transaction — assigning the
+                // raw Hibernate proxy instead throws LazyInitializationException when Jackson serializes
+                // the response after the session has already closed.
+                .photoUrls(c.getPhotoUrls() != null ? new ArrayList<>(c.getPhotoUrls()) : new ArrayList<>())
                 .notes(c.getNotes())
                 .visitedBy(c.getVisitedBy())
                 .createdAt(c.getCreatedAt())
