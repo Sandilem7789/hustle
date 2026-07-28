@@ -500,6 +500,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
                 <button class="btn approve mt-sm" (click)="submitVerification(a)" [disabled]="verifySavingId() === a.id">
                   {{ verifySavingId() === a.id ? 'Saving…' : '✓ Save Verification' }}
                 </button>
+                <p *ngIf="verifySuccess[a.id]" class="approved-msg mt-sm">✓ Verification saved. Use "→ Move to Approved" above when you're ready to advance this applicant.</p>
               </div>
 
               <!-- ── Verification result read-only ── -->
@@ -1764,9 +1765,11 @@ export class FacilitatorQueueComponent implements OnInit {
     const f = this.verifyForms[a.id];
     if (!f.visitDate || !f.outcome) {
       this.verifyErrors[a.id] = 'Please fill in the visit date and select an outcome.';
+      this.verifySuccess[a.id] = false;
       return;
     }
     this.verifyErrors[a.id] = '';
+    this.verifySuccess[a.id] = false;
     this.verifySavingId.set(a.id);
     const payload: BusinessVerificationRequest = {
       visitDate: f.visitDate,
@@ -1783,6 +1786,7 @@ export class FacilitatorQueueComponent implements OnInit {
         this.applicants.update(list => list.map(x =>
           x.id === a.id ? { ...x, pipelineStage: 'BUSINESS_VERIFICATION' } : x
         ));
+        this.verifySuccess[a.id] = true;
         this.verifySavingId.set(null);
       },
       error: (err) => {
@@ -2179,6 +2183,7 @@ export class FacilitatorQueueComponent implements OnInit {
   verificationData: Record<string, BusinessVerificationResponse> = {};
   verifyForms: Record<string, { visitDate: string; latitude?: number; longitude?: number; photoUrls: string[]; notes: string; outcome: string; verifiedBy: string }> = {};
   verifyErrors: Record<string, string> = {};
+  verifySuccess: Record<string, boolean> = {};
   verifySavingId = signal<string | null>(null);
   gpsLoadingId = signal<string | null>(null);
   gpsError: Record<string, string> = {};
