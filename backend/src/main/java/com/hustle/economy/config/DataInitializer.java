@@ -17,6 +17,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -281,7 +285,51 @@ public class DataInitializer implements ApplicationRunner {
     // /available-field-keys endpoint so the canonical keys never drift apart.
     private void seedSurveyTemplates() {
         seedSurveyTemplate(SurveyType.BASELINE, "Baseline Survey");
-        seedSurveyTemplate(SurveyType.GROWTH_PLAN, "Growth Plan Survey");
+        reconcileGrowthPlanQuestions();
+    }
+
+    // The GROWTH_PLAN question set was redesigned to ask more granular, structured questions
+    // (explicit before/after figures, itemised seed capital costs) so the n8n document-generation
+    // pipeline can build an accurate report matching the Growth Plan template. Unlike
+    // seedSurveyTemplate(), this runs against an already-seeded production template: it adds any
+    // canonical fieldKey that's missing, refreshes text/order for ones that already exist, and
+    // deactivates superseded fieldKeys — never hard-deletes, so historical answers on the old
+    // questions stay readable. Idempotent: safe to run on every startup.
+    private void reconcileGrowthPlanQuestions() {
+        SurveyTemplate template = surveyTemplateRepository.findByTypeAndActiveTrue(SurveyType.GROWTH_PLAN)
+                .stream().findFirst()
+                .orElseGet(() -> surveyTemplateRepository.save(SurveyTemplate.builder()
+                        .type(SurveyType.GROWTH_PLAN)
+                        .name("Growth Plan Survey")
+                        .active(true)
+                        .createdAt(OffsetDateTime.now())
+                        .build()));
+
+        List<SurveyQuestion> existing = surveyQuestionRepository.findByTemplate_IdOrderByOrderIndexAsc(template.getId());
+        Map<String, SurveyQuestion> byFieldKey = existing.stream()
+                .collect(Collectors.toMap(SurveyQuestion::getFieldKey, q -> q, (a, b) -> a));
+
+        List<SurveyQuestionSeed> canonical = SurveyFieldKeys.GROWTH_PLAN;
+        Set<String> canonicalKeys = canonical.stream().map(SurveyQuestionSeed::fieldKey).collect(Collectors.toSet());
+
+        int orderIndex = 0;
+        for (SurveyQuestionSeed seed : canonical) {
+            SurveyQuestion question = byFieldKey.getOrDefault(seed.fieldKey(),
+                    SurveyQuestion.builder().template(template).fieldKey(seed.fieldKey()).build());
+            question.setOrderIndex(orderIndex++);
+            question.setQuestionText(seed.questionText());
+            question.setQuestionType(seed.questionType());
+            question.setRequired(seed.required());
+            question.setActive(true);
+            surveyQuestionRepository.save(question);
+        }
+
+        for (SurveyQuestion question : existing) {
+            if (question.isActive() && !canonicalKeys.contains(question.getFieldKey())) {
+                question.setActive(false);
+                surveyQuestionRepository.save(question);
+            }
+        }
     }
 
     private void seedSurveyTemplate(SurveyType type, String name) {

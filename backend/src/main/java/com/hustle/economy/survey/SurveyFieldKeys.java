@@ -28,15 +28,21 @@ public final class SurveyFieldKeys {
 
     public static final List<SurveyQuestionSeed> GROWTH_PLAN = List.of(
             new SurveyQuestionSeed("business_focus_description", "Briefly describe your business and its focus — what does it sell, and to who?", SurveyQuestionType.TEXTAREA, true),
-            new SurveyQuestionSeed("current_financial_status", "What is the current financial status of your business?", SurveyQuestionType.TEXTAREA, true),
-            new SurveyQuestionSeed("seed_capital_breakdown", "List the items you plan to buy with the seed capital and their approximate cost.", SurveyQuestionType.TEXTAREA, true),
-            new SurveyQuestionSeed("purchase_location", "Where will you purchase these items?", SurveyQuestionType.TEXT, true),
-            new SurveyQuestionSeed("revenue_increase_explanation", "How will this seed capital increase your revenue? Who will buy from you as a result?", SurveyQuestionType.TEXTAREA, true),
-            new SurveyQuestionSeed("expense_increase_explanation", "Will this seed capital increase your expenses? (e.g. extra rent, electricity, insurance)", SurveyQuestionType.TEXTAREA, false),
-            new SurveyQuestionSeed("challenges_to_address", "What challenges will this seed capital help you address?", SurveyQuestionType.TEXTAREA, true),
-            new SurveyQuestionSeed("projected_revenue", "Projected monthly revenue after receiving seed capital (R)", SurveyQuestionType.NUMBER, true),
-            new SurveyQuestionSeed("projected_expenses", "Projected monthly expenses after receiving seed capital (R)", SurveyQuestionType.NUMBER, true),
-            new SurveyQuestionSeed("projected_profit", "Projected monthly profit after receiving seed capital (R)", SurveyQuestionType.NUMBER, true)
+            new SurveyQuestionSeed("current_monthly_revenue", "What is your business's current average monthly revenue (R)?", SurveyQuestionType.NUMBER, true),
+            new SurveyQuestionSeed("current_monthly_expenses", "What is your business's current average monthly expenses (R)?", SurveyQuestionType.NUMBER, true),
+            new SurveyQuestionSeed("current_financial_notes", "Any extra detail on recent financial performance? (e.g. month-by-month figures, trends, seasonal changes)", SurveyQuestionType.TEXTAREA, false),
+            new SurveyQuestionSeed("seed_capital_problem", "What problem or limitation is the business currently facing that this equipment will solve? (e.g. old/broken equipment, a slow manual process, no equipment at all)", SurveyQuestionType.TEXTAREA, true),
+            new SurveyQuestionSeed("seed_capital_solution", "How will the new equipment or item solve this problem and improve the business?", SurveyQuestionType.TEXTAREA, true),
+            new SurveyQuestionSeed("seed_capital_items_breakdown", "List each item to be purchased with the seed capital and its cost — one per line, e.g. \"Braai stand – R7 000\". Include a delivery fee line if there is one.", SurveyQuestionType.TEXTAREA, true),
+            new SurveyQuestionSeed("total_item_cost", "What is the total cost of all items (R)?", SurveyQuestionType.NUMBER, true),
+            new SurveyQuestionSeed("business_savings_contribution", "How much will the business contribute from its own savings (R)?", SurveyQuestionType.NUMBER, true),
+            new SurveyQuestionSeed("seed_capital_requested", "How much seed capital funding is being requested (R)? (total item cost minus business savings)", SurveyQuestionType.NUMBER, true),
+            new SurveyQuestionSeed("purchase_location", "Where will these items be purchased?", SurveyQuestionType.TEXT, true),
+            new SurveyQuestionSeed("revenue_increase_explanation", "Explain how this seed capital will increase revenue. For each product or service affected, give the current (before) and expected (after) monthly figures, and say who the additional customers will be.", SurveyQuestionType.TEXTAREA, true),
+            new SurveyQuestionSeed("expense_increase_explanation", "Explain how this seed capital will affect monthly expenses (e.g. electricity, transport, stock, insurance, rent). Give current (before) and expected (after) figures for each cost that changes.", SurveyQuestionType.TEXTAREA, true),
+            new SurveyQuestionSeed("challenges_to_address", "What challenges will this seed capital help address, and how will they be managed?", SurveyQuestionType.TEXTAREA, true),
+            new SurveyQuestionSeed("projected_monthly_revenue", "Projected total monthly revenue after receiving seed capital (R)", SurveyQuestionType.NUMBER, true),
+            new SurveyQuestionSeed("projected_monthly_expenses", "Projected total monthly expenses after receiving seed capital (R)", SurveyQuestionType.NUMBER, true)
     );
 
     // Note: no PROFILE seed — that document is generated from existing
