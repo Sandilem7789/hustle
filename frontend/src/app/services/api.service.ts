@@ -58,13 +58,13 @@ export class ApiService {
   // ─── Orders ──────────────────────────────────────────────────────────────
   placeOrder(payload: OrderRequest, customerToken: string): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(`${this.baseUrl}/api/orders`, payload, {
-      headers: new HttpHeaders({ 'X-Auth-Token': customerToken })
+      headers: new HttpHeaders({ 'X-Customer-Token': customerToken })
     });
   }
 
   getMyOrders(customerToken: string): Observable<OrderResponse[]> {
     return this.http.get<OrderResponse[]>(`${this.baseUrl}/api/orders/my`, {
-      headers: new HttpHeaders({ 'X-Auth-Token': customerToken })
+      headers: new HttpHeaders({ 'X-Customer-Token': customerToken })
     });
   }
 

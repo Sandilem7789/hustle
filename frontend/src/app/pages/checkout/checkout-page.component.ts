@@ -249,7 +249,7 @@ export class CheckoutPageComponent {
     };
 
     this.loading.set(true);
-    this.api.placeOrder(payload, this.unifiedAuth.getToken()!).subscribe({
+    this.api.placeOrder(payload, this.unifiedAuth.getCustomerToken()!).subscribe({
       next: () => {
         this.cart.clear();
         this.router.navigate(['/orders']);
