@@ -38,6 +38,14 @@ public class ProductService {
         BusinessProfile business = businessProfileRepository.findById(businessProfileId)
                 .orElseThrow(() -> new EntityNotFoundException("Business profile not found"));
 
+        String barcode = normalizeBarcode(request.getBarcode());
+        if (barcode != null) {
+            productRepository.findByBusiness_IdAndBarcode(businessProfileId, barcode).ifPresent(p -> {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "A product with this barcode already exists in your shop");
+            });
+        }
+
         Product product = Product.builder()
                 .business(business)
                 .name(request.getName())
@@ -45,11 +53,26 @@ public class ProductService {
                 .price(request.getPrice())
                 .mediaUrl(request.getMediaUrl())
                 .category(request.getCategory() != null ? request.getCategory() : ProductCategory.OTHER)
+                .barcode(barcode)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
         return toResponse(productRepository.save(product));
+    }
+
+    @Transactional(readOnly = true)
+    public ProductResponse getByBarcode(String barcode, UUID businessProfileId) {
+        Product product = productRepository.findByBusiness_IdAndBarcode(businessProfileId, normalizeBarcode(barcode))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No product with this barcode"));
+        return toResponse(product);
+    }
+
+    private String normalizeBarcode(String barcode) {
+        if (barcode == null || barcode.isBlank()) {
+            return null;
+        }
+        return barcode.trim();
     }
 
     @Transactional(readOnly = true)
@@ -91,6 +114,16 @@ public class ProductService {
         if (request.getCategory() != null) {
             product.setCategory(request.getCategory());
         }
+        if (request.getBarcode() != null) {
+            String barcode = normalizeBarcode(request.getBarcode());
+            if (barcode != null && !barcode.equals(product.getBarcode())) {
+                productRepository.findByBusiness_IdAndBarcode(businessProfileId, barcode).ifPresent(p -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "A product with this barcode already exists in your shop");
+                });
+            }
+            product.setBarcode(barcode);
+        }
         product.setUpdatedAt(OffsetDateTime.now());
         return toResponse(productRepository.save(product));
     }
@@ -115,6 +148,7 @@ public class ProductService {
                 .businessId(p.getBusiness().getId().toString())
                 .businessName(p.getBusiness().getBusinessName())
                 .category(p.getCategory())
+                .barcode(p.getBarcode())
                 .createdAt(p.getCreatedAt())
                 .build();
     }

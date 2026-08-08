@@ -19,5 +19,6 @@ public class ProductResponse {
     private String businessId;
     private String businessName;
     private ProductCategory category;
+    private String barcode;
     private OffsetDateTime createdAt;
 }

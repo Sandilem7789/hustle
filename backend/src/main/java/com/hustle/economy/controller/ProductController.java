@@ -36,6 +36,14 @@ public class ProductController {
         return ResponseEntity.ok(productService.listMyProducts(profile.getId()));
     }
 
+    @GetMapping("/by-barcode/{code}")
+    public ResponseEntity<ProductResponse> getByBarcode(
+            @RequestHeader("X-Auth-Token") String token,
+            @PathVariable String code) {
+        BusinessProfile profile = authService.requireAuth(token);
+        return ResponseEntity.ok(productService.getByBarcode(code, profile.getId()));
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
             @RequestHeader("X-Auth-Token") String token,

@@ -6,11 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     long countByBusiness_Id(UUID businessId);
+
+    Optional<Product> findByBusiness_IdAndBarcode(UUID businessId, String barcode);
 
     @Query("SELECT p FROM Product p JOIN FETCH p.business b LEFT JOIN FETCH b.community WHERE b.id = :businessId ORDER BY p.createdAt DESC")
     List<Product> findByBusinessIdFetched(@Param("businessId") UUID businessId);

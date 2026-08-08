@@ -21,4 +21,5 @@ public class ProductRequest {
     private BigDecimal price;
     private String mediaUrl;
     private ProductCategory category;
+    private String barcode;
 }

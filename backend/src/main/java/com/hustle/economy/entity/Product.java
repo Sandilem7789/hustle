@@ -38,6 +38,8 @@ public class Product {
 
     private String mediaUrl;
 
+    private String barcode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProductCategory category;
