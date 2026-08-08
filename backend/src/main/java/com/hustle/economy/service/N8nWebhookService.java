@@ -1,5 +1,6 @@
 package com.hustle.economy.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hustle.economy.entity.ReportGenerationStatus;
 import com.hustle.economy.entity.SurveyAssignment;
 import com.hustle.economy.entity.SurveyType;
@@ -35,10 +36,12 @@ public class N8nWebhookService {
 
     private final RestTemplate restTemplate;
     private final SurveyAssignmentRepository assignmentRepository;
+    private final ObjectMapper objectMapper;
 
-    public N8nWebhookService(RestTemplate restTemplate, SurveyAssignmentRepository assignmentRepository) {
+    public N8nWebhookService(RestTemplate restTemplate, SurveyAssignmentRepository assignmentRepository, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.assignmentRepository = assignmentRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Value("${n8n.webhook-url}")
@@ -47,17 +50,23 @@ public class N8nWebhookService {
     @Value("${n8n.webhook-secret}")
     private String webhookSecret;
 
-    // n8n responds synchronously to the webhook call with the generated report text.
-    private record N8nReportResponse(String reportText) {
+    // n8n responds synchronously to the webhook call with the generated report text and,
+    // for Growth Plan reports, a financialImpact object computed deterministically in n8n
+    // (not by the model) so the Rand figures can't be mis-stated - see ReportResult below.
+    private record N8nReportResponse(String reportText, Object financialImpact) {
+    }
+
+    private record ReportResult(String reportText, String financialImpactJson) {
     }
 
     @Async
     public void triggerReportGenerationAsync(UUID assignmentId, SurveyType templateType) {
         try {
-            String reportText = triggerReportGeneration(assignmentId, templateType);
+            ReportResult result = triggerReportGeneration(assignmentId, templateType);
             assignmentRepository.findById(assignmentId).ifPresent(a -> {
                 a.setReportStatus(ReportGenerationStatus.READY);
-                a.setReportText(reportText);
+                a.setReportText(result.reportText());
+                a.setFinancialImpactJson(result.financialImpactJson());
                 a.setReportError(null);
                 assignmentRepository.save(a);
             });
@@ -66,13 +75,14 @@ public class N8nWebhookService {
             assignmentRepository.findById(assignmentId).ifPresent(a -> {
                 a.setReportStatus(ReportGenerationStatus.FAILED);
                 a.setReportText(null);
+                a.setFinancialImpactJson(null);
                 a.setReportError("Couldn't reach the report-generation service. Try again shortly.");
                 assignmentRepository.save(a);
             });
         }
     }
 
-    public String triggerReportGeneration(UUID assignmentId, SurveyType templateType) {
+    public ReportResult triggerReportGeneration(UUID assignmentId, SurveyType templateType) {
         if (webhookUrl == null || webhookUrl.isBlank()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Report generation isn't configured yet (missing n8n webhook URL)");
@@ -96,8 +106,17 @@ public class N8nWebhookService {
                         "The report-generation service returned no content.");
             }
 
+            String financialImpactJson = null;
+            if (response.financialImpact() != null) {
+                try {
+                    financialImpactJson = objectMapper.writeValueAsString(response.financialImpact());
+                } catch (Exception e) {
+                    log.warn("Couldn't serialize financialImpact for assignment {}: {}", assignmentId, e.getMessage());
+                }
+            }
+
             log.info("Generated n8n report for survey assignment {}", assignmentId);
-            return response.reportText();
+            return new ReportResult(response.reportText(), financialImpactJson);
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {

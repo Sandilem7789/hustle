@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ApiService, ReportGenerationResponse, SurveyAssignmentDetailResponse, SurveyQuestionResponse } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
-import { generateSurveyReportPdf } from '../../utils/survey-report.util';
+import { generateSurveyReportPdf, parseFinancialImpact } from '../../utils/survey-report.util';
 
 @Component({
   selector: 'app-survey-form-page',
@@ -230,7 +230,7 @@ export class SurveyFormPageComponent implements OnInit {
       businessName: this.auth.state()?.businessName ?? 'My Business',
       templateName: a.templateName,
       templateType: a.templateType,
-    });
+    }, parseFinancialImpact(this.reportStatus()?.financialImpactJson));
   }
 
   isChecked(questionId: string, option: string): boolean {

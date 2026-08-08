@@ -7,5 +7,6 @@ import lombok.Getter;
 public class ReportGenerationResponse {
     private String status;
     private String reportText;
+    private String financialImpactJson;
     private String error;
 }

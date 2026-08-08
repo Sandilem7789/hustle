@@ -9,7 +9,7 @@ import {
 } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { AppSelectComponent } from '../app-select/app-select.component';
-import { generateSurveyReportPdf } from '../../utils/survey-report.util';
+import { generateSurveyReportPdf, parseFinancialImpact } from '../../utils/survey-report.util';
 
 @Component({
   selector: 'app-facilitator-surveys',
@@ -454,7 +454,7 @@ export class FacilitatorSurveysComponent implements OnInit {
   responseDetailLoading = signal(false);
   reportGenerating = signal<string | null>(null);
   reportError: Record<string, string> = {};
-  reportReady: Record<string, string> = {};
+  reportReady: Record<string, { reportText: string; financialImpactJson?: string }> = {};
 
   filterCommunityOpts = computed(() =>
     [{ value: '', label: 'All communities' }, ...this.communities().map(c => ({ value: c.id, label: c.name }))]);
@@ -724,7 +724,7 @@ export class FacilitatorSurveysComponent implements OnInit {
       this.api.getSurveyReportStatus(a.id).subscribe({
         next: (res) => {
           if (res.status === 'READY' && res.reportText) {
-            this.reportReady[a.id] = res.reportText;
+            this.reportReady[a.id] = { reportText: res.reportText, financialImpactJson: res.financialImpactJson };
           }
         },
         error: () => {}
@@ -746,13 +746,13 @@ export class FacilitatorSurveysComponent implements OnInit {
   }
 
   downloadReport(a: SurveyAssignmentResponse): void {
-    const reportText = this.reportReady[a.id];
-    if (!reportText) return;
-    generateSurveyReportPdf(reportText, {
+    const report = this.reportReady[a.id];
+    if (!report) return;
+    generateSurveyReportPdf(report.reportText, {
       businessName: a.businessName,
       templateName: a.templateName,
       templateType: a.templateType,
-    });
+    }, parseFinancialImpact(report.financialImpactJson));
   }
 
   // The n8n chain (login + fetch + OpenAI + formatting) takes 20-50s, longer than
@@ -764,12 +764,12 @@ export class FacilitatorSurveysComponent implements OnInit {
       next: (res) => {
         if (res.status === 'READY' && res.reportText) {
           this.reportGenerating.set(null);
-          this.reportReady[a.id] = res.reportText;
+          this.reportReady[a.id] = { reportText: res.reportText, financialImpactJson: res.financialImpactJson };
           generateSurveyReportPdf(res.reportText, {
             businessName: a.businessName,
             templateName: a.templateName,
             templateType: a.templateType,
-          });
+          }, parseFinancialImpact(res.financialImpactJson));
         } else if (res.status === 'FAILED') {
           this.reportGenerating.set(null);
           this.reportError[a.id] = res.error || 'Could not generate report.';

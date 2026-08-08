@@ -154,6 +154,7 @@ public class SurveyAssignmentService {
 
         assignment.setReportStatus(ReportGenerationStatus.PENDING);
         assignment.setReportText(null);
+        assignment.setFinancialImpactJson(null);
         assignment.setReportError(null);
         assignmentRepository.save(assignment);
 
@@ -168,6 +169,7 @@ public class SurveyAssignmentService {
         return ReportGenerationResponse.builder()
                 .status(assignment.getReportStatus() != null ? assignment.getReportStatus().name() : "NONE")
                 .reportText(assignment.getReportText())
+                .financialImpactJson(assignment.getFinancialImpactJson())
                 .error(assignment.getReportError())
                 .build();
     }

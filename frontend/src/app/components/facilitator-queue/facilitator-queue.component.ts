@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, HustlerApplication, Community, HustlerProfileUpdate, FacilitatorHustler, ApplicantResponse, ApplicantRequest, CohortCapResponse, InterviewResponse, InterviewRequest, BusinessVerificationResponse, BusinessVerificationRequest, ActivateApplicantResponse, MonthlyCheckInResponse, MonthlyCheckInRequest, IncomeEntryResponse, IncomeEntryRequest } from '../../services/api.service';
 import { MapPickerComponent } from '../map-picker/map-picker.component';
 import { generateMonthlyReportPdf, generateBulkMonthlyReportPdf, ReportHustler } from '../../utils/monthly-report.util';
-import { generateBulkSurveyReportPdf } from '../../utils/survey-report.util';
+import { generateBulkSurveyReportPdf, parseFinancialImpact, FinancialImpact } from '../../utils/survey-report.util';
 import { AppSelectComponent } from '../app-select/app-select.component';
 import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-surveys.component';
 
@@ -2098,7 +2098,7 @@ export class FacilitatorQueueComponent implements OnInit {
       next: (assignments) => {
         if (!assignments.length) { downloading.set(false); return; }
         let remaining = assignments.length;
-        const collected: { reportText: string; meta: { businessName: string; templateName: string; templateType: string } }[] = [];
+        const collected: { reportText: string; meta: { businessName: string; templateName: string; templateType: string }; financialImpact?: FinancialImpact | null }[] = [];
         for (const a of assignments) {
           this.api.getSurveyReportStatus(a.id).subscribe({
             next: (res) => {
@@ -2106,6 +2106,7 @@ export class FacilitatorQueueComponent implements OnInit {
                 collected.push({
                   reportText: res.reportText,
                   meta: { businessName: a.businessName, templateName: a.templateName, templateType: a.templateType },
+                  financialImpact: parseFinancialImpact(res.financialImpactJson),
                 });
               }
               if (--remaining === 0) { generateBulkSurveyReportPdf(collected, templateType); downloading.set(false); }

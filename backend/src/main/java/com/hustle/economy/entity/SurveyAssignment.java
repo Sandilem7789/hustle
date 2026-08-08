@@ -46,5 +46,8 @@ public class SurveyAssignment {
     @Column(columnDefinition = "TEXT")
     private String reportText;
 
+    @Column(columnDefinition = "TEXT")
+    private String financialImpactJson;
+
     private String reportError;
 }
