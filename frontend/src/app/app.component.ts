@@ -9,6 +9,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { UnifiedAuthService } from './services/unified-auth.service';
 import { DriverAuthService } from './services/driver-auth.service';
+import { CartService } from './services/cart.service';
 import { OfflineBannerComponent } from './components/offline-banner/offline-banner.component';
 
 @Component({
@@ -29,6 +30,7 @@ export class AppComponent implements OnInit {
 
   readonly unifiedAuth = inject(UnifiedAuthService);
   readonly driverAuth  = inject(DriverAuthService);
+  readonly cart = inject(CartService);
   private readonly router = inject(Router);
 
   readonly isDriver = computed(() => this.driverAuth.isLoggedIn());

@@ -3,16 +3,17 @@ import { Component, OnInit, signal, inject, computed, effect, untracked } from '
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { jsPDF } from 'jspdf';
-import { ApiService, ProductResponse, ProductRequest, IncomeEntryResponse, IncomeSummary, OrderResponse } from '../../services/api.service';
+import { ApiService, ProductResponse, ProductRequest, IncomeEntryRequest, IncomeEntryResponse, IncomeSummary, OrderResponse, SaleResponse, SaleItemRequest, SaleRequest } from '../../services/api.service';
 import { generateMonthlyReportPdf } from '../../utils/monthly-report.util';
 import { AuthService } from '../../services/auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 import { AppSelectComponent } from '../../components/app-select/app-select.component';
+import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcode-scanner.component';
 
 @Component({
   selector: 'app-hustler-dashboard-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoginGateComponent, AppSelectComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoginGateComponent, AppSelectComponent, BarcodeScannerComponent],
   template: `
     <app-login-gate *ngIf="!auth.isLoggedIn()"
       icon="👤"
@@ -21,8 +22,30 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
     ></app-login-gate>
 
     <section class="layout" *ngIf="auth.isLoggedIn()">
+    <div class="dashboard-shell">
+    <nav class="rail-nav">
+      <div class="rail-brand">HUSTLE</div>
+      <button type="button" class="rail-item" [class.rail-active]="tab() === 'sell'" (click)="tab.set('sell')"><span>🧺</span>Sell</button>
+      <button type="button" class="rail-item" [class.rail-active]="tab() === 'income'" (click)="tab.set('income')"><span>💰</span>Money</button>
+      <button type="button" class="rail-item" [class.rail-active]="tab() === 'products'" (click)="tab.set('products')"><span>📦</span>Stock</button>
+      <button type="button" class="rail-item" [class.rail-active]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')"><span>🛍</span>Orders</button>
+      <div class="rail-spacer"></div>
+      <div class="rail-sync mut">● synced</div>
+    </nav>
+    <div class="main-col">
 
-      <!-- ── HERO BANNER ── -->
+      <!-- ── MOBILE GREETING + COMPACT SUMMARY (mobile only; hero-banner/fin-grid below take over on desktop) ── -->
+      <div class="mobile-greeting-bar">
+        <span>Hi {{ auth.state()?.firstName }}! <b>{{ auth.state()?.businessName }}</b></span>
+        <span class="tag-chip">● synced</span>
+      </div>
+      <div class="mobile-summary-strip">
+        <span><span class="mss-arrow mss-up">↑</span> <b>R {{ (summary()?.monthIncome ?? 0) | number:'1.2-2' }}</b> <span class="mut">in</span></span>
+        <span><span class="mss-arrow mss-down">↓</span> <b>R {{ (summary()?.monthExpenses ?? 0) | number:'1.2-2' }}</b> <span class="mut">out</span></span>
+        <span><span class="mss-arrow">≈</span> <b>R {{ (summary()?.monthProfit ?? 0) | number:'1.2-2' }}</b> <span class="mut">profit</span></span>
+      </div>
+
+      <!-- ── HERO BANNER (desktop) ── -->
       <div class="hero-banner">
         <div class="hero-inner">
           <div class="hero-text">
@@ -64,32 +87,50 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
         </div>
       </div>
 
-      <!-- ── MONTHLY REPORT BAR ── -->
-      <div class="report-bar">
-        <div class="report-bar-left">
-          <span class="report-bar-icon">📄</span>
-          <div>
-            <p class="report-bar-title">Monthly Report</p>
-            <p class="report-bar-sub">Download your income & expenses as a PDF</p>
-          </div>
-        </div>
-        <div class="report-bar-right">
-          <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
-          <button class="report-dl-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">
-            {{ reportDownloading() ? 'Generating…' : '↓ PDF' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- ── TAB BAR ── -->
+      <!-- ── TAB BAR (mobile) ── -->
       <div class="tab-bar">
-        <button [class.tab-active-finances]="tab() === 'income'" (click)="tab.set('income')">Finances</button>
-        <button [class.tab-active-products]="tab() === 'products'" (click)="tab.set('products')">Products</button>
+        <button [class.tab-active-sell]="tab() === 'sell'" (click)="tab.set('sell')">Sell</button>
+        <button [class.tab-active-finances]="tab() === 'income'" (click)="tab.set('income')">Money</button>
+        <button [class.tab-active-products]="tab() === 'products'" (click)="tab.set('products')">Stock</button>
         <button [class.tab-active-orders]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')">Orders</button>
       </div>
 
-      <!-- ── FINANCES TAB ── -->
+      <!-- ── MONEY TAB ── -->
       <ng-container *ngIf="tab() === 'income'">
+
+        <div class="card money-summary-card">
+          <div class="ms-month">{{ currentMonthLabel() }}</div>
+          <div class="ms-profit">R {{ (summary()?.monthProfit ?? 0) | number:'1.2-2' }} profit</div>
+          <div class="ms-inout-row">
+            <div><span class="ms-arrow ms-up">↑</span> R {{ (summary()?.monthIncome ?? 0) | number:'1.2-2' }}<span class="mut ms-inout-label">in</span></div>
+            <div><span class="ms-arrow ms-down">↓</span> R {{ (summary()?.monthExpenses ?? 0) | number:'1.2-2' }}<span class="mut ms-inout-label">out</span></div>
+          </div>
+        </div>
+
+        <div class="money-quicklog-row">
+          <button type="button" class="money-in-btn" (click)="openMoneyWizard('INCOME')">＋ Money IN</button>
+          <button type="button" class="money-out-btn" (click)="openMoneyWizard('EXPENSE')">－ Money OUT</button>
+        </div>
+        <p class="mut money-wizard-note">POS sales auto-log income — this is only for cash outside the basket.</p>
+
+        <div class="card">
+          <h2 class="pos-section-title">History</h2>
+          <div *ngIf="incomeHistory().length === 0" class="muted" style="margin-top:0.5rem">No entries yet.</div>
+          <div class="compact-history-list" *ngIf="incomeHistory().length > 0">
+            <div class="compact-history-row" *ngFor="let e of incomeHistory().slice(0, 6)">
+              <span class="ch-date">{{ e.date | date:'d MMM' }}</span>
+              <span class="ch-cat">{{ e.category || (e.entryType === 'EXPENSE' ? 'Expense' : 'Income') }}</span>
+              <span class="ch-amt" [class.ch-neg]="e.entryType === 'EXPENSE'">{{ e.entryType === 'EXPENSE' ? '−' : '+' }}R {{ e.amount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="more-toggle-btn" (click)="moneyMoreOpen.set(!moneyMoreOpen())">
+          {{ moneyMoreOpen() ? '▲ Less' : '▼ More — detailed log, chart, CSV export' }}
+        </button>
+
+        <ng-container *ngIf="moneyMoreOpen()">
+
         <div class="card">
           <div class="log-tabs">
             <button [class.logtab-active-income]="logTab() === 'income'" (click)="logTab.set('income')">Log Income</button>
@@ -224,7 +265,14 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
               Log entries on at least 2 different dates to see the trend graph.
             </p>
           </ng-container>
+
+          <div class="csv-export-row">
+            <button type="button" class="outline-btn" (click)="exportCsv('weekly')">↓ CSV (this week)</button>
+            <button type="button" class="outline-btn" (click)="exportCsv('monthly')">↓ CSV (this month)</button>
+          </div>
         </div>
+
+        </ng-container>
 
         <button class="logout-btn" (click)="logout()">Sign Out</button>
       </ng-container>
@@ -263,6 +311,7 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
                   <span *ngIf="p.category" class="product-cat-badge">{{ getCategoryLabel(p.category) }}</span>
                   <p class="muted">{{ p.description }}</p>
                   <p class="price">R {{ p.price | number:'1.2-2' }}</p>
+                  <p class="barcode-label" *ngIf="p.barcode">🏷️ {{ p.barcode }}</p>
                 </div>
                 <div class="card-actions">
                   <button class="edit-btn" (click)="startEdit(p)" title="Edit" aria-label="Edit product">✎</button>
@@ -293,6 +342,13 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
                       [options]="productCategoryOpts"
                       placeholder="— Select category —">
                     </app-select>
+                  </label>
+                  <label>
+                    <span>Barcode</span>
+                    <div class="barcode-row">
+                      <input [value]="editBarcode" (input)="editBarcode = $any($event.target).value" placeholder="Scan or type barcode" />
+                      <button type="button" class="scan-btn" (click)="barcodeModalMode.set('edit')">📷 Scan</button>
+                    </div>
                   </label>
                   <label>
                     <span>Replace image</span>
@@ -360,6 +416,186 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
         </div>
       </ng-container>
 
+      <!-- ── SELL (POS) TAB ── -->
+      <ng-container *ngIf="tab() === 'sell'">
+        <div class="pos-subtabs">
+          <button [class.pos-subtab-active]="posView() === 'sell'" (click)="posView.set('sell')">Sell</button>
+          <button [class.pos-subtab-active]="posView() === 'history'" (click)="posView.set('history'); loadSalesHistory()">History</button>
+        </div>
+
+        <ng-container *ngIf="posView() === 'sell'">
+          <div class="card pos-search-card">
+            <div class="search-scan-row">
+              <span class="search-icon">🔍</span>
+              <input type="text" class="search-input" placeholder="Search or scan" [(ngModel)]="posSearchQuery" [ngModelOptions]="{standalone:true}" />
+              <button type="button" class="scan-chip" (click)="openPosScanModal()">▦ Scan</button>
+            </div>
+          </div>
+
+          <div class="card" *ngIf="products().length > 0">
+            <h2 class="pos-section-title">Quick add</h2>
+            <div class="quick-grid">
+              <button type="button" class="quick-tile" *ngFor="let p of posVisibleProducts()" (click)="addProductToBasket(p)">
+                <span class="quick-name">{{ p.name }}</span>
+                <span class="quick-price">R {{ p.price | number:'1.2-2' }}</span>
+              </button>
+              <button type="button" class="quick-tile quick-more" *ngIf="posHasMoreProducts()" (click)="posShowAllProducts.set(true)">
+                <span class="quick-name">＋ more</span>
+              </button>
+            </div>
+            <p *ngIf="posSearchQuery.trim() && posVisibleProducts().length === 0" class="muted" style="margin-top:0.5rem">No products match "{{ posSearchQuery }}".</p>
+          </div>
+
+          <div class="card">
+            <h2 class="pos-section-title">Basket <span class="basket-count" *ngIf="posBasket().length > 0">({{ posBasket().length }})</span></h2>
+            <div *ngIf="posBasket().length === 0" class="muted" style="margin-top:0.5rem">Scan or tap a product to start a sale.</div>
+            <p class="basket-summary" *ngIf="posBasket().length > 0">{{ basketSummaryLine() }}</p>
+            <div class="basket-list" *ngIf="posBasket().length > 0">
+              <div class="basket-row" *ngFor="let item of posBasket(); let i = index">
+                <div class="basket-info">
+                  <span class="basket-name">{{ item.itemName }}</span>
+                  <span class="basket-unit">R {{ item.unitPrice | number:'1.2-2' }} each</span>
+                </div>
+                <div class="basket-qty">
+                  <button type="button" (click)="decBasketQty(i)" aria-label="Decrease quantity">−</button>
+                  <span>{{ item.quantity }}</span>
+                  <button type="button" (click)="incBasketQty(i)" aria-label="Increase quantity">+</button>
+                </div>
+                <span class="basket-line-total">R {{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
+                <button type="button" class="basket-remove" (click)="removeBasketItem(i)" aria-label="Remove item">✕</button>
+              </div>
+            </div>
+
+            <div class="pos-total-row" *ngIf="posBasket().length > 0">
+              <span>Total</span>
+              <strong>R {{ basketTotal() | number:'1.2-2' }}</strong>
+            </div>
+
+            <button class="complete-sale-btn" [disabled]="posBasket().length === 0 || posCompleting()" (click)="completeSale()">
+              <ng-container *ngIf="!posCompleting()">CHARGE — R {{ basketTotal() | number:'1.2-2' }}</ng-container>
+              <ng-container *ngIf="posCompleting()">Charging…</ng-container>
+            </button>
+            <p *ngIf="posError()" class="error">{{ posError() }}</p>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="posView() === 'history'">
+          <div class="card">
+            <h2 class="pos-section-title">Sales history</h2>
+            <div *ngIf="salesHistoryLoading()" class="muted" style="margin-top:0.75rem">Loading…</div>
+            <div *ngIf="!salesHistoryLoading() && salesHistory().length === 0" class="muted" style="margin-top:0.75rem">No sales yet.</div>
+            <div class="sale-history-list" *ngIf="salesHistory().length > 0">
+              <div class="sale-history-row" *ngFor="let s of salesHistory()">
+                <div class="sale-history-main">
+                  <span class="sale-history-time">{{ s.saleDate | date:'d MMM, h:mm a' }}</span>
+                  <span class="sale-history-items">{{ saleItemsSummary(s) }}</span>
+                </div>
+                <strong class="sale-history-total">R {{ s.totalAmount | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+
+      <!-- ── MONTHLY REPORT BAR (bottom — occasional action, not a daily one) ── -->
+      <div class="report-bar">
+        <div class="report-bar-left">
+          <span class="report-bar-icon">📄</span>
+          <div>
+            <p class="report-bar-title">Monthly Report</p>
+            <p class="report-bar-sub">Download your income & expenses as a PDF</p>
+          </div>
+        </div>
+        <div class="report-bar-right">
+          <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
+          <button class="report-dl-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">
+            {{ reportDownloading() ? 'Generating…' : '↓ PDF' }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── QUICK LOG PANEL (desktop only, visible on Sell tab) ── -->
+    <aside class="quick-log-panel" *ngIf="tab() === 'sell'">
+      <h3 class="ql-title">Quick log</h3>
+      <div class="ql-type-row">
+        <button type="button" class="ql-type-btn ql-type-in" [class.ql-type-active]="quickLogType() === 'INCOME'" (click)="quickLogType.set('INCOME')">＋ IN</button>
+        <button type="button" class="ql-type-btn ql-type-out" [class.ql-type-active]="quickLogType() === 'EXPENSE'" (click)="quickLogType.set('EXPENSE')">－ OUT</button>
+      </div>
+      <input type="number" min="0" step="0.01" class="ql-amount-input" [(ngModel)]="quickLogAmount" [ngModelOptions]="{standalone:true}" placeholder="Amount" />
+      <app-select [(ngModel)]="quickLogCategory" [ngModelOptions]="{standalone:true}" [options]="quickLogCategoryOpts()" placeholder="Category ▾"></app-select>
+      <button class="primary ql-save-btn" [disabled]="!quickLogAmount || quickLogAmount <= 0 || quickLogSaving()" (click)="saveQuickLog()">
+        {{ quickLogSaving() ? 'Saving…' : 'SAVE' }}
+      </button>
+      <p *ngIf="quickLogError()" class="error" style="font-size:0.78rem;margin:0">{{ quickLogError() }}</p>
+      <div class="ql-report-row">
+        <span>📄 report</span>
+        <button type="button" class="chip-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">↓ PDF</button>
+      </div>
+    </aside>
+
+    </div>
+
+      <!-- ── POS SUCCESS CONFIRMATION ── -->
+      <div class="modal-overlay pos-success-overlay" *ngIf="posSuccess() as res">
+        <div class="pos-success-sheet">
+          <div class="pos-success-icon">✓</div>
+          <p class="pos-success-label">Sale complete</p>
+          <p class="pos-success-total">R {{ res.total | number:'1.2-2' }}</p>
+          <button class="primary" (click)="posSuccess.set(null)">Next customer</button>
+        </div>
+      </div>
+
+      <!-- ── BARCODE SCAN MODAL (product add/edit capture + POS scanning) ── -->
+      <div class="modal-overlay" *ngIf="barcodeModalMode()" (click)="onBarcodeOverlayClick($event)">
+        <div class="modal-sheet barcode-modal-sheet">
+          <div class="modal-head">
+            <h2>{{ barcodeModalMode() === 'pos' ? 'Scan items' : 'Scan barcode' }}</h2>
+            <button class="modal-close" (click)="barcodeModalMode.set(null)" aria-label="Close scanner">✕</button>
+          </div>
+          <app-barcode-scanner (scanned)="onBarcodeCaptured($event)"></app-barcode-scanner>
+          <ng-container *ngIf="barcodeModalMode() === 'pos'">
+            <p *ngIf="posLastAdded()" class="success" style="margin-top:0.5rem">✓ Added {{ posLastAdded() }}</p>
+            <p *ngIf="posScanError()" class="error" style="margin-top:0.5rem">{{ posScanError() }}</p>
+            <div class="unknown-barcode-banner" *ngIf="posUnknownBarcode() as code">
+              <span>No product found for code <strong>{{ code }}</strong></span>
+              <button type="button" (click)="createProductFromBarcode()">+ Create product</button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ── MONEY WIZARD (quick IN/OUT logging, one question at a time) ── -->
+      <div class="modal-overlay" *ngIf="moneyWizardOpen()" (click)="onMoneyWizardOverlayClick($event)">
+        <div class="modal-sheet wizard-sheet">
+          <div class="modal-head">
+            <h2>{{ moneyWizardType() === 'INCOME' ? '＋ Money IN' : '－ Money OUT' }}</h2>
+            <button class="modal-close" (click)="closeMoneyWizard()" aria-label="Close">✕</button>
+          </div>
+
+          <ng-container *ngIf="moneyWizardStep() === 'amount'">
+            <p class="wizard-step-label">STEP 1 of 2 · How much?</p>
+            <input type="number" min="0" step="0.01" class="wizard-amount-input" [(ngModel)]="moneyWizardAmount" [ngModelOptions]="{standalone:true}" placeholder="0.00" />
+            <button class="primary wizard-next-btn" type="button" [disabled]="!moneyWizardAmount || moneyWizardAmount <= 0" (click)="moneyWizardNext()">Next</button>
+          </ng-container>
+
+          <ng-container *ngIf="moneyWizardStep() === 'category'">
+            <p class="wizard-step-label">STEP 2 of 2 · What for?</p>
+            <div class="wizard-category-grid">
+              <button type="button" class="wizard-cat-tile" *ngFor="let c of moneyWizardCategoryOpts()" [disabled]="moneyWizardSaving()" (click)="selectMoneyWizardCategory(c.value)">
+                <span class="wizard-cat-icon">{{ c.icon }}</span>
+                <span>{{ c.label }}</span>
+              </button>
+            </div>
+            <button type="button" class="wizard-note-toggle" *ngIf="!moneyWizardShowNotes()" (click)="moneyWizardShowNotes.set(true)">+ add a note</button>
+            <input type="text" class="wizard-note-input" *ngIf="moneyWizardShowNotes()" [(ngModel)]="moneyWizardNotes" [ngModelOptions]="{standalone:true}" placeholder="Optional note" />
+            <p *ngIf="moneyWizardSaving()" class="muted" style="margin-top:0.5rem">Saving…</p>
+            <p *ngIf="moneyWizardError()" class="error">{{ moneyWizardError() }}</p>
+          </ng-container>
+        </div>
+      </div>
+
       <!-- ── ADD PRODUCT MODAL (fixed, inside layout for scoped styles) ── -->
       <div class="modal-overlay" *ngIf="showAddModal()" (click)="onOverlayClick($event)">
         <div class="modal-sheet">
@@ -390,6 +626,13 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
               </app-select>
             </label>
             <label>
+              <span>Barcode (optional)</span>
+              <div class="barcode-row">
+                <input formControlName="barcode" placeholder="Scan or type barcode" />
+                <button type="button" class="scan-btn" (click)="barcodeModalMode.set('add')">📷 Scan</button>
+              </div>
+            </label>
+            <label>
               <span>Product image</span>
               <input type="file" accept="image/*" (change)="onFileChange($event)" class="file-input" />
               <div *ngIf="imagePreview()" class="preview-wrap">
@@ -408,7 +651,35 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
     </section>
   `,
   styles: `
-    /* ── Hero Banner ── */
+    /* ── Mobile compact greeting + summary (replaces hero-banner/fin-grid below 960px) ── */
+    .mobile-greeting-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+      background: white; border: 1px solid #E7E5E4; border-radius: 1rem;
+      padding: 0.85rem 1.1rem; font-size: 0.95rem; color: #1C1917;
+    }
+    .mobile-greeting-bar b { font-weight: 800; }
+    .tag-chip {
+      flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: #166534;
+      background: rgba(45,179,68,0.1); border-radius: 999px; padding: 0.2rem 0.6rem; white-space: nowrap;
+    }
+    .mobile-summary-strip {
+      display: flex; justify-content: space-between; gap: 0.5rem;
+      background: white; border: 1px solid #E7E5E4; border-radius: 1rem;
+      padding: 0.8rem 1rem; font-size: 0.85rem; color: #1C1917; text-align: center;
+    }
+    .mobile-summary-strip > span { flex: 1; }
+    .mss-arrow { font-weight: 900; }
+    .mss-up { color: #2DB344; }
+    .mss-down { color: #E53935; }
+
+    .hero-banner, .fin-grid { display: none; }
+    @media (min-width: 960px) {
+      .mobile-greeting-bar, .mobile-summary-strip { display: none; }
+      .hero-banner { display: block; }
+      .fin-grid { display: grid; }
+    }
+
+    /* ── Hero Banner (desktop) ── */
     .hero-banner {
       background: #1C1917;
       border-radius: 1.5rem;
@@ -452,9 +723,8 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
       .hero-avatar { font-size: 2rem; }
     }
 
-    /* ── Financial Cards ── */
-    .fin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-    @media (max-width: 480px) { .fin-grid { grid-template-columns: 1fr; gap: 0.6rem; } }
+    /* ── Financial Cards (desktop only — see mobile-compact toggle above) ── */
+    .fin-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
     .fin-card {
       border-radius: 1.25rem;
       padding: 1rem 1.1rem;
@@ -729,6 +999,164 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
       transition: border-color 0.15s, color 0.15s;
     }
     .logout-btn:hover { border-color: #E53935; color: #E53935; }
+
+    /* ── Sell tab ── */
+    .tab-active-sell { color: #92400e !important; border-bottom: 3px solid #F5B800 !important; background: rgba(245,184,0,0.12) !important; }
+    .pos-subtabs { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 2px 10px rgba(28,25,23,0.06); border: 1px solid #E7E5E4; }
+    .pos-subtabs button { flex: 1; padding: 0.7rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #A8A29E; cursor: pointer; font-family: inherit; min-height: 44px; border-bottom: 2px solid transparent; }
+    .pos-subtab-active { color: #1C1917 !important; border-bottom: 2px solid #F5B800 !important; background: rgba(245,184,0,0.06) !important; }
+    .pos-section-title { margin: 0 0 0.25rem; font-size: 1rem; font-weight: 800; color: #1C1917; }
+    .unknown-barcode-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; background: rgba(245,184,0,0.1); border: 1px solid rgba(245,184,0,0.35); border-radius: 0.75rem; padding: 0.7rem 0.9rem; font-size: 0.85rem; color: #1C1917; }
+    .unknown-barcode-banner button { border: none; border-radius: 999px; background: #F5B800; color: #1C1917; font-weight: 800; font-size: 0.8rem; padding: 0.45rem 0.9rem; cursor: pointer; font-family: inherit; min-height: 36px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.6rem; margin-top: 0.75rem; }
+    .quick-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; border: 1.5px solid #E7E5E4; border-radius: 0.85rem; padding: 0.7rem 0.8rem; background: #FAFAF9; cursor: pointer; font-family: inherit; min-height: 60px; text-align: left; transition: border-color 0.15s, background 0.15s; }
+    .quick-tile:hover, .quick-tile:active { border-color: #F5B800; background: rgba(245,184,0,0.06); }
+    .quick-name { font-size: 0.85rem; font-weight: 700; color: #1C1917; }
+    .quick-price { font-size: 0.78rem; font-weight: 700; color: #2DB344; }
+    .basket-list { display: flex; flex-direction: column; margin-top: 0.75rem; border: 1px solid #E7E5E4; border-radius: 0.75rem; overflow: hidden; }
+    .basket-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid #E7E5E4; }
+    .basket-row:last-child { border-bottom: none; }
+    .basket-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
+    .basket-name { font-size: 0.88rem; font-weight: 700; color: #1C1917; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .basket-unit { font-size: 0.72rem; color: #A8A29E; }
+    .basket-qty { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+    .basket-qty button { width: 32px; height: 32px; min-height: unset; border-radius: 50%; border: 1.5px solid #E7E5E4; background: white; font-size: 1rem; font-weight: 800; color: #1C1917; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+    .basket-qty span { min-width: 20px; text-align: center; font-weight: 800; font-size: 0.9rem; }
+    .basket-line-total { font-size: 0.9rem; font-weight: 800; color: #1C1917; flex-shrink: 0; min-width: 64px; text-align: right; }
+    .basket-remove { background: none; border: none; color: #A8A29E; font-size: 1rem; cursor: pointer; min-height: unset; width: 28px; height: 28px; flex-shrink: 0; font-family: inherit; }
+    .basket-remove:hover { color: #E53935; }
+    .pos-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.85rem; border-top: 2px solid #E7E5E4; font-size: 1.1rem; font-weight: 800; color: #1C1917; }
+    .complete-sale-btn { display: block; width: 100%; margin-top: 1rem; border: none; border-radius: 999px; padding: 1.1rem; font-size: 1.05rem; font-weight: 800; background: #2DB344; color: white; cursor: pointer; font-family: inherit; min-height: 56px; box-shadow: 0 4px 14px rgba(45,179,68,0.35); transition: box-shadow 0.15s; }
+    .complete-sale-btn:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(45,179,68,0.5); }
+    .complete-sale-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+    .barcode-label { font-size: 0.72rem; color: #A8A29E; margin: 0.2rem 0 0; }
+    .barcode-row { display: flex; gap: 0.5rem; }
+    .barcode-row input { flex: 1; }
+    .scan-btn { flex-shrink: 0; border: 2px solid #E7E5E4; background: white; border-radius: 0.75rem; padding: 0 0.9rem; font-size: 0.85rem; font-weight: 700; color: #1C1917; cursor: pointer; font-family: inherit; min-height: 48px; }
+    .scan-btn:hover { border-color: #F5B800; }
+    .barcode-modal-sheet { max-width: 420px; }
+
+    /* ── POS success confirmation ── */
+    .pos-success-overlay { z-index: 300; align-items: center; }
+    .pos-success-sheet { background: white; border-radius: 1.5rem; padding: 2.25rem 1.75rem; width: 100%; max-width: 340px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; animation: slideUp 0.25s ease; }
+    .pos-success-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(45,179,68,0.12); color: #2DB344; font-size: 2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem; }
+    .pos-success-label { font-size: 0.95rem; font-weight: 700; color: #78716C; margin: 0; }
+    .pos-success-total { font-size: 1.9rem; font-weight: 900; color: #1C1917; margin: 0 0 0.75rem; }
+    .pos-success-sheet .primary { width: 100%; }
+
+    /* ── Sales history ── */
+    .sale-history-list { display: flex; flex-direction: column; margin-top: 0.75rem; border: 1px solid #E7E5E4; border-radius: 0.75rem; overflow: hidden; }
+    .sale-history-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid #E7E5E4; }
+    .sale-history-row:last-child { border-bottom: none; }
+    .sale-history-main { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+    .sale-history-time { font-size: 0.78rem; font-weight: 700; color: #78716C; }
+    .sale-history-items { font-size: 0.85rem; color: #1C1917; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
+    .sale-history-total { font-size: 0.95rem; font-weight: 800; color: #2DB344; flex-shrink: 0; }
+
+    /* ── Desktop shell: rail nav + main column + quick log panel ── */
+    .dashboard-shell { display: flex; flex-direction: column; gap: 1.25rem; }
+    .rail-nav { display: none; }
+    .main-col { display: flex; flex-direction: column; gap: 1.25rem; flex: 1; min-width: 0; }
+    .quick-log-panel { display: none; }
+    @media (min-width: 960px) {
+      .dashboard-shell { flex-direction: row; align-items: flex-start; gap: 1.5rem; }
+      .rail-nav {
+        display: flex; flex-direction: column; gap: 0.5rem; width: 150px; flex-shrink: 0;
+        background: white; border: 1px solid #E7E5E4; border-radius: 1.25rem;
+        padding: 1.25rem 0.9rem; position: sticky; top: 1rem;
+      }
+      .tab-bar { display: none; }
+      .quick-log-panel {
+        display: flex; flex-direction: column; gap: 0.65rem; width: 220px; flex-shrink: 0;
+        background: #fffdf5; border: 1.5px dashed #d8cfa8; border-radius: 1.25rem;
+        padding: 1.25rem 1rem; position: sticky; top: 1rem;
+      }
+    }
+    .rail-brand { font-weight: 900; font-size: 0.95rem; color: #1C1917; letter-spacing: 0.03em; padding: 0 0.3rem 0.5rem; }
+    .rail-item {
+      display: flex; align-items: center; gap: 0.6rem; border: none; background: none; border-radius: 0.75rem;
+      padding: 0.65rem 0.6rem; font-size: 0.88rem; font-weight: 700; color: #78716C; cursor: pointer;
+      font-family: inherit; text-align: left; min-height: 44px;
+    }
+    .rail-item span { font-size: 1.05rem; }
+    .rail-item:hover { background: #FAFAF9; }
+    .rail-active { background: rgba(245,184,0,0.12) !important; color: #1C1917 !important; }
+    .rail-spacer { flex: 1; }
+    .rail-sync { font-size: 0.72rem; padding: 0 0.3rem; }
+
+    /* ── Quick log panel (desktop) ── */
+    .ql-title { margin: 0; font-size: 0.95rem; font-weight: 800; color: #1C1917; }
+    .ql-type-row { display: flex; gap: 0.5rem; }
+    .ql-type-btn { flex: 1; border: 2px solid #E7E5E4; border-radius: 0.7rem; background: white; padding: 0.55rem 0.3rem; font-size: 0.82rem; font-weight: 800; cursor: pointer; font-family: inherit; min-height: 40px; }
+    .ql-type-in.ql-type-active { border-color: #2DB344; background: rgba(45,179,68,0.08); color: #166534; }
+    .ql-type-out.ql-type-active { border-color: #E53935; background: rgba(229,57,53,0.08); color: #991b1b; }
+    .ql-amount-input { border-radius: 0.7rem; border: 2px solid #E7E5E4; padding: 0.55rem 0.7rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; min-height: 42px; }
+    .ql-save-btn { font-size: 0.85rem; padding: 0.6rem; }
+    .ql-report-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: #78716C; padding-top: 0.4rem; border-top: 1px dashed #E7E5E4; margin-top: 0.2rem; }
+    .chip-btn { border: 1.5px solid #E7E5E4; background: white; border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .chip-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Sell tab: search-or-scan bar ── */
+    .pos-search-card { padding: 0.9rem 1rem; }
+    .search-scan-row { display: flex; align-items: center; gap: 0.6rem; }
+    .search-icon { font-size: 1rem; flex-shrink: 0; }
+    .search-input { flex: 1; border: none; outline: none; font-size: 1rem; font-family: inherit; min-width: 0; background: transparent; }
+    .scan-chip { flex-shrink: 0; border: 1.5px solid #E7E5E4; background: #FAFAF9; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.82rem; font-weight: 700; color: #1C1917; cursor: pointer; font-family: inherit; min-height: 36px; }
+    .scan-chip:hover { border-color: #F5B800; }
+    .quick-more .quick-name { color: #78716C; }
+    .basket-count { font-weight: 700; color: #78716C; font-size: 0.85rem; }
+    .basket-summary { font-size: 0.8rem; color: #78716C; margin: 0.2rem 0 0; }
+
+    /* ── Money tab: summary card + wizard entry ── */
+    .money-summary-card { display: flex; flex-direction: column; gap: 0.4rem; padding: 1.1rem 1.25rem; }
+    .ms-month { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: #A8A29E; }
+    .ms-profit { font-size: 1.6rem; font-weight: 900; color: #1C1917; }
+    .ms-inout-row { display: flex; gap: 1.5rem; margin-top: 0.3rem; font-size: 0.9rem; font-weight: 700; color: #1C1917; }
+    .ms-arrow { font-weight: 900; margin-right: 0.15rem; }
+    .ms-up { color: #2DB344; }
+    .ms-down { color: #E53935; }
+    .ms-inout-label { margin-left: 0.3rem; font-weight: 600; }
+    .money-quicklog-row { display: flex; gap: 0.75rem; }
+    .money-quicklog-row button {
+      flex: 1; border: 2px solid #222; border-radius: 1rem; padding: 1rem 0.6rem; text-align: center;
+      font-size: 1.05rem; font-weight: 800; background: white; cursor: pointer; font-family: inherit; min-height: 56px;
+    }
+    .money-in-btn { border-color: #2DB344 !important; color: #166534; background: rgba(45,179,68,0.06) !important; }
+    .money-out-btn { border-color: #E53935 !important; color: #991b1b; background: rgba(229,57,53,0.05) !important; }
+    .money-wizard-note { font-size: 0.76rem; text-align: center; margin: -0.4rem 0 0; }
+    .compact-history-list { display: flex; flex-direction: column; margin-top: 0.5rem; }
+    .compact-history-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid #F5F0E8; font-size: 0.85rem; }
+    .compact-history-row:last-child { border-bottom: none; }
+    .ch-date { color: #A8A29E; font-weight: 700; min-width: 52px; flex-shrink: 0; }
+    .ch-cat { flex: 1; color: #1C1917; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ch-amt { font-weight: 800; color: #2DB344; flex-shrink: 0; }
+    .ch-amt.ch-neg { color: #E53935; }
+    .more-toggle-btn {
+      align-self: center; background: none; border: none; color: #1B6FD4; font-weight: 700;
+      font-size: 0.85rem; cursor: pointer; font-family: inherit; padding: 0.5rem; min-height: 40px;
+    }
+    .csv-export-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E7E5E4; }
+
+    /* ── Money wizard modal ── */
+    .wizard-sheet { max-width: 380px; display: flex; flex-direction: column; gap: 0.9rem; }
+    .wizard-step-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; color: #A8A29E; text-transform: uppercase; margin: 0; }
+    .wizard-amount-input {
+      font-size: 2rem; font-weight: 800; text-align: center; border: 2px solid #E7E5E4; border-radius: 1rem;
+      padding: 0.9rem; width: 100%; box-sizing: border-box; font-family: inherit; color: #1C1917;
+    }
+    .wizard-amount-input:focus { border-color: #F5B800; outline: none; }
+    .wizard-next-btn { width: 100%; }
+    .wizard-category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+    .wizard-cat-tile {
+      display: flex; flex-direction: column; align-items: center; gap: 0.35rem; border: 1.5px solid #E7E5E4;
+      border-radius: 0.9rem; padding: 0.9rem 0.4rem; background: #FAFAF9; cursor: pointer; font-family: inherit;
+      font-size: 0.78rem; font-weight: 700; color: #1C1917; min-height: 76px;
+    }
+    .wizard-cat-tile:hover:not(:disabled) { border-color: #F5B800; background: rgba(245,184,0,0.06); }
+    .wizard-cat-tile:disabled { opacity: 0.5; cursor: not-allowed; }
+    .wizard-cat-icon { font-size: 1.4rem; }
+    .wizard-note-toggle { align-self: flex-start; background: none; border: none; color: #1B6FD4; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit; padding: 0.2rem; }
+    .wizard-note-input { border-radius: 0.7rem; border: 2px solid #E7E5E4; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; }
   `
 })
 export class HustlerDashboardPageComponent implements OnInit {
@@ -752,7 +1180,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     });
   }
 
-  tab = signal<'income' | 'products' | 'orders'>('income');
+  tab = signal<'income' | 'products' | 'orders' | 'sell'>('sell');
   logTab = signal<'income' | 'expense'>('income');
 
   readonly historyFilterOpts = [
@@ -895,9 +1323,295 @@ export class HustlerDashboardPageComponent implements OnInit {
   editName = '';
   editDescription = '';
   editPrice = 0;
+  editBarcode = '';
   private editPendingImageUrl: string | null = null;
   saveLoading = signal(false);
   saveError = signal('');
+
+  // ── Barcode scan modal (add/edit product capture + POS scanning) ───────────
+  barcodeModalMode = signal<'add' | 'edit' | 'pos' | null>(null);
+  private pendingBarcodeForNewProduct: string | null = null;
+
+  onBarcodeCaptured(code: string): void {
+    const mode = this.barcodeModalMode();
+    if (mode === 'add') {
+      this.productForm.patchValue({ barcode: code });
+      this.barcodeModalMode.set(null);
+    } else if (mode === 'edit') {
+      this.editBarcode = code;
+      this.barcodeModalMode.set(null);
+    } else if (mode === 'pos') {
+      this.onPosScan(code);
+      // stays open — a cashier scans several items in a row; closed manually via ✕
+    }
+  }
+
+  onBarcodeOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('modal-overlay')) {
+      this.barcodeModalMode.set(null);
+    }
+  }
+
+  // ── Sell (POS) ───────────────────────────────────────────────────────────
+  posView = signal<'sell' | 'history'>('sell');
+  posBasket = signal<{ productId?: string; itemName: string; unitPrice: number; quantity: number }[]>([]);
+  posSearchQuery = '';
+  posShowAllProducts = signal(false);
+  posScanError = signal('');
+  posUnknownBarcode = signal<string | null>(null);
+  posLastAdded = signal<string | null>(null);
+  posCompleting = signal(false);
+  posSuccess = signal<{ total: number } | null>(null);
+  posError = signal('');
+
+  salesHistory = signal<SaleResponse[]>([]);
+  salesHistoryLoading = signal(false);
+
+  private readonly POS_QUICK_PREVIEW = 6;
+
+  posFilteredProducts = computed(() => {
+    const q = this.posSearchQuery.trim().toLowerCase();
+    const list = this.products();
+    return q ? list.filter(p => p.name.toLowerCase().includes(q)) : list;
+  });
+
+  posVisibleProducts = computed(() => {
+    const list = this.posFilteredProducts();
+    return this.posShowAllProducts() || this.posSearchQuery.trim()
+      ? list
+      : list.slice(0, this.POS_QUICK_PREVIEW);
+  });
+
+  posHasMoreProducts = computed(() =>
+    !this.posShowAllProducts() && !this.posSearchQuery.trim() && this.posFilteredProducts().length > this.POS_QUICK_PREVIEW
+  );
+
+  basketTotal = computed(() => this.posBasket().reduce((s, i) => s + i.unitPrice * i.quantity, 0));
+  basketSummaryLine = computed(() => this.posBasket().map(i => `${i.itemName} ×${i.quantity}`).join(', '));
+
+  openPosScanModal(): void {
+    this.posScanError.set('');
+    this.posUnknownBarcode.set(null);
+    this.posLastAdded.set(null);
+    this.barcodeModalMode.set('pos');
+  }
+
+  onPosScan(code: string): void {
+    this.posScanError.set('');
+    this.api.getProductByBarcode(code, this.auth.getToken()!).subscribe({
+      next: (product) => this.addProductToBasket(product),
+      error: (err) => {
+        if (err.status === 404) {
+          this.posUnknownBarcode.set(code);
+        } else {
+          this.posScanError.set('Could not look up that barcode. Try again.');
+        }
+      }
+    });
+  }
+
+  addProductToBasket(product: ProductResponse): void {
+    this.posBasket.update(items => {
+      const idx = items.findIndex(i => i.productId === product.id);
+      if (idx >= 0) {
+        const updated = [...items];
+        updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + 1 };
+        return updated;
+      }
+      return [...items, { productId: product.id, itemName: product.name, unitPrice: Number(product.price), quantity: 1 }];
+    });
+    this.posUnknownBarcode.set(null);
+    this.posLastAdded.set(product.name);
+    setTimeout(() => this.posLastAdded.set(null), 1500);
+  }
+
+  incBasketQty(i: number): void {
+    this.posBasket.update(items => items.map((it, idx) => idx === i ? { ...it, quantity: it.quantity + 1 } : it));
+  }
+
+  decBasketQty(i: number): void {
+    this.posBasket.update(items => {
+      const it = items[i];
+      if (it.quantity <= 1) return items.filter((_, idx) => idx !== i);
+      return items.map((x, idx) => idx === i ? { ...x, quantity: x.quantity - 1 } : x);
+    });
+  }
+
+  removeBasketItem(i: number): void {
+    this.posBasket.update(items => items.filter((_, idx) => idx !== i));
+  }
+
+  createProductFromBarcode(): void {
+    const code = this.posUnknownBarcode();
+    if (!code) return;
+    this.productForm.reset();
+    this.newProductCategory = '';
+    this.imagePreview.set(null);
+    this.pendingImageUrl.set(null);
+    this.productForm.patchValue({ barcode: code });
+    this.pendingBarcodeForNewProduct = code;
+    this.barcodeModalMode.set(null);
+    this.showAddModal.set(true);
+    this.posUnknownBarcode.set(null);
+  }
+
+  completeSale(): void {
+    if (this.posBasket().length === 0) return;
+    this.posCompleting.set(true);
+    this.posError.set('');
+    const items: SaleItemRequest[] = this.posBasket().map(i => ({
+      productId: i.productId,
+      itemName: i.itemName,
+      unitPrice: i.unitPrice,
+      quantity: i.quantity,
+    }));
+    const payload: SaleRequest = { id: crypto.randomUUID(), items, totalAmount: this.basketTotal() };
+    this.api.createSale(payload, this.auth.getToken()!).subscribe({
+      next: (sale) => {
+        this.posCompleting.set(false);
+        this.posSuccess.set({ total: Number(sale.totalAmount) });
+        this.posBasket.set([]);
+        this.loadSummary();
+        setTimeout(() => this.posSuccess.set(null), 3000);
+      },
+      error: (err) => {
+        this.posCompleting.set(false);
+        this.posError.set(err?.error?.message || 'Failed to complete sale. Please try again.');
+      }
+    });
+  }
+
+  loadSalesHistory(): void {
+    this.salesHistoryLoading.set(true);
+    this.api.listSales(this.auth.getToken()!).subscribe({
+      next: (res) => { this.salesHistory.set(res.content); this.salesHistoryLoading.set(false); },
+      error: () => this.salesHistoryLoading.set(false)
+    });
+  }
+
+  saleItemsSummary(s: SaleResponse): string {
+    return s.items.map(i => `${i.quantity}x ${i.itemName}`).join(', ');
+  }
+
+  // ── Money tab: summary + collapsible "More" ─────────────────────────────────
+  moneyMoreOpen = signal(false);
+  currentMonthLabel = computed(() => new Date().toLocaleString('en-ZA', { month: 'long' }).toUpperCase());
+
+  private moneyCategoryOpts(type: 'INCOME' | 'EXPENSE'): { value: string; label: string; icon: string }[] {
+    return type === 'INCOME'
+      ? [
+          { value: 'CASH_SALES', label: 'Cash Sales', icon: '💵' },
+          { value: 'CREDIT_SALES', label: 'Credit Sale', icon: '🤝' },
+          { value: 'GRANTS_SASSA', label: 'Grants / SASSA', icon: '🏛️' },
+          { value: 'OTHER_SALARY_WAGES', label: 'Salary / Wages', icon: '💼' },
+          { value: 'OTHER_HOUSEHOLD', label: 'Other', icon: '➕' },
+        ]
+      : [
+          { value: 'COST_OF_GOODS', label: 'Stock', icon: '🍞' },
+          { value: 'TRANSPORT', label: 'Transport', icon: '🚌' },
+          { value: 'ELECTRICITY', label: 'Electricity', icon: '⚡' },
+          { value: 'WAGES', label: 'Wages', icon: '👷' },
+          { value: 'AIRTIME_DATA', label: 'Airtime/Data', icon: '📱' },
+          { value: 'OTHER_OVERHEAD_1', label: 'Other', icon: '➕' },
+        ];
+  }
+
+  // ── Money wizard (mobile, one question at a time) ───────────────────────────
+  moneyWizardOpen = signal(false);
+  moneyWizardStep = signal<'amount' | 'category'>('amount');
+  moneyWizardType = signal<'INCOME' | 'EXPENSE'>('INCOME');
+  moneyWizardAmount: number | null = null;
+  moneyWizardNotes = '';
+  moneyWizardShowNotes = signal(false);
+  moneyWizardSaving = signal(false);
+  moneyWizardError = signal('');
+
+  moneyWizardCategoryOpts = computed(() => this.moneyCategoryOpts(this.moneyWizardType()));
+
+  openMoneyWizard(type: 'INCOME' | 'EXPENSE'): void {
+    this.moneyWizardType.set(type);
+    this.moneyWizardStep.set('amount');
+    this.moneyWizardAmount = null;
+    this.moneyWizardNotes = '';
+    this.moneyWizardShowNotes.set(false);
+    this.moneyWizardError.set('');
+    this.moneyWizardOpen.set(true);
+  }
+
+  closeMoneyWizard(): void {
+    this.moneyWizardOpen.set(false);
+  }
+
+  onMoneyWizardOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('modal-overlay')) {
+      this.closeMoneyWizard();
+    }
+  }
+
+  moneyWizardNext(): void {
+    if (!this.moneyWizardAmount || this.moneyWizardAmount <= 0) return;
+    this.moneyWizardStep.set('category');
+  }
+
+  selectMoneyWizardCategory(category: string): void {
+    this.moneyWizardSaving.set(true);
+    this.moneyWizardError.set('');
+    const payload: IncomeEntryRequest = {
+      date: new Date().toISOString().slice(0, 10),
+      amount: this.moneyWizardAmount!,
+      channel: 'CASH',
+      entryType: this.moneyWizardType(),
+      category,
+      notes: this.moneyWizardNotes || undefined,
+    };
+    this.api.logIncome(payload, this.auth.getToken()!).subscribe({
+      next: (entry) => {
+        this.moneyWizardSaving.set(false);
+        this.moneyWizardOpen.set(false);
+        this.incomeHistory.update(h => [entry, ...h]);
+        this.loadSummary();
+      },
+      error: (err) => {
+        this.moneyWizardSaving.set(false);
+        this.moneyWizardError.set(err?.error?.message || 'Failed to save. Please try again.');
+      }
+    });
+  }
+
+  // ── Quick log panel (desktop, always visible on Sell tab) ───────────────────
+  quickLogType = signal<'INCOME' | 'EXPENSE'>('INCOME');
+  quickLogAmount: number | null = null;
+  quickLogCategory = '';
+  quickLogSaving = signal(false);
+  quickLogError = signal('');
+
+  quickLogCategoryOpts = computed(() => this.moneyCategoryOpts(this.quickLogType()));
+
+  saveQuickLog(): void {
+    if (!this.quickLogAmount || this.quickLogAmount <= 0) return;
+    this.quickLogSaving.set(true);
+    this.quickLogError.set('');
+    const payload: IncomeEntryRequest = {
+      date: new Date().toISOString().slice(0, 10),
+      amount: this.quickLogAmount,
+      channel: 'CASH',
+      entryType: this.quickLogType(),
+      category: this.quickLogCategory || undefined,
+    };
+    this.api.logIncome(payload, this.auth.getToken()!).subscribe({
+      next: (entry) => {
+        this.quickLogSaving.set(false);
+        this.incomeHistory.update(h => [entry, ...h]);
+        this.loadSummary();
+        this.quickLogAmount = null;
+        this.quickLogCategory = '';
+      },
+      error: (err) => {
+        this.quickLogSaving.set(false);
+        this.quickLogError.set(err?.error?.message || 'Failed to save.');
+      }
+    });
+  }
 
   readonly productCategoryOpts = [
     { value: '',            label: '— Select category —' },
@@ -922,6 +1636,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     name:        ['', Validators.required],
     description: ['', Validators.required],
     price:       [null as number | null, [Validators.required, Validators.min(0)]],
+    barcode:     [''],
   });
 
   // ── Orders ───────────────────────────────────────────────────────────────────
@@ -1164,10 +1879,15 @@ export class HustlerDashboardPageComponent implements OnInit {
       price: this.productForm.value.price!,
       mediaUrl: this.pendingImageUrl() ?? undefined,
       category: this.newProductCategory || undefined,
+      barcode: this.productForm.value.barcode || undefined,
     };
     this.api.createProduct(payload, this.auth.getToken()!).subscribe({
       next: (p) => {
         this.products.update(l => [p, ...l]);
+        if (this.pendingBarcodeForNewProduct && p.barcode === this.pendingBarcodeForNewProduct) {
+          this.addProductToBasket(p);
+        }
+        this.pendingBarcodeForNewProduct = null;
         this.productForm.reset();
         this.newProductCategory = '';
         this.imagePreview.set(null);
@@ -1198,6 +1918,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.editDescription = p.description;
     this.editPrice = Number(p.price);
     this.editCategory = p.category ?? '';
+    this.editBarcode = p.barcode ?? '';
     this.editPendingImageUrl = null;
     this.saveError.set('');
   }
@@ -1224,6 +1945,7 @@ export class HustlerDashboardPageComponent implements OnInit {
       price: this.editPrice,
       mediaUrl: this.editPendingImageUrl ?? p.mediaUrl,
       category: this.editCategory || undefined,
+      barcode: this.editBarcode,
     };
     this.api.updateProduct(p.id, payload, this.auth.getToken()!).subscribe({
       next: (updated) => {

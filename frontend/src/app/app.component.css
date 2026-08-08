@@ -37,6 +37,34 @@
   display: block;
 }
 
+/* Mobile has the ☰ Menu item in the bottom nav already — showing it again up
+   here too is a redundant second door to the same drawer. Desktop hides the
+   bottom nav entirely, so this is its only entry point there — keep it. */
+.toolbar-hamburger-btn {
+  display: none;
+}
+
+.toolbar-cart-btn {
+  position: relative;
+}
+
+.toolbar-cart-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #E53935;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+
 .toolbar-spacer {
   flex: 1;
 }
@@ -300,6 +328,10 @@
   .toolbar-logo {
     height: 52px;
     max-width: 240px;
+  }
+
+  .toolbar-hamburger-btn {
+    display: inline-flex;
   }
 
   .bottom-nav {

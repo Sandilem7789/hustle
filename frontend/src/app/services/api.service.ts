@@ -172,6 +172,12 @@ export class ApiService {
     });
   }
 
+  getProductByBarcode(code: string, token: string): Observable<ProductResponse> {
+    return this.http.get<ProductResponse>(`${this.baseUrl}/api/products/by-barcode/${encodeURIComponent(code)}`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
   // ─── Income ──────────────────────────────────────────────────────────────
   logIncome(payload: IncomeEntryRequest, token: string): Observable<IncomeEntryResponse> {
     return this.http.post<IncomeEntryResponse>(`${this.baseUrl}/api/income`, payload, {
@@ -200,6 +206,20 @@ export class ApiService {
       headers: new HttpHeaders({ 'X-Auth-Token': token }),
       params: { period },
       responseType: 'blob'
+    });
+  }
+
+  // ─── Sales (POS) ─────────────────────────────────────────────────────────
+  createSale(payload: SaleRequest, token: string): Observable<SaleResponse> {
+    return this.http.post<SaleResponse>(`${this.baseUrl}/api/sales`, payload, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token })
+    });
+  }
+
+  listSales(token: string, page = 0, size = 20): Observable<SalesPageResponse> {
+    return this.http.get<SalesPageResponse>(`${this.baseUrl}/api/sales`, {
+      headers: new HttpHeaders({ 'X-Auth-Token': token }),
+      params: { page, size }
     });
   }
 
@@ -608,6 +628,7 @@ export interface ProductRequest {
   price: number;
   mediaUrl?: string;
   category?: string;
+  barcode?: string;
 }
 
 export interface ProductOption {
@@ -625,6 +646,7 @@ export interface ProductResponse {
   businessName: string;
   createdAt: string;
   category?: string;
+  barcode?: string;
   options?: ProductOption[];
 }
 
@@ -649,6 +671,43 @@ export interface IncomeEntryResponse {
   notes?: string;
   category?: string;
   createdAt: string;
+}
+
+export interface SaleItemRequest {
+  productId?: string;
+  itemName: string;
+  unitPrice: number;
+  quantity: number;
+}
+
+export interface SaleRequest {
+  id: string;
+  items: SaleItemRequest[];
+  totalAmount: number;
+}
+
+export interface SaleItemResponse {
+  productId?: string;
+  itemName: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+}
+
+export interface SaleResponse {
+  id: string;
+  totalAmount: number;
+  saleDate: string;
+  createdAt: string;
+  items: SaleItemResponse[];
+}
+
+export interface SalesPageResponse {
+  content: SaleResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export interface HustlerProfileUpdate {
@@ -907,6 +966,7 @@ export interface SurveyAssignmentDetailResponse {
 export interface ReportGenerationResponse {
   status: 'NONE' | 'PENDING' | 'READY' | 'FAILED';
   reportText?: string;
+  financialImpactJson?: string;
   error?: string;
 }
 

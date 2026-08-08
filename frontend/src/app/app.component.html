@@ -121,7 +121,7 @@
 
     <!-- Top Toolbar -->
     <mat-toolbar class="app-toolbar">
-      <button type="button" mat-icon-button (click)="sidenav.toggle()" aria-label="Open menu">
+      <button type="button" mat-icon-button (click)="sidenav.toggle()" aria-label="Open menu" class="toolbar-hamburger-btn">
         <mat-icon>menu</mat-icon>
       </button>
 
@@ -141,8 +141,10 @@
         mat-icon-button
         routerLink="/checkout"
         aria-label="Cart"
+        class="toolbar-cart-btn"
       >
         <mat-icon>shopping_cart</mat-icon>
+        <span class="toolbar-cart-badge" *ngIf="cart.count() > 0">{{ cart.count() }}</span>
       </button>
 
       <button
@@ -172,7 +174,7 @@
     <!-- Public / not logged in -->
     <nav class="bottom-nav" *ngIf="!unifiedAuth.isLoggedIn() && !isDriver()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🛒</span>
+        <span class="bottom-nav-icon">🏪</span>
         <span>Market</span>
       </a>
       <a routerLink="/login" routerLinkActive="active" class="bottom-nav-item">
@@ -185,7 +187,7 @@
     <nav class="bottom-nav"
          *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.isHustler() && !unifiedAuth.isStaff()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🛒</span>
+        <span class="bottom-nav-icon">🏪</span>
         <span>Market</span>
       </a>
       <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
@@ -205,11 +207,11 @@
     <!-- Hustler -->
     <nav class="bottom-nav" *ngIf="unifiedAuth.isHustler()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🛒</span>
+        <span class="bottom-nav-icon">🏪</span>
         <span>Market</span>
       </a>
       <a routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏪</span>
+        <span class="bottom-nav-icon">🏠</span>
         <span>My Store</span>
       </a>
       <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
@@ -225,7 +227,7 @@
     <!-- Staff (Facilitator / Coordinator) -->
     <nav class="bottom-nav" *ngIf="unifiedAuth.isStaff()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🛒</span>
+        <span class="bottom-nav-icon">🏪</span>
         <span>Market</span>
       </a>
       <a *ngIf="unifiedAuth.hasStore()" routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
