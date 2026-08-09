@@ -34,15 +34,11 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     </nav>
     <div class="main-col">
 
-      <!-- ── MOBILE GREETING + COMPACT SUMMARY (mobile only; hero-banner/fin-grid below take over on desktop) ── -->
+      <!-- ── MOBILE GREETING (mobile only; hero-banner/fin-grid below take over on desktop) ── -->
+      <!-- Income/expenses/profit live only in the Money tab (money-summary-card below) — not repeated here. -->
       <div class="mobile-greeting-bar">
         <span>Hi {{ auth.state()?.firstName }}! <b>{{ auth.state()?.businessName }}</b></span>
         <span class="tag-chip">● synced</span>
-      </div>
-      <div class="mobile-summary-strip">
-        <span><span class="mss-arrow mss-up">↑</span> <b>R {{ (summary()?.monthIncome ?? 0) | number:'1.2-2' }}</b> <span class="mut">in</span></span>
-        <span><span class="mss-arrow mss-down">↓</span> <b>R {{ (summary()?.monthExpenses ?? 0) | number:'1.2-2' }}</b> <span class="mut">out</span></span>
-        <span><span class="mss-arrow">≈</span> <b>R {{ (summary()?.monthProfit ?? 0) | number:'1.2-2' }}</b> <span class="mut">profit</span></span>
       </div>
 
       <!-- ── HERO BANNER (desktop) ── -->
@@ -122,6 +118,22 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
               <span class="ch-cat">{{ e.category || (e.entryType === 'EXPENSE' ? 'Expense' : 'Income') }}</span>
               <span class="ch-amt" [class.ch-neg]="e.entryType === 'EXPENSE'">{{ e.entryType === 'EXPENSE' ? '−' : '+' }}R {{ e.amount | number:'1.2-2' }}</span>
             </div>
+          </div>
+        </div>
+
+        <div class="report-bar">
+          <div class="report-bar-left">
+            <span class="report-bar-icon">📄</span>
+            <div>
+              <p class="report-bar-title">Monthly Report</p>
+              <p class="report-bar-sub">Download your income & expenses as a PDF</p>
+            </div>
+          </div>
+          <div class="report-bar-right">
+            <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
+            <button class="report-dl-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">
+              {{ reportDownloading() ? 'Generating…' : '↓ PDF' }}
+            </button>
           </div>
         </div>
 
@@ -497,23 +509,6 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
         </ng-container>
       </ng-container>
 
-      <!-- ── MONTHLY REPORT BAR (bottom — occasional action, not a daily one) ── -->
-      <div class="report-bar">
-        <div class="report-bar-left">
-          <span class="report-bar-icon">📄</span>
-          <div>
-            <p class="report-bar-title">Monthly Report</p>
-            <p class="report-bar-sub">Download your income & expenses as a PDF</p>
-          </div>
-        </div>
-        <div class="report-bar-right">
-          <input type="month" [(ngModel)]="reportMonth" [ngModelOptions]="{standalone:true}" class="month-input" />
-          <button class="report-dl-btn" (click)="downloadMyMonthlyReport()" [disabled]="reportDownloading()">
-            {{ reportDownloading() ? 'Generating…' : '↓ PDF' }}
-          </button>
-        </div>
-      </div>
-
     </div>
 
     <!-- ── QUICK LOG PANEL (desktop only, visible on Sell tab) ── -->
@@ -662,19 +657,9 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
       flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: #166534;
       background: rgba(45,179,68,0.1); border-radius: 999px; padding: 0.2rem 0.6rem; white-space: nowrap;
     }
-    .mobile-summary-strip {
-      display: flex; justify-content: space-between; gap: 0.5rem;
-      background: white; border: 1px solid #E7E5E4; border-radius: 1rem;
-      padding: 0.8rem 1rem; font-size: 0.85rem; color: #1C1917; text-align: center;
-    }
-    .mobile-summary-strip > span { flex: 1; }
-    .mss-arrow { font-weight: 900; }
-    .mss-up { color: #2DB344; }
-    .mss-down { color: #E53935; }
-
     .hero-banner, .fin-grid { display: none; }
     @media (min-width: 960px) {
-      .mobile-greeting-bar, .mobile-summary-strip { display: none; }
+      .mobile-greeting-bar { display: none; }
       .hero-banner { display: block; }
       .fin-grid { display: grid; }
     }
