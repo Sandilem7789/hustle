@@ -1,135 +1,111 @@
 <div class="login-page">
+  <div class="auth-card">
 
-  <mat-tab-group mat-stretch-tabs="true" animationDuration="200ms" class="login-tabs">
+    <div class="auth-tabs">
+      <button type="button" [class.auth-tab-active]="activeTab() === 'login'" (click)="activeTab.set('login')">Login</button>
+      <button type="button" [class.auth-tab-active]="activeTab() === 'register'" (click)="activeTab.set('register')">Create Account</button>
+    </div>
 
-    <!-- ── Login Tab ─────────────────────────────── -->
-    <mat-tab label="Login">
-      <form class="auth-form" (ngSubmit)="onLogin()" #loginForm="ngForm">
+    <!-- ── Login ─────────────────────────────── -->
+    <form class="auth-form" *ngIf="activeTab() === 'login'" (ngSubmit)="onLogin()" #loginForm="ngForm">
+      <label>
+        <span>Phone number</span>
+        <input
+          type="tel"
+          placeholder="e.g. 0812345678"
+          [(ngModel)]="loginPhone"
+          name="loginPhone"
+          required
+          autocomplete="tel"
+        />
+      </label>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Phone number</mat-label>
-          <mat-icon matPrefix>phone</mat-icon>
+      <label>
+        <span>Password</span>
+        <div class="pwd-wrap">
           <input
-            matInput
-            type="tel"
-            placeholder="e.g. 0812345678"
-            [(ngModel)]="loginPhone"
-            name="loginPhone"
-            required
-            autocomplete="tel"
-          />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Password</mat-label>
-          <mat-icon matPrefix>lock</mat-icon>
-          <input
-            matInput
             [type]="hideLoginPwd ? 'password' : 'text'"
             [(ngModel)]="loginPassword"
             name="loginPassword"
             required
             autocomplete="current-password"
           />
-          <button type="button" mat-icon-button matSuffix (click)="hideLoginPwd = !hideLoginPwd">
-            <mat-icon>{{ hideLoginPwd ? 'visibility_off' : 'visibility' }}</mat-icon>
+          <button type="button" class="pwd-toggle" (click)="hideLoginPwd = !hideLoginPwd" [attr.aria-label]="hideLoginPwd ? 'Show password' : 'Hide password'">
+            {{ hideLoginPwd ? '👁️' : '🙈' }}
           </button>
-        </mat-form-field>
-
-        <p *ngIf="loginError" class="auth-error">{{ loginError }}</p>
-
-        <button
-          type="submit"
-          mat-flat-button
-          class="auth-submit-btn"
-          [disabled]="loginLoading()"
-        >
-          <mat-spinner *ngIf="loginLoading()" diameter="20" class="btn-spinner"></mat-spinner>
-          <span *ngIf="!loginLoading()">Login</span>
-        </button>
-
-      </form>
-    </mat-tab>
-
-    <!-- ── Register Tab ───────────────────────────── -->
-    <mat-tab label="Create Account">
-      <form class="auth-form" (ngSubmit)="onRegister()" #regForm="ngForm">
-
-        <div class="name-row">
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>First name</mat-label>
-            <input matInput [(ngModel)]="regFirstName" name="regFirstName" required autocomplete="given-name" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Last name</mat-label>
-            <input matInput [(ngModel)]="regLastName" name="regLastName" required autocomplete="family-name" />
-          </mat-form-field>
         </div>
+      </label>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Phone number</mat-label>
-          <mat-icon matPrefix>phone</mat-icon>
+      <p *ngIf="loginError" class="auth-error">{{ loginError }}</p>
+
+      <button type="submit" class="auth-submit-btn" [disabled]="loginLoading()">
+        {{ loginLoading() ? 'Signing in…' : 'Login' }}
+      </button>
+    </form>
+
+    <!-- ── Create Account ───────────────────────── -->
+    <form class="auth-form" *ngIf="activeTab() === 'register'" (ngSubmit)="onRegister()" #regForm="ngForm">
+      <div class="name-row">
+        <label class="half-width">
+          <span>First name</span>
+          <input [(ngModel)]="regFirstName" name="regFirstName" required autocomplete="given-name" />
+        </label>
+        <label class="half-width">
+          <span>Last name</span>
+          <input [(ngModel)]="regLastName" name="regLastName" required autocomplete="family-name" />
+        </label>
+      </div>
+
+      <label>
+        <span>Phone number</span>
+        <input
+          type="tel"
+          placeholder="e.g. 0812345678"
+          [(ngModel)]="regPhone"
+          name="regPhone"
+          required
+          autocomplete="tel"
+        />
+      </label>
+
+      <label>
+        <span>Email (optional)</span>
+        <input type="email" placeholder="e.g. name@gmail.com" [(ngModel)]="regEmail" name="regEmail" autocomplete="email" />
+      </label>
+
+      <label>
+        <span>Password</span>
+        <div class="pwd-wrap">
           <input
-            matInput
-            type="tel"
-            placeholder="e.g. 0812345678"
-            [(ngModel)]="regPhone"
-            name="regPhone"
-            required
-            autocomplete="tel"
-          />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email (optional)</mat-label>
-          <mat-icon matPrefix>email</mat-icon>
-          <input matInput type="email" [(ngModel)]="regEmail" name="regEmail" autocomplete="email" placeholder="e.g. name@gmail.com" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Password</mat-label>
-          <mat-icon matPrefix>lock</mat-icon>
-          <input
-            matInput
             [type]="hideRegPwd ? 'password' : 'text'"
             [(ngModel)]="regPassword"
             name="regPassword"
             required
             autocomplete="new-password"
           />
-          <button type="button" mat-icon-button matSuffix (click)="hideRegPwd = !hideRegPwd">
-            <mat-icon>{{ hideRegPwd ? 'visibility_off' : 'visibility' }}</mat-icon>
+          <button type="button" class="pwd-toggle" (click)="hideRegPwd = !hideRegPwd" [attr.aria-label]="hideRegPwd ? 'Show password' : 'Hide password'">
+            {{ hideRegPwd ? '👁️' : '🙈' }}
           </button>
-        </mat-form-field>
+        </div>
+      </label>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Confirm password</mat-label>
-          <mat-icon matPrefix>lock_reset</mat-icon>
-          <input
-            matInput
-            [type]="hideRegPwd ? 'password' : 'text'"
-            [(ngModel)]="regConfirm"
-            name="regConfirm"
-            required
-            autocomplete="new-password"
-          />
-        </mat-form-field>
+      <label>
+        <span>Confirm password</span>
+        <input
+          [type]="hideRegPwd ? 'password' : 'text'"
+          [(ngModel)]="regConfirm"
+          name="regConfirm"
+          required
+          autocomplete="new-password"
+        />
+      </label>
 
-        <p *ngIf="regError" class="auth-error">{{ regError }}</p>
+      <p *ngIf="regError" class="auth-error">{{ regError }}</p>
 
-        <button
-          type="submit"
-          mat-flat-button
-          class="auth-submit-btn"
-          [disabled]="regLoading()"
-        >
-          <mat-spinner *ngIf="regLoading()" diameter="20" class="btn-spinner"></mat-spinner>
-          <span *ngIf="!regLoading()">Create Account</span>
-        </button>
+      <button type="submit" class="auth-submit-btn" [disabled]="regLoading()">
+        {{ regLoading() ? 'Creating account…' : 'Create Account' }}
+      </button>
+    </form>
 
-      </form>
-    </mat-tab>
-
-  </mat-tab-group>
-
+  </div>
 </div>
