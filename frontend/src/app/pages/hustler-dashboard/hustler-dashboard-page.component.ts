@@ -436,29 +436,30 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
         </div>
 
         <ng-container *ngIf="posView() === 'sell'">
-          <div class="card pos-search-card">
+          <div class="card pos-sell-card">
             <div class="search-scan-row">
               <span class="search-icon">🔍</span>
               <input type="text" class="search-input" placeholder="Search or scan" [(ngModel)]="posSearchQuery" [ngModelOptions]="{standalone:true}" />
               <button type="button" class="scan-chip" (click)="openPosScanModal()">▦ Scan</button>
             </div>
-          </div>
 
-          <div class="card" *ngIf="products().length > 0">
-            <h2 class="pos-section-title">Quick add</h2>
-            <div class="quick-grid">
-              <button type="button" class="quick-tile" *ngFor="let p of posVisibleProducts()" (click)="addProductToBasket(p)">
-                <span class="quick-name">{{ p.name }}</span>
-                <span class="quick-price">R {{ p.price | number:'1.2-2' }}</span>
-              </button>
-              <button type="button" class="quick-tile quick-more" *ngIf="posHasMoreProducts()" (click)="posShowAllProducts.set(true)">
-                <span class="quick-name">＋ more</span>
-              </button>
-            </div>
-            <p *ngIf="posSearchQuery.trim() && posVisibleProducts().length === 0" class="muted" style="margin-top:0.5rem">No products match "{{ posSearchQuery }}".</p>
-          </div>
+            <ng-container *ngIf="products().length > 0">
+              <div class="pos-divider"></div>
+              <h2 class="pos-section-title">Quick add</h2>
+              <div class="quick-grid">
+                <button type="button" class="quick-tile" *ngFor="let p of posVisibleProducts()" (click)="addProductToBasket(p)">
+                  <span class="quick-name">{{ p.name }}</span>
+                  <span class="quick-price">R {{ p.price | number:'1.2-2' }}</span>
+                </button>
+                <button type="button" class="quick-tile quick-more" *ngIf="posHasMoreProducts()" (click)="posShowAllProducts.set(true)">
+                  <span class="quick-name">＋ more</span>
+                </button>
+              </div>
+              <p *ngIf="posSearchQuery.trim() && posVisibleProducts().length === 0" class="muted" style="margin-top:0.5rem">No products match "{{ posSearchQuery }}".</p>
+            </ng-container>
 
-          <div class="card">
+            <div class="pos-divider"></div>
+
             <h2 class="pos-section-title">Basket <span class="basket-count" *ngIf="posBasket().length > 0">({{ posBasket().length }})</span></h2>
             <div *ngIf="posBasket().length === 0" class="muted" style="margin-top:0.5rem">Scan or tap a product to start a sale.</div>
             <p class="basket-summary" *ngIf="posBasket().length > 0">{{ basketSummaryLine() }}</p>
@@ -1081,8 +1082,9 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .chip-btn { border: 1.5px solid #E7E5E4; background: white; border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; font-family: inherit; }
     .chip-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── Sell tab: search-or-scan bar ── */
-    .pos-search-card { padding: 0.9rem 1rem; }
+    /* ── Sell tab: one continuous card (search + quick-add + basket) instead of stacked boxes ── */
+    .pos-sell-card { padding: 1.1rem 1.25rem; }
+    .pos-divider { height: 1px; background: #E7E5E4; margin: 1.1rem 0 0.9rem; }
     .search-scan-row { display: flex; align-items: center; gap: 0.6rem; }
     .search-icon { font-size: 1rem; flex-shrink: 0; }
     .search-input { flex: 1; border: none; outline: none; font-size: 1rem; font-family: inherit; min-width: 0; background: transparent; }
