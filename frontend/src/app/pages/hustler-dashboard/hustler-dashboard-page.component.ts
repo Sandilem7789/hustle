@@ -6,6 +6,7 @@ import { jsPDF } from 'jspdf';
 import { ApiService, ProductResponse, ProductRequest, IncomeEntryRequest, IncomeEntryResponse, IncomeSummary, OrderResponse, SaleResponse, SaleItemRequest, SaleRequest } from '../../services/api.service';
 import { generateMonthlyReportPdf } from '../../utils/monthly-report.util';
 import { AuthService } from '../../services/auth.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 import { AppSelectComponent } from '../../components/app-select/app-select.component';
 import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcode-scanner.component';
@@ -1148,6 +1149,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
 })
 export class HustlerDashboardPageComponent implements OnInit {
   readonly auth = inject(AuthService);
+  private readonly unifiedAuth = inject(UnifiedAuthService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
@@ -1638,7 +1640,7 @@ export class HustlerDashboardPageComponent implements OnInit {
   }
 
   logout(): void {
-    this.auth.logout();
+    this.unifiedAuth.logout();
     this.router.navigate(['/register']);
   }
 

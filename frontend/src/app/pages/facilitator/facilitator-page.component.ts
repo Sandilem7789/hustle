@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FacilitatorQueueComponent } from '../../components/facilitator-queue/facilitator-queue.component';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
-import { AuthService } from '../../services/auth.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
 
 @Component({
   selector: 'app-facilitator-page',
@@ -49,13 +49,10 @@ import { AuthService } from '../../services/auth.service';
   `
 })
 export class FacilitatorPageComponent {
-  private readonly auth = inject(AuthService);
+  private readonly auth = inject(UnifiedAuthService);
   private readonly router = inject(Router);
 
-  readonly authorized = computed(() => {
-    const r = this.auth.state()?.role;
-    return r === 'FACILITATOR' || r === 'COORDINATOR';
-  });
+  readonly authorized = computed(() => this.auth.isStaff());
 
   logout(): void {
     this.auth.logout();

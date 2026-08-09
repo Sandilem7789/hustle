@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService, CommunityStats, BusinessProfile } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 import * as L from 'leaflet';
 
@@ -456,7 +456,7 @@ import * as L from 'leaflet';
 })
 export class OperationsPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
-  private readonly auth = inject(AuthService);
+  private readonly auth = inject(UnifiedAuthService);
   private readonly router = inject(Router);
 
   readonly stats = signal<CommunityStats[]>([]);
@@ -465,10 +465,7 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
   readonly communityHustlers = signal<BusinessProfile[]>([]);
   readonly hustlersLoading = signal(false);
 
-  readonly authorized = computed(() => {
-    const r = this.auth.state()?.role;
-    return r === 'FACILITATOR' || r === 'COORDINATOR';
-  });
+  readonly authorized = computed(() => this.auth.isStaff());
 
   private map: L.Map | null = null;
 
