@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import * as QRCode from 'qrcode';
 import { ApiService, OrderResponse } from '../../services/api.service';
 import { CustomerAuthService } from '../../services/customer-auth.service';
 
@@ -61,6 +62,16 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
             📍 {{ order.deliveryAddress }}
           </div>
 
+          <div class="pickup-qr-box" *ngIf="needsPickupQr(order)">
+            <ng-container *ngIf="qrDataUrls()[order.id]; else qrLoading">
+              <img [src]="qrDataUrls()[order.id]" alt="Pickup QR code" class="pickup-qr-img" />
+            </ng-container>
+            <ng-template #qrLoading>
+              <p class="muted">Generating pickup code…</p>
+            </ng-template>
+            <p class="pickup-qr-label">Show this to the seller when you collect your order</p>
+          </div>
+
           <div class="order-total">
             <span class="total-label">Total</span>
             <span class="total-amount">R {{ order.totalAmount | number:'1.2-2' }}</span>
@@ -92,6 +103,10 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
 
     .delivery-addr { font-size: 0.85rem; color: #78716C; margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(245,184,0,0.06); border: 1px solid rgba(245,184,0,0.2); border-radius: 0.75rem; }
 
+    .pickup-qr-box { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding: 1rem; background: #FAFAF9; border: 2px dashed #E7E5E4; border-radius: 1rem; text-align: center; }
+    .pickup-qr-img { width: 160px; height: 160px; }
+    .pickup-qr-label { font-size: 0.8rem; font-weight: 700; color: #57534E; margin: 0; }
+
     .order-total { display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 2px solid #E7E5E4; }
     .total-label { font-size: 0.8rem; font-weight: 800; color: #A8A29E; text-transform: uppercase; letter-spacing: 0.05em; }
     .total-amount { font-size: 1.2rem; font-weight: 800; color: #1C1917; }
@@ -103,6 +118,7 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
     .status-driver-assigned { background: rgba(139,47,201,0.1); color: #8B2FC9; }
     .status-en-route { background: rgba(245,184,0,0.15); color: #92620A; }
     .status-delivered { background: rgba(45,179,68,0.12); color: #166534; }
+    .status-collected { background: rgba(45,179,68,0.12); color: #166534; }
     .status-cancelled { background: rgba(229,57,53,0.1); color: #E53935; }
 
     .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
@@ -116,6 +132,7 @@ export class CustomerOrdersPageComponent implements OnInit {
 
   orders = signal<OrderResponse[]>([]);
   loading = signal(false);
+  qrDataUrls = signal<Record<string, string>>({});
 
   ngOnInit(): void {
     if (!this.customerAuth.isLoggedIn()) return;
@@ -128,9 +145,26 @@ export class CustomerOrdersPageComponent implements OnInit {
       next: (list) => {
         this.orders.set([...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
         this.loading.set(false);
+        this.generateQrCodes(list);
       },
       error: () => this.loading.set(false)
     });
+  }
+
+  needsPickupQr(order: OrderResponse): boolean {
+    return order.fulfillmentType === 'COLLECTION' && order.status !== 'COLLECTED' && order.status !== 'CANCELLED';
+  }
+
+  private async generateQrCodes(list: OrderResponse[]): Promise<void> {
+    const pending = list.filter(o => this.needsPickupQr(o) && o.pickupToken && !this.qrDataUrls()[o.id]);
+    for (const order of pending) {
+      try {
+        const dataUrl = await QRCode.toDataURL(order.pickupToken!, { width: 220, margin: 1 });
+        this.qrDataUrls.update(m => ({ ...m, [order.id]: dataUrl }));
+      } catch {
+        // QR generation failed — customer can still reference the order id with the seller
+      }
+    }
   }
 
   statusLabel(status: string): string {
@@ -140,6 +174,7 @@ export class CustomerOrdersPageComponent implements OnInit {
       DRIVER_ASSIGNED: 'Driver Assigned',
       EN_ROUTE: 'En Route',
       DELIVERED: 'Delivered',
+      COLLECTED: 'Collected',
       CANCELLED: 'Cancelled'
     };
     return map[status] ?? status;
@@ -152,6 +187,7 @@ export class CustomerOrdersPageComponent implements OnInit {
       DRIVER_ASSIGNED: 'status-driver-assigned',
       EN_ROUTE: 'status-en-route',
       DELIVERED: 'status-delivered',
+      COLLECTED: 'status-collected',
       CANCELLED: 'status-cancelled'
     };
     return map[status] ?? 'status-pending';

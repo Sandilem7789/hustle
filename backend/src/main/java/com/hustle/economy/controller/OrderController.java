@@ -2,6 +2,7 @@ package com.hustle.economy.controller;
 
 import com.hustle.economy.dto.DistanceCheckRequest;
 import com.hustle.economy.dto.DistanceCheckResponse;
+import com.hustle.economy.dto.OrderCollectRequest;
 import com.hustle.economy.dto.OrderRequest;
 import com.hustle.economy.dto.OrderResponse;
 import com.hustle.economy.entity.BusinessProfile;
@@ -58,6 +59,14 @@ public class OrderController {
         BusinessProfile profile = authService.requireAuth(token);
         OrderStatus newStatus = OrderStatus.valueOf(body.get("status"));
         return ResponseEntity.ok(orderService.updateOrderStatus(id, newStatus, profile.getId()));
+    }
+
+    @PostMapping("/collect")
+    public ResponseEntity<OrderResponse> collectOrder(
+            @RequestHeader("X-Auth-Token") String token,
+            @RequestBody @Valid OrderCollectRequest req) {
+        BusinessProfile profile = authService.requireAuth(token);
+        return ResponseEntity.ok(orderService.collectOrder(req.getPickupToken(), profile.getId()));
     }
 
     @PostMapping("/validate-distance")

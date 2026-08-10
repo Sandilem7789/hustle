@@ -89,6 +89,7 @@ public class OrderService {
                 .deliveryLng(req.getDeliveryLng())
                 .status(OrderStatus.PENDING)
                 .businessPurchaseOrderRef(req.getBusinessPurchaseOrderRef())
+                .pickupToken(UUID.randomUUID().toString())
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .items(new ArrayList<>())
@@ -117,13 +118,13 @@ public class OrderService {
         savedOrder.getItems().addAll(orderItems);
         savedOrder = orderRepository.save(savedOrder);
 
-        return toResponse(savedOrder);
+        return toResponse(savedOrder, true);
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> listOrdersByCustomer(UUID customerId) {
         return orderRepository.findByCustomer_IdOrderByCreatedAtDesc(customerId)
-                .stream().map(this::toResponse).toList();
+                .stream().map(o -> toResponse(o, true)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -141,6 +142,11 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this order");
         }
 
+        if (newStatus == OrderStatus.COLLECTED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Scan the customer's pickup QR code to mark an order as collected");
+        }
+
         order.setStatus(newStatus);
         order.setUpdatedAt(OffsetDateTime.now());
         order = orderRepository.save(order);
@@ -148,6 +154,34 @@ public class OrderService {
         if (newStatus == OrderStatus.CONFIRMED && order.getFulfillmentType() == FulfillmentType.DELIVERY) {
             dispatchService.createJob(order);
         }
+
+        return toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse collectOrder(String pickupToken, UUID businessProfileId) {
+        Order order = orderRepository.findByPickupToken(pickupToken)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No order found for this code"));
+
+        if (!order.getHustlerProfile().getId().equals(businessProfileId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this order");
+        }
+
+        if (order.getFulfillmentType() != FulfillmentType.COLLECTION) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order is not a collection order");
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This order was cancelled");
+        }
+
+        if (order.getStatus() == OrderStatus.COLLECTED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This order was already collected");
+        }
+
+        order.setStatus(OrderStatus.COLLECTED);
+        order.setUpdatedAt(OffsetDateTime.now());
+        order = orderRepository.save(order);
 
         return toResponse(order);
     }
@@ -181,6 +215,10 @@ public class OrderService {
     }
 
     private OrderResponse toResponse(Order order) {
+        return toResponse(order, false);
+    }
+
+    private OrderResponse toResponse(Order order, boolean includePickupToken) {
         List<OrderItemResponse> items = order.getItems().stream()
                 .map(i -> OrderItemResponse.builder()
                         .id(i.getId().toString())
@@ -209,6 +247,7 @@ public class OrderService {
                 .items(items)
                 .totalAmount(order.getTotalAmount())
                 .createdAt(order.getCreatedAt().toString())
+                .pickupToken(includePickupToken ? order.getPickupToken() : null)
                 .build();
     }
 }

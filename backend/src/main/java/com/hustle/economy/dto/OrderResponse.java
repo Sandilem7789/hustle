@@ -24,4 +24,5 @@ public class OrderResponse {
     private List<OrderItemResponse> items;
     private BigDecimal totalAmount;
     private String createdAt;
+    private String pickupToken;
 }

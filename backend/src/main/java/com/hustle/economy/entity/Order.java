@@ -53,6 +53,9 @@ public class Order {
 
     private String businessPurchaseOrderRef;
 
+    @Column(unique = true)
+    private String pickupToken;
+
     @Column(nullable = false)
     private OffsetDateTime createdAt;
 

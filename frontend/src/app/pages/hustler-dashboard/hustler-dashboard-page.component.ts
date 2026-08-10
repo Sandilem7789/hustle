@@ -365,7 +365,12 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
                   </label>
                   <label>
                     <span>Replace image</span>
-                    <input type="file" accept="image/*" (change)="onEditFileChange($event)" class="file-input" />
+                    <div class="image-source-row">
+                      <button type="button" class="image-source-btn" (click)="editCameraInput.click()">📷 Take photo</button>
+                      <button type="button" class="image-source-btn" (click)="editGalleryInput.click()">🖼️ Choose from gallery</button>
+                    </div>
+                    <input #editCameraInput type="file" accept="image/*" capture="environment" (change)="onEditFileChange($event)" class="file-input-hidden" />
+                    <input #editGalleryInput type="file" accept="image/*" (change)="onEditFileChange($event)" class="file-input-hidden" />
                     <small *ngIf="uploadLoading()">Uploading…</small>
                   </label>
                   <div class="edit-actions">
@@ -422,6 +427,9 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
                 <button class="btn-cancel-order" (click)="cancelOrder(order.id)" [disabled]="orderActionId() === order.id">
                   ✕ Cancel
                 </button>
+              </div>
+              <div class="order-actions" *ngIf="order.fulfillmentType === 'COLLECTION' && order.status === 'CONFIRMED'">
+                <button class="btn-confirm" (click)="openCollectScanModal()">📷 Scan to collect</button>
               </div>
               <p *ngIf="orderError() && orderActionId() === order.id" class="error">{{ orderError() }}</p>
             </article>
@@ -545,13 +553,13 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
       </div>
 
       <!-- ── BARCODE SCAN MODAL (product add/edit capture + POS scanning) ── -->
-      <div class="modal-overlay" *ngIf="barcodeModalMode()" (click)="onBarcodeOverlayClick($event)">
+      <div class="modal-overlay scanner-overlay" *ngIf="barcodeModalMode()" (click)="onBarcodeOverlayClick($event)">
         <div class="modal-sheet barcode-modal-sheet">
           <div class="modal-head">
-            <h2>{{ barcodeModalMode() === 'pos' ? 'Scan items' : 'Scan barcode' }}</h2>
+            <h2>{{ barcodeModalMode() === 'pos' ? 'Scan items' : barcodeModalMode() === 'collect' ? 'Scan pickup code' : 'Scan barcode' }}</h2>
             <button class="modal-close" (click)="barcodeModalMode.set(null)" aria-label="Close scanner">✕</button>
           </div>
-          <app-barcode-scanner [active]="!posConfirming()" (scanned)="onBarcodeCaptured($event)"></app-barcode-scanner>
+          <app-barcode-scanner [active]="!posConfirming() && !collectScanBusy()" (scanned)="onBarcodeCaptured($event)"></app-barcode-scanner>
           <ng-container *ngIf="barcodeModalMode() === 'pos'">
             <p *ngIf="posLastAdded()" class="success" style="margin-top:0.5rem">✓ Added {{ posLastAdded() }}</p>
             <p *ngIf="posScanError()" class="error" style="margin-top:0.5rem">{{ posScanError() }}</p>
@@ -569,6 +577,11 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
                 <button type="button" class="pos-confirm-add" (click)="confirmPendingScan()">+ Add</button>
               </div>
             </div>
+          </ng-container>
+          <ng-container *ngIf="barcodeModalMode() === 'collect'">
+            <p class="scan-hint-text">Ask the customer to show their pickup QR code</p>
+            <p *ngIf="collectSuccess()" class="success" style="margin-top:0.5rem">✓ Order marked as collected</p>
+            <p *ngIf="collectScanError()" class="error" style="margin-top:0.5rem">{{ collectScanError() }}</p>
           </ng-container>
         </div>
       </div>
@@ -641,7 +654,12 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
             </label>
             <label>
               <span>Product image</span>
-              <input type="file" accept="image/*" (change)="onFileChange($event)" class="file-input" />
+              <div class="image-source-row">
+                <button type="button" class="image-source-btn" (click)="addCameraInput.click()">📷 Take photo</button>
+                <button type="button" class="image-source-btn" (click)="addGalleryInput.click()">🖼️ Choose from gallery</button>
+              </div>
+              <input #addCameraInput type="file" accept="image/*" capture="environment" (change)="onFileChange($event)" class="file-input-hidden" />
+              <input #addGalleryInput type="file" accept="image/*" (change)="onFileChange($event)" class="file-input-hidden" />
               <div *ngIf="imagePreview()" class="preview-wrap">
                 <img [src]="imagePreview()!" alt="preview" class="preview" />
               </div>
@@ -780,6 +798,9 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     select { appearance: none; -webkit-appearance: none; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 16px; padding-right: 2.5rem; cursor: pointer; }
     select:focus { background-color: white; }
     .file-input { border: none; padding: 0; font-size: 0.9rem; min-height: unset !important; }
+    .file-input-hidden { display: none; }
+    .image-source-row { display: flex; gap: 0.5rem; }
+    .image-source-btn { flex: 1; border: 2px solid #E7E5E4; border-radius: 0.75rem; background: white; color: #1C1917; font-weight: 700; font-size: 0.85rem; padding: 0.6rem 0.5rem; cursor: pointer; font-family: inherit; min-height: 48px; }
     .preview-wrap { margin-top: 0.5rem; }
     .preview { width: 100%; max-height: 140px; object-fit: cover; border-radius: 0.75rem; }
     .primary { border: none; border-radius: 999px; padding: 0.9rem; font-size: 1rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
@@ -788,6 +809,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     @media (max-width: 600px) { .primary.span-2 { grid-column: span 1; } }
     .primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
     .success { color: #2DB344; font-weight: 700; margin-top: 0.75rem; }
+    .scan-hint-text { text-align: center; font-size: 0.85rem; color: #78716C; margin: 0.5rem 0 0; }
     .error   { color: #E53935; font-weight: 700; margin-top: 0.75rem; }
     .checkbox-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: #1C1917; cursor: pointer; flex-direction: row; }
     .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #2DB344; flex-shrink: 0; min-height: unset !important; }
@@ -978,6 +1000,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .order-status-confirmed { background: rgba(27,111,212,0.1); color: #1B6FD4; }
     .order-status-cancelled { background: rgba(229,57,53,0.1); color: #E53935; }
     .order-status-delivered { background: rgba(45,179,68,0.12); color: #2DB344; }
+    .order-status-collected { background: rgba(45,179,68,0.12); color: #2DB344; }
 
     /* ── Logout button ── */
     .logout-btn {
@@ -1043,6 +1066,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
 
     /* ── POS success confirmation ── */
     .pos-success-overlay { z-index: 300; align-items: center; }
+    .scanner-overlay { z-index: 250; }
     .pos-success-sheet { background: white; border-radius: 1.5rem; padding: 2.25rem 1.75rem; width: 100%; max-width: 340px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; animation: slideUp 0.25s ease; }
     .pos-success-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(45,179,68,0.12); color: #2DB344; font-size: 2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem; }
     .pos-success-label { font-size: 0.95rem; font-weight: 700; color: #78716C; margin: 0; }
@@ -1336,7 +1360,7 @@ export class HustlerDashboardPageComponent implements OnInit {
   saveError = signal('');
 
   // ── Barcode scan modal (add/edit product capture + POS scanning) ───────────
-  barcodeModalMode = signal<'add' | 'edit' | 'pos' | null>(null);
+  barcodeModalMode = signal<'add' | 'edit' | 'pos' | 'collect' | null>(null);
   private pendingBarcodeForNewProduct: string | null = null;
 
   onBarcodeCaptured(code: string): void {
@@ -1350,6 +1374,8 @@ export class HustlerDashboardPageComponent implements OnInit {
     } else if (mode === 'pos') {
       this.onPosScan(code);
       // stays open — a cashier scans several items in a row; closed manually via ✕
+    } else if (mode === 'collect') {
+      this.onCollectScan(code);
     }
   }
 
@@ -1726,9 +1752,41 @@ export class HustlerDashboardPageComponent implements OnInit {
   orderStatusClass(status: string): string {
     const map: Record<string, string> = {
       PENDING: 'order-status-pending', CONFIRMED: 'order-status-confirmed',
-      CANCELLED: 'order-status-cancelled', DELIVERED: 'order-status-delivered'
+      CANCELLED: 'order-status-cancelled', DELIVERED: 'order-status-delivered',
+      COLLECTED: 'order-status-collected'
     };
     return map[status] ?? 'order-status-pending';
+  }
+
+  // ── Collection pickup scan ──────────────────────────────────────────────────
+  collectScanError = signal('');
+  collectSuccess = signal(false);
+  collectScanBusy = signal(false);
+
+  openCollectScanModal(): void {
+    this.collectScanError.set('');
+    this.collectSuccess.set(false);
+    this.collectScanBusy.set(false);
+    this.barcodeModalMode.set('collect');
+  }
+
+  onCollectScan(code: string): void {
+    const token = this.auth.getToken();
+    if (!token) return;
+    this.collectScanError.set('');
+    this.collectScanBusy.set(true);
+    this.api.collectOrder(code, token).subscribe({
+      next: (updated) => {
+        this.incomingOrders.update(list => list.map(o => o.id === updated.id ? updated : o));
+        this.collectSuccess.set(true);
+        this.collectScanBusy.set(false);
+        setTimeout(() => { this.collectSuccess.set(false); this.barcodeModalMode.set(null); }, 1200);
+      },
+      error: (err) => {
+        this.collectScanBusy.set(false);
+        this.collectScanError.set(err?.error?.message || 'Could not verify that code. Try again.');
+      }
+    });
   }
 
   // ── Income ───────────────────────────────────────────────────────────────────

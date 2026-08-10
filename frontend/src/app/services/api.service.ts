@@ -80,6 +80,12 @@ export class ApiService {
     });
   }
 
+  collectOrder(pickupToken: string, hustlerToken: string): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.baseUrl}/api/orders/collect`, { pickupToken }, {
+      headers: new HttpHeaders({ 'X-Auth-Token': hustlerToken })
+    });
+  }
+
   validateDeliveryDistance(payload: { sellerId: string; deliveryLat: number; deliveryLng: number }): Observable<DistanceCheckResponse> {
     return this.http.post<DistanceCheckResponse>(`${this.baseUrl}/api/orders/validate-distance`, payload);
   }
@@ -558,6 +564,7 @@ export interface OrderResponse {
   items: OrderItemResponse[];
   totalAmount: number;
   createdAt: string;
+  pickupToken?: string;
 }
 
 export interface DistanceCheckResponse {
