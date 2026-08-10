@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 // Minimal shape of the native BarcodeDetector API (not yet in lib.dom.d.ts).
@@ -116,6 +116,7 @@ declare const BarcodeDetector: {
   `
 })
 export class BarcodeScannerComponent implements OnInit, OnDestroy {
+  @Input() active = true;
   @Output() scanned = new EventEmitter<string>();
   @ViewChild('videoEl') videoEl?: ElementRef<HTMLVideoElement>;
 
@@ -200,7 +201,7 @@ export class BarcodeScannerComponent implements OnInit, OnDestroy {
     });
 
     const tick = async () => {
-      if (video.readyState >= 2) {
+      if (this.active && video.readyState >= 2) {
         try {
           const codes = await detector.detect(video);
           if (codes.length > 0) {
@@ -220,7 +221,7 @@ export class BarcodeScannerComponent implements OnInit, OnDestroy {
       const { BrowserMultiFormatReader } = await import('@zxing/browser');
       const reader = new BrowserMultiFormatReader();
       this.zxingControls = await reader.decodeFromStream(this.stream!, video, (result) => {
-        if (result) {
+        if (result && this.active) {
           this.handleDetection(result.getText());
         }
       });
@@ -240,7 +241,25 @@ export class BarcodeScannerComponent implements OnInit, OnDestroy {
     if (code !== this.lastCode || now - this.lastEmitAt > this.COOLDOWN_MS) {
       this.lastCode = code;
       this.lastEmitAt = now;
+      this.playScanBeep();
       this.scanned.emit(code);
+    }
+  }
+
+  private playScanBeep(): void {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 1800;
+      gain.gain.value = 0.15;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.09);
+      osc.onended = () => ctx.close();
+    } catch {
+      // audio not available on this device — non-critical
     }
   }
 }

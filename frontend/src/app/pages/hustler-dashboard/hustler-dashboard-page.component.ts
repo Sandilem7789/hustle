@@ -551,13 +551,23 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
             <h2>{{ barcodeModalMode() === 'pos' ? 'Scan items' : 'Scan barcode' }}</h2>
             <button class="modal-close" (click)="barcodeModalMode.set(null)" aria-label="Close scanner">✕</button>
           </div>
-          <app-barcode-scanner (scanned)="onBarcodeCaptured($event)"></app-barcode-scanner>
+          <app-barcode-scanner [active]="!posConfirming()" (scanned)="onBarcodeCaptured($event)"></app-barcode-scanner>
           <ng-container *ngIf="barcodeModalMode() === 'pos'">
             <p *ngIf="posLastAdded()" class="success" style="margin-top:0.5rem">✓ Added {{ posLastAdded() }}</p>
             <p *ngIf="posScanError()" class="error" style="margin-top:0.5rem">{{ posScanError() }}</p>
             <div class="unknown-barcode-banner" *ngIf="posUnknownBarcode() as code">
               <span>No product found for code <strong>{{ code }}</strong></span>
               <button type="button" (click)="createProductFromBarcode()">+ Create product</button>
+            </div>
+            <div class="pos-confirm-banner" *ngIf="posPendingProduct() as product">
+              <div class="pos-confirm-info">
+                <span class="pos-confirm-name">{{ product.name }}</span>
+                <span class="pos-confirm-price">R {{ product.price | number:'1.2-2' }}</span>
+              </div>
+              <div class="pos-confirm-actions">
+                <button type="button" class="pos-confirm-cancel" (click)="cancelPendingScan()">Cancel</button>
+                <button type="button" class="pos-confirm-add" (click)="confirmPendingScan()">+ Add</button>
+              </div>
             </div>
           </ng-container>
         </div>
@@ -995,6 +1005,14 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .pos-section-title { margin: 0 0 0.25rem; font-size: 1rem; font-weight: 800; color: #1C1917; }
     .unknown-barcode-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; background: rgba(245,184,0,0.1); border: 1px solid rgba(245,184,0,0.35); border-radius: 0.75rem; padding: 0.7rem 0.9rem; font-size: 0.85rem; color: #1C1917; }
     .unknown-barcode-banner button { border: none; border-radius: 999px; background: #F5B800; color: #1C1917; font-weight: 800; font-size: 0.8rem; padding: 0.45rem 0.9rem; cursor: pointer; font-family: inherit; min-height: 36px; }
+    .pos-confirm-banner { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; background: #F0FDF4; border: 2px solid #16A34A; border-radius: 0.9rem; padding: 0.9rem 1rem; }
+    .pos-confirm-info { display: flex; flex-direction: column; gap: 0.15rem; text-align: center; }
+    .pos-confirm-name { font-size: 1.05rem; font-weight: 800; color: #1C1917; }
+    .pos-confirm-price { font-size: 0.9rem; font-weight: 700; color: #16A34A; }
+    .pos-confirm-actions { display: flex; gap: 0.6rem; }
+    .pos-confirm-cancel, .pos-confirm-add { flex: 1; border: none; border-radius: 0.75rem; padding: 0.8rem; font-weight: 800; font-size: 0.95rem; cursor: pointer; font-family: inherit; min-height: 48px; }
+    .pos-confirm-cancel { background: #F5F5F4; color: #57534E; }
+    .pos-confirm-add { background: #16A34A; color: white; }
     .quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.6rem; margin-top: 0.75rem; }
     .quick-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; border: 1.5px solid #E7E5E4; border-radius: 0.85rem; padding: 0.7rem 0.8rem; background: #FAFAF9; cursor: pointer; font-family: inherit; min-height: 60px; text-align: left; transition: border-color 0.15s, background 0.15s; }
     .quick-tile:hover, .quick-tile:active { border-color: #F5B800; background: rgba(245,184,0,0.06); }
@@ -1349,6 +1367,8 @@ export class HustlerDashboardPageComponent implements OnInit {
   posScanError = signal('');
   posUnknownBarcode = signal<string | null>(null);
   posLastAdded = signal<string | null>(null);
+  posConfirming = signal(false);
+  posPendingProduct = signal<ProductResponse | null>(null);
   posCompleting = signal(false);
   posSuccess = signal<{ total: number } | null>(null);
   posError = signal('');
@@ -1382,13 +1402,18 @@ export class HustlerDashboardPageComponent implements OnInit {
     this.posScanError.set('');
     this.posUnknownBarcode.set(null);
     this.posLastAdded.set(null);
+    this.posConfirming.set(false);
+    this.posPendingProduct.set(null);
     this.barcodeModalMode.set('pos');
   }
 
   onPosScan(code: string): void {
     this.posScanError.set('');
     this.api.getProductByBarcode(code, this.auth.getToken()!).subscribe({
-      next: (product) => this.addProductToBasket(product),
+      next: (product) => {
+        this.posPendingProduct.set(product);
+        this.posConfirming.set(true);
+      },
       error: (err) => {
         if (err.status === 404) {
           this.posUnknownBarcode.set(code);
@@ -1397,6 +1422,18 @@ export class HustlerDashboardPageComponent implements OnInit {
         }
       }
     });
+  }
+
+  confirmPendingScan(): void {
+    const product = this.posPendingProduct();
+    if (product) this.addProductToBasket(product);
+    this.posPendingProduct.set(null);
+    this.posConfirming.set(false);
+  }
+
+  cancelPendingScan(): void {
+    this.posPendingProduct.set(null);
+    this.posConfirming.set(false);
   }
 
   addProductToBasket(product: ProductResponse): void {
