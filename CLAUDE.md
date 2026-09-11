@@ -254,8 +254,8 @@ Implementation:
 ### Git
 - Commit messages: `type: short description` — types are `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 - One logical change per commit — do not bundle unrelated changes
-- Always push to `main` and pull after pushing to stay in sync with remote collaborators (Mesh Audio Bot)
-- Before starting any new feature, pull first: `git pull origin main`
+- `main` is production and auto-deploys. Only the senior (Sandile.Claude) pushes to `main`, by fast-forwarding `development` after review. The junior (Sandile.Codex) pushes to `development` or `feature/*` only.
+- Before starting any new feature, pull first: `git pull origin development`. Pull again after pushing to stay in sync with remote collaborators (Mesh Audio Bot).
 
 ### Team workflow (Senior / Junior)
 - Two developer identities, both driven by Sandile: **Sandile.Claude** (senior, Claude Code sessions) and **Sandile.Codex** (junior, Codex sessions). `AGENTS.md` is the junior's standing brief.
@@ -264,6 +264,7 @@ Implementation:
 - Each entry ends with a *Senior changes since last review* list so the junior can see what the senior touched.
 - Close an entry only after verifying the junior's fix. Answer anything under *Questions for senior* in the same file.
 - `main` is production (auto-deploys). The junior works on `development` / `feature/*`; only the senior merges `development` → `main`.
+- Future agents added to the project report to both Sandile.Codex and Sandile.Claude. Both review their work and reach decisions jointly, recorded in `CODE_REVIEWS.md`. The merge rule above is unchanged.
 
 ### Building features
 - Read the relevant existing files before writing any new code

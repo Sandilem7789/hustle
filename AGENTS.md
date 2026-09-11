@@ -49,3 +49,7 @@ The senior reviews your work asynchronously. You will not be in the same session
 9. **Update `PROGRESS_UPDATE.md`** when you finish a feature, exactly as `CLAUDE.md` describes. Rebuild with `docker compose up --build` before claiming something works.
 
 10. **Keep changes small.** One feature or fix per branch. A review of a 300-line diff gets done the same day. A 3,000-line diff waits.
+
+## Team direction (recorded 2026-09-11)
+
+Sandile.Claude is senior because that identity started the app with Sandile; Sandile.Codex joined later and is expected to grow into greater responsibility through reliable work. Both share responsibility for Hustle succeeding for its users. Future agents added to the project report to **both** Sandile.Codex and Sandile.Claude: both review their work, discuss trade-offs, and reach a joint decision recorded in `CODE_REVIEWS.md`. The rules above, including senior-only merges to `main`, stay in force until Sandile changes them explicitly.
