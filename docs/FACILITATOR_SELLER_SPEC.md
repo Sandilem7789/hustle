@@ -172,4 +172,24 @@ Reviewing this spec (Sandile.Codex, Claude in VS Code, Claude chat / BA)? **Appe
 
 Format: `**<who>, <date>:** <note>`
 
-_(none yet)_
+**Sandile.Claude (VS Code), 2026-09-11:** Verified §2 against the code: `AppUserRole` = `{CUSTOMER, HUSTLER, DRIVER, FACILITATOR, COORDINATOR}`, `BusinessVerification.verifiedBy` and `Applicant.capturedBy` are `String`, `Order` has `transactionType`/`fulfillmentType`/`totalAmount` and no attribution field, and the only payout logic is `DispatchService` (10% of order total, R10 minimum). The grounding is accurate. Notes below are in spec order.
+
+**Sandile.Claude (VS Code), 2026-09-11 — D1, prerequisite:** Agree with a distinct `FACILITATOR_SELLER` role. But there are two role enums today: `AppUserRole` (per-user, in `app_user_roles`) and the legacy `UserRole` (`HUSTLER, FACILITATOR, COORDINATOR`), and `UnifiedAuthService.requireRole()` takes `UserRole`. Adding the new role means adding it to both or finishing the enum unification first. Put "retire `UserRole`" as step 0 of §9 or every role check for the new role will be ambiguous.
+
+**Sandile.Claude (VS Code), 2026-09-11 — §4.1 idempotency vs reversal:** The unique constraint on `(eventType, sourceType, sourceId)` conflicts with D2's compensating `REVERSED` row, which has the same three values. Either add `reversesEarningId FK → FacilitatorEarning (nullable)` and make the uniqueness `(eventType, sourceType, sourceId) WHERE reversesEarningId IS NULL`, or include a `direction` (CREDIT/DEBIT) column in the key. Note a partial unique index cannot be expressed through Hibernate `ddl-auto=update`, which brings up the next point.
+
+**Sandile.Claude (VS Code), 2026-09-11 — "additive, migration-safe":** True only while the schema is managed by `ddl-auto=update`, which is exactly the tool that cannot express partial indexes, check constraints, or backfills (the `verifiedByUser` backfill in §4.4). Recommend Flyway lands before step 1 of this sprint. This is a money ledger; it should not be the first table whose shape is guessed by Hibernate against production data.
+
+**Sandile.Claude (VS Code), 2026-09-11 — §5 approval bottleneck:** Every earning row passing through a `COORDINATOR` by hand will not scale past one community. Suggest: `VERIFICATION` and `SELLER_ONBOARDED` rows auto-approve after a fixed window (say 7 days) unless flagged, coordinators approve in bulk via a `PATCH /api/facilitator-earnings/approve` taking a list of ids, and only reversals stay strictly manual. Keeps the audit trail, removes the queue.
+
+**Sandile.Claude (VS Code), 2026-09-11 — §6 envelope:** The `{data, message, success}` envelope is in `CLAUDE.md` but no existing controller uses it; they all return bare DTOs via `ResponseEntity.ok(...)`. Either this sprint follows the code as it is, or the convention is fixed across the API first. Don't introduce a third style.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q1:** Flat fee. A percentage of `totalAmount` on cash-assisted orders pays the facilitator on a number nobody verifies, which is the one incentive we should not create.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q2:** Coordinator-granted after training. Add the revoke path to the design now: on revoke, `PENDING` rows freeze (cannot be approved) and `APPROVED` unpaid rows still pay out. Otherwise revocation becomes a way to withhold earned money.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q4 self-dealing:** The guards in §5 need a concrete join to work: "the assister is the seller of that order" compares an `AppUser` with a `BusinessProfile`. Confirm the `AppUser` ↔ `BusinessProfile` link exists and is unique before relying on it; if it is not, the guard is unenforceable.
+
+**Sandile.Claude (VS Code), 2026-09-11 — missing open question:** Where does the money come from? A programme grant means payouts are capped per period and the rate table needs a budget ceiling; platform revenue means earnings depend on GMV. This decides whether `EarningRate` needs a monthly cap per facilitator or per community. Add as Q6.
+
+**Sandile.Claude (VS Code), 2026-09-11 — nit:** Section numbering skips from 9 to 11.

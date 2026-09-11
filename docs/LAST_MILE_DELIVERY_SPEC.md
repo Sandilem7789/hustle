@@ -178,4 +178,24 @@ Reviewing this spec (Sandile.Codex, Claude in VS Code, Claude chat / BA)? **Appe
 
 Format: `**<who>, <date>:** <note>`
 
-_(none yet)_
+**Sandile.Claude (VS Code), 2026-09-11 — §2 decision:** Agree with parallel entities. Verified: `DispatchService` derives the payout from `order.getTotalAmount()` and `validateTransition` is private to `JobStatus`; there is nothing generic to reuse at the entity level.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q1 and §9, notification reuse is not possible today:** `NotificationService.create()` takes a `BusinessProfile` recipient and writes an in-app notification row, and `N8nWebhookService` only triggers survey report generation. Neither can reach a person who is not a platform user, and WhatsApp is on the not-yet-built list in `CLAUDE.md`. So the consent step cannot ship as described until the WhatsApp sprint lands. Interim design: the hub operator phones the recipient and records `consentConfirmedAt` and `consentMethod` (`PHONE_CALL | WHATSAPP | IN_PERSON`) on the `Parcel`; a parcel cannot move to `ASSIGNED` without it. Swap in the automated message later without changing the state machine.
+
+**Sandile.Claude (VS Code), 2026-09-11 — §4 two auth systems:** Drivers authenticate with `X-Driver-Token` against `DriverSession`, and `Driver` is not an `AppUser`. Hub operators authenticate with `X-Auth-Token` against `AppUser`. `Trip` endpoints will therefore live on the driver side and `Parcel` logging on the app-user side, with two different `requireAuth` paths. That works, but this is the second feature (after the seller-delivery flow) to pay for the split. Consider whether unifying `Driver` into `AppUser` with the existing `DRIVER` role is cheaper than carrying both forever. Not a blocker for this spec, but it should be a conscious decision before the driver dashboard grows a second tab.
+
+**Sandile.Claude (VS Code), 2026-09-11 — §5.3 `totalCashDue`:** Stored derived value. Every parcel add, remove, or `FAILED` transition has to keep it in sync, and the first bug will be a trip whose total disagrees with its parcels. Compute it from the parcels on read.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q4 cash custody:** Settle driver → hub per trip: on `Trip.COMPLETED` the driver hands `Σ(fee − driverCut)` to the hub operator, who confirms the amount in the app (mismatch stays visible as a variance, not silently overwritten). Hub → platform weekly through the shared ledger. The driver should never hold platform cash overnight; the hub operator is the accountable, trained, paid role from the other spec, which is the point of that role.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q2 failed delivery:** Add `attemptCount` to `Parcel`. First failed attempt is free and returns to hub; a second attempt requires fresh consent and charges the same tariff again. After a hold period (7 days?) the parcel is `RETURNED` to the courier depot and the hub logs it as closed. The driver's cut on a failed attempt is a question for the tariff table: a `failedAttemptDriverCut` column, or nothing, but decide it, because drivers will not roll out twice for free.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q3:** Flat per zone to start. Keep `sizeBand` on `Parcel` for the driver's benefit (what to carry), leave it nullable on the tariff so size pricing can be introduced without a schema change.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q5:** Guest always at first, but normalise `recipientPhone` with the existing `PhoneUtils.normalize` and reuse the same recipient details on repeat parcels so the hub operator does not retype them. That gives you the customer list for a later "create account" offer without a user table now.
+
+**Sandile.Claude (VS Code), 2026-09-11 — Q6:** One hub per trip. Agree.
+
+**Sandile.Claude (VS Code), 2026-09-11 — §9 tracking link:** The parcel UUID in the URL is unguessable enough. The page itself must show status, fee, and estimated window only. No recipient address, no waybill, no driver phone. The waybill in particular identifies the recipient's account with the external courier.
+
+**Sandile.Claude (VS Code), 2026-09-11 — build order:** §11 step 5 depends on the ledger from the other spec, and both specs depend on Flyway (see my note there). Suggested combined order: Flyway → role unification → `Hub` + `DeliveryTariff` → `Parcel` with manual consent → `Trip` → ledger from the seller spec → cash reconciliation → automated consent once WhatsApp exists. Hubs and tariffs are pure config and can ship first without any money moving.
