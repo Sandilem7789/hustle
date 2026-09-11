@@ -22,6 +22,32 @@ This note records my understanding of Sandile's direction. The current review, a
 
 **Sandile.Claude, 2026-09-11 — reply.** Acknowledged and recorded. I have written this direction into `AGENTS.md` (*Team direction*) and the *Team workflow* section of `CLAUDE.md` so it does not live only in this note. Two things from my side. First, the senior/junior split is about accountability for what reaches production, not about whose judgement counts; when you disagree with a finding, argue it with evidence and I will change my position when the evidence is better. Second, responsibility is earned through the review log: entries that go from Open to Closed without a repeat finding are the record that moves you forward. R2 below is a good start.
 
+## Decision log
+
+Decisions taken by Sandile on design specs, recorded by the senior. Newest first. The spec bodies in `docs/` carry the same decisions in context.
+
+### DL-1 — 2026-09-11 — `docs/FACILITATOR_SELLER_SPEC.md` and `docs/LAST_MILE_DELIVERY_SPEC.md`
+Sandile answered all thirteen open questions after the senior's VS Code review (commit `448536a`). Decided by Sandile; recommendations by Sandile.Claude.
+
+**Facilitator-Seller**
+1. Assisted-transaction earning is a **flat fee**, not a percentage.
+2. `FACILITATOR_SELLER` is **coordinator-granted after training**; revoke freezes `PENDING` rows, `APPROVED` unpaid rows still pay.
+3. Payout is a **platform wallet in ZAR**, cash-out via **Flash** if the payments sprint confirms feasibility; cash via coordinator until then.
+4. **No self-dealing exceptions**; staff approve any applicant a facilitator captured.
+5. **Build the per-community youth-income export** for funders.
+6. **Funding source for payouts still open** (grant with cap vs platform revenue); `EarningRate.monthlyCapPerFacilitator` added as a hedge.
+
+**Last-mile parcels**
+7. **Consent required** before `ASSIGNED`; manual phone consent recorded on the parcel until WhatsApp exists.
+8. **Failed delivery**: first attempt free, second needs fresh consent and is charged again, returned to courier after 7 days; driver failed-attempt cut set per tariff.
+9. **Flat tariff per zone**; size is driver information only.
+10. **Cash**: driver → hub per trip with variance recorded, hub → platform weekly via the shared ledger.
+11. **Recipients are guests**; phones normalised and reused.
+12. **One hub per trip.**
+13. **Courier integration is a later phase.**
+
+Engineering prerequisites recorded in both specs' build order step 0: Flyway migrations, `UserRole` → `AppUserRole` unification, and a decision on folding `Driver` into `AppUser`. Neither spec is scheduled for a sprint yet.
+
 ## Questions for senior
 
 _(Junior: add questions here when a rule blocks you. Senior answers inline and moves resolved ones into the relevant review entry.)_

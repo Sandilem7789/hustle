@@ -1,6 +1,6 @@
 # Last-Mile Parcel Relay — Design Spec
 
-**Status:** Draft for review — design only, not yet approved for build.
+**Status:** Decisions recorded 2026-09-11 (§3, §8) — design only, not yet scheduled for a sprint. Build order in §11.
 **Author:** Sandile.Claude · **Date:** 2026-09-11
 **Relates to:** [`FACILITATOR_SELLER_SPEC.md`](FACILITATOR_SELLER_SPEC.md) — hubs are operated by the Facilitator-Seller layer.
 
@@ -28,7 +28,13 @@ A last-mile parcel has **none of those**: no thenga seller, no thenga order, no 
 
 - **Origination:** hub operator logs parcels as they physically arrive at the depot. Control sits with the trusted local layer (a Facilitator-Seller running a hub), not with the buyer self-requesting.
 - **Consolidation:** one driver **Trip** carries **many parcels** to many homes from a depot run.
-- **Payment:** **cash on delivery**, priced by a **fixed zone tariff** (e.g. Mkuze depot → KwaNgwenya = R\_\_), not per-km.
+- **Payment:** **cash on delivery**, priced by a **fixed zone tariff** (e.g. Mkuze depot → KwaNgwenya = R\_\_), not per-km. Flat per zone; parcel size does not change the price.
+- **Consent:** the recipient must agree to the fee before a parcel can be `ASSIGNED`. Until WhatsApp exists, the hub operator phones the recipient and records consent on the parcel.
+- **Failed delivery:** first failed attempt is free and the parcel returns to the hub; a second attempt needs fresh consent and is charged the tariff again; after 7 days unclaimed the parcel is `RETURNED` to the courier depot.
+- **Cash custody:** driver settles to the hub operator per trip; hub settles to the platform weekly through the shared ledger; the driver never holds platform cash overnight. Platform share accrues to the wallet machinery defined in the Facilitator-Seller spec (D4).
+- **Recipients:** always guests (name, phone, address). Phone numbers normalised with `PhoneUtils.normalize` so repeat recipients are recognised and reused.
+- **Trips:** one hub per trip.
+- **Courier integration:** waybill typed by hand. Barcode scanning and courier API lookups are a later phase.
 
 ---
 
@@ -68,7 +74,10 @@ loggedByUser   FK → AppUser           // hub operator who logged it
 courierName    String                 // external courier, free text ("Takealot / CourierGuy")
 waybillRef     String (nullable)      // external tracking number — treat as sensitive
 description    String                 // "medium box", so the driver knows what to carry
-sizeBand       enum ParcelSize        // SMALL | MEDIUM | LARGE (may affect tariff — see §8)
+sizeBand       enum ParcelSize        // SMALL | MEDIUM | LARGE — driver information only; tariff is flat per zone
+consentMethod  enum ConsentMethod (nullable) // PHONE_CALL | WHATSAPP | IN_PERSON — how the recipient agreed to the fee
+consentConfirmedAt timestamp (nullable) // required before ASSIGNED
+attemptCount   int @default(0)        // delivery attempts made
 recipientName  String
 recipientPhone String                 // PII — mask in lists, never log
 destCommunity  FK → Community
@@ -90,7 +99,7 @@ id           UUID
 driver       FK → Driver
 originHub    FK → Hub
 status       enum TripStatus          // OPEN | IN_PROGRESS | COMPLETED | CANCELLED
-totalCashDue BigDecimal(12,2)         // sum of deliveryFee for parcels on the trip
+// totalCashDue is not stored — computed on read as the sum of deliveryFee over the trip's parcels
 createdAt / startedAt / completedAt
 ```
 A Trip has many `Parcel`s (`parcel.trip_id`). Driver adds LOGGED parcels from `originHub` to a Trip, then works through them.
@@ -102,6 +111,7 @@ originHub      FK → Hub (nullable)    // or origin community if hub-agnostic
 destCommunity  FK → Community
 fee            BigDecimal(12,2)       // recipient pays this
 driverCut      BigDecimal(12,2)       // driver keeps this; platform keeps fee - driverCut
+failedAttemptDriverCut BigDecimal(12,2) (nullable) // paid to the driver for a FAILED attempt; null = nothing
 sizeBand       enum ParcelSize (nullable) // if pricing varies by size
 effectiveFrom / effectiveTo          // rate history — never edit in place, add a row
 active         boolean
@@ -112,32 +122,33 @@ Fee resolution at log time picks the active tariff for (hub/origin, destCommunit
 
 ## 6. Status flows
 
-**Parcel:** `LOGGED` → `ASSIGNED` (added to a Trip) → `OUT_FOR_DELIVERY` (Trip started) → `DELIVERED` (proof photo + cash marked) | `FAILED` (recipient unreachable) → `RETURNED` (back to hub). Server validates transitions, same pattern as `DispatchService.validateTransition`.
+**Parcel:** `LOGGED` → `ASSIGNED` (added to a Trip; **rejected unless `consentConfirmedAt` is set**) → `OUT_FOR_DELIVERY` (Trip started) → `DELIVERED` (proof photo + cash marked) | `FAILED` (recipient unreachable or refuses; `attemptCount` incremented, parcel goes back to `LOGGED` at the hub with consent cleared) → after 7 days unclaimed, `RETURNED` (to the courier depot, closed). A second attempt requires fresh consent and is charged the tariff again. Server validates transitions, same pattern as `DispatchService.validateTransition`.
 
 **Trip:** `OPEN` (driver assembling parcels) → `IN_PROGRESS` (left the hub) → `COMPLETED` (all parcels DELIVERED/FAILED). Completing a trip triggers cash reconciliation (§7).
 
 ---
 
-## 7. Cash flow & reconciliation *(needs sign-off — see §8)*
+## 7. Cash flow & reconciliation *(decided 2026-09-11)*
 
 Cash-on-delivery means money moves outside the app, so reconciliation is the risky part:
 1. Recipient pays the driver `deliveryFee` in cash on handover; driver marks `cashCollected = true`, `cashAmount`.
-2. Driver keeps `driverCut`; the remainder (`fee − driverCut`) is **owed to the platform/hub**.
-3. On Trip `COMPLETED`, the system computes total platform share owed and records it — settled via the same **`PayoutBatch`/ledger machinery proposed in the Facilitator-Seller spec** (reused, not rebuilt). The hub operator or coordinator confirms cash received.
+2. Driver keeps `driverCut`; the remainder (`fee − driverCut`) is **owed to the hub**.
+3. **Per trip, driver → hub:** on Trip `COMPLETED` the system computes the platform share owed (sum over delivered parcels) and the driver hands that cash to the hub operator on return. The hub operator confirms the amount received in the app; any mismatch is stored as a visible variance, never silently overwritten. The driver never holds platform cash overnight.
+4. **Weekly, hub → platform:** the hub's accumulated platform share is settled through the same **ledger / `PayoutBatch` / wallet machinery defined in the Facilitator-Seller spec** (reused, not rebuilt). The hub operator is the accountable party, which is why that role is a trained, paid one.
 
 This keeps every cent auditable and feeds the same "income generated per community" funder reporting.
 
 ---
 
-## 8. Open questions for Sandile
+## 8. Decisions (Sandile, 2026-09-11)
 
-1. **Recipient consent to the fee.** Since the hub logs the parcel (recipient didn't request it), the recipient must *agree to pay* before a driver rolls out. Do we send a WhatsApp/SMS (reuse `NotificationService` / `N8nWebhookService`) — "Your parcel is at Mkuze, delivery to KwaNgwenya is R\_\_, reply YES" — and only mark `ASSIGNED` after acceptance? *My lean: yes, an accept step; avoids a driver arriving to a refused fee.*
-2. **Failed delivery / no-show.** Recipient not home or won't pay → `RETURNED` to hub. Storage limit? Re-attempt fee? Who bears the wasted trip cost?
-3. **Does size affect the tariff,** or is it flat per zone regardless of parcel size? (`ParcelSize` is in the model but optional in `DeliveryTariff`.)
-4. **Cash reconciliation cadence** (§7) — settle per trip, daily, or weekly? And does the hub operator or the driver hold the platform's cash between settlements?
-5. **Recipient identity** — pure guest (name+phone+address) always, or offer "save as a thenga account" to build the customer base?
-6. **Multi-hub trips** — can one Trip collect from more than one hub (e.g. CourierGuy + PostNet in the same town run), or one hub per trip to start? *My lean: one hub per trip first.*
-7. **Courier integration** — for now `waybillRef` is free text the operator types. Barcode/waybill scanning + courier API lookups are a later phase, not now.
+1. **Recipient consent** — **Required before `ASSIGNED`.** Neither `NotificationService` (in-app, `BusinessProfile` recipients only) nor `N8nWebhookService` (survey reports only) can reach a non-user, and WhatsApp is not built. Interim: the hub operator phones the recipient and records `consentMethod` + `consentConfirmedAt`. The automated message replaces the phone call later without changing the state machine.
+2. **Failed delivery** — First attempt free, back to hub. Second attempt needs fresh consent and is charged again. `RETURNED` to courier after 7 days unclaimed. Driver compensation for a failed attempt comes from `DeliveryTariff.failedAttemptDriverCut`; the coordinator sets it per zone (may be zero).
+3. **Size and tariff** — **Flat per zone.** `sizeBand` stays on the parcel for the driver's information; `DeliveryTariff.sizeBand` stays nullable so size pricing can be added later without a schema change.
+4. **Cash custody and cadence** — **Driver → hub per trip, hub → platform weekly** (§7). The driver never holds platform cash overnight.
+5. **Recipient identity** — **Guest always.** Phones normalised with `PhoneUtils.normalize`; repeat recipients' details are reused rather than retyped. No account offer yet.
+6. **Multi-hub trips** — **One hub per trip.**
+7. **Courier integration** — **Later phase.** Waybill typed by hand for now.
 
 ---
 
@@ -146,7 +157,7 @@ This keeps every cent auditable and feeds the same "income generated per communi
 - **Hub operator** (inside the Facilitator-Seller "Agent" area): "Log a parcel" form (courier, waybill, recipient name/phone, destination community + address, auto-filled fee from tariff), and a list of parcels held at their hub by status. Phones masked in the list.
 - **Driver dashboard** — new "Parcels" tab beside seller jobs: parcels available at hubs in/near their community, "Start a run" to assemble a Trip, then a delivery checklist per parcel with the Leaflet map, tap-to-call recipient, `cash collected` toggle, and proof photo. Reuses the existing driver map/GPS/photo components.
 - **Coordinator** (`/coordinator`): register hubs, manage zone tariffs, cash reconciliation view.
-- **Recipient** — no login required; a WhatsApp/SMS with a tracking link (parcel status + fee + "when will it arrive").
+- **Recipient** — no login required. Once WhatsApp exists, a message with a tracking link; until then the hub operator gives the fee and expected window by phone when taking consent. The tracking page shows status, fee and expected window only: no address, no waybill, no driver phone.
 
 ---
 
@@ -161,12 +172,14 @@ This keeps every cent auditable and feeds the same "income generated per communi
 
 ## 11. Suggested build order (when approved)
 
-1. `Hub` + `DeliveryTariff` entities + coordinator config endpoints/UI + seed the Mkuze→KwaNgwenya tariff.
-2. `Parcel` entity + hub-operator "log parcel" flow + fee auto-fill from tariff.
-3. Recipient consent notification (reuse `NotificationService`/n8n WhatsApp).
-4. `Trip` entity + driver "assemble a run" + parcel status flow + proof photo.
-5. Cash reconciliation via the shared `PayoutBatch`/ledger (depends on Facilitator-Seller spec §4).
+0. **Prerequisites** (shared with the Facilitator-Seller spec): Flyway baseline migration; `UserRole` → `AppUserRole` unification. Decide whether `Driver` is folded into `AppUser` before the driver dashboard gains a second tab.
+1. `Hub` + `DeliveryTariff` entities + coordinator config endpoints/UI + seed the Mkuze→KwaNgwenya tariff. Pure config, no money moves.
+2. `Parcel` entity + hub-operator "log parcel" flow + fee auto-fill from tariff + manual consent recording.
+3. `Trip` entity + driver "assemble a run" + parcel status flow (consent gate, attempt counting) + proof photo.
+4. Per-trip driver → hub cash confirmation with variance.
+5. Weekly hub → platform settlement via the shared ledger / wallet (depends on Facilitator-Seller spec §4 and D4).
 6. Recipient tracking link.
+7. Automated consent message once the WhatsApp integration exists.
 
 Each step ships behind role checks and adds at least one integration test in `tests/` against the real DB.
 

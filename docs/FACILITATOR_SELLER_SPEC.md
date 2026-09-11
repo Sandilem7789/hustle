@@ -1,6 +1,6 @@
 # Facilitator-Seller & Earnings — Design Spec
 
-**Status:** Draft for review — design only, not yet approved for build.
+**Status:** Decisions recorded 2026-09-11 (§8) — design only, not yet scheduled for a sprint. Build prerequisites in §9 step 0.
 **Author:** Sandile.Claude · **Date:** 2026-09-11
 **Relates to:** thenga.com rebrand (Ingwenya Digital (Pty) Ltd). The user-facing rebrand (Hustle Economy → thenga.com) has shipped; internal package `com.hustle.economy` stays as the codename.
 
@@ -44,8 +44,8 @@ Store earnings as an **append-only `FacilitatorEarning` ledger** (one row per ea
 ### D3 — What events earn, and how much is configured
 Three earning event types, each with a configurable rate (see §5). Rates must be **server-configured**, never client-supplied.
 
-### D4 — Payout mechanism *(open — see §8)*
-Whether payouts are cash-via-coordinator, EFT, or wallet depends on the payments sprint. The ledger is payout-mechanism-agnostic; a `PayoutBatch` references settled ledger rows.
+### D4 — Payout mechanism *(decided 2026-09-11: platform wallet)*
+Approved earnings settle into a **platform wallet** balance per facilitator, in ZAR. Cash-out is via **Flash** (the Flash / 1Voucher retail network) if the payments sprint confirms it is feasible, so a facilitator can redeem at any Flash-enabled spaza without a bank account. Flash is the redemption rail, not the currency. Until the wallet exists, `CASH_VIA_COORDINATOR` is the interim method. The ledger stays payout-mechanism-agnostic; a `PayoutBatch` references settled ledger rows.
 
 ---
 
@@ -68,14 +68,16 @@ payoutBatchId     FK → PayoutBatch (nullable)
 note              TEXT (nullable)
 createdAt / updatedAt
 ```
-- **Idempotency:** unique constraint on `(eventType, sourceType, sourceId)` so the same verification/onboarding/order can never generate two earning rows.
+- Add `reversesEarningId FK → FacilitatorEarning (nullable)` — set only on a `REVERSED` compensating row, pointing at the row it reverses.
+- **Idempotency:** partial unique index on `(eventType, sourceType, sourceId) WHERE reversesEarningId IS NULL`, so the same verification/onboarding/order can never generate two earning rows while reversals remain possible. This index cannot be expressed by Hibernate `ddl-auto`; it requires the Flyway migration in §9 step 0.
 
 ### 4.2 `EarningRate` (server config)
 ```
 id UUID
 eventType   enum EarningEventType (unique per active period)
 amount      BigDecimal(12,2)   // flat ZAR for VERIFICATION / SELLER_ONBOARDED
-percentage  BigDecimal(5,2) nullable  // for ASSISTED_TRANSACTION (% of order total), if used
+percentage  BigDecimal(5,2) nullable  // reserved; unused — ASSISTED_TRANSACTION is a flat fee (§8.1)
+monthlyCapPerFacilitator BigDecimal(12,2) nullable // optional ceiling per facilitator per month (§8.6)
 effectiveFrom / effectiveTo   // rate history — never overwrite, add a new row
 active      boolean
 ```
@@ -86,7 +88,7 @@ Rate resolution at event time picks the row active for that `eventType` on that 
 id UUID
 facilitator   FK → AppUser
 totalAmount   BigDecimal(12,2)
-method        enum PayoutMethod  // CASH_VIA_COORDINATOR | EFT | WALLET (see §8)
+method        enum PayoutMethod  // WALLET (primary, D4) | CASH_VIA_COORDINATOR (interim) | EFT (reserved)
 reference     String nullable
 status        enum PayoutStatus  // OPEN | SETTLED | CANCELLED
 createdBy     FK → AppUser       // coordinator/staff who authorised
@@ -111,17 +113,19 @@ No table renames, no package rename — all additive, migration-safe.
 | `SELLER_ONBOARDED` | Applicant reaches `APPROVED` **and** `onboardedByUser` is a `FACILITATOR_SELLER` (not just `capturedBy`) | one per applicant; the approving staff member must be a *different* user (D1 four-eyes) | `EarningRate(SELLER_ONBOARDED)` flat ZAR |
 | `ASSISTED_TRANSACTION` | `Order` reaches a terminal success state (e.g. `DELIVERED`/collected) **and** `assistedByUser` set | one per order; excluded if the assister is the seller of that order | flat ZAR, *or* % of `totalAmount` — **decide in §8** |
 
-All three create earnings in `status = PENDING`; a staff `COORDINATOR` moves them to `APPROVED` before they can enter a `PayoutBatch`. Reversal (fraud, cancelled order) = new `REVERSED` compensating row, original untouched.
+All three create earnings in `status = PENDING`. `VERIFICATION` and `SELLER_ONBOARDED` rows **auto-approve after 7 days** unless a coordinator flags them; `ASSISTED_TRANSACTION` rows need explicit approval until volume is understood. Coordinators approve in bulk (§6). Only `APPROVED` rows can enter a `PayoutBatch`. Reversal (fraud, cancelled order) = new `REVERSED` compensating row with `reversesEarningId` set, original untouched.
 
 ---
 
-## 6. API surface (proposed, per project conventions — `/api`, `X-Auth-Token`, `{data,message,success}` envelope)
+## 6. API surface (proposed — `/api`, `X-Auth-Token`; responses are bare DTOs via `ResponseEntity`, matching every existing controller)
 
 | Method | Endpoint | Role | Purpose |
 |---|---|---|---|
 | GET | `/api/facilitator-earnings/my` | `FACILITATOR_SELLER` | Own earnings feed + pending/approved/paid totals |
 | GET | `/api/facilitator-earnings?community=&status=` | `COORDINATOR` | Review queue across community |
 | PATCH | `/api/facilitator-earnings/{id}/approve` | `COORDINATOR` | PENDING → APPROVED |
+| PATCH | `/api/facilitator-earnings/approve` | `COORDINATOR` | Bulk PENDING → APPROVED (body: list of ids) |
+| GET | `/api/facilitator-earnings/export?community=&from=&to=` | `COORDINATOR` | Youth-income-per-community CSV for funders (Q5) |
 | PATCH | `/api/facilitator-earnings/{id}/reverse` | `COORDINATOR` | Compensating reversal (reason required) |
 | GET | `/api/earning-rates` | `COORDINATOR` | Current + historical rates |
 | POST | `/api/earning-rates` | `COORDINATOR` | Add a new rate period (never edit in place) |
@@ -142,19 +146,21 @@ Every earning-creating action is a **server-side side effect of an existing flow
 
 ---
 
-## 8. Open questions for Sandile
+## 8. Decisions (Sandile, 2026-09-11)
 
-1. **ASSISTED_TRANSACTION amount** — flat fee per assisted order, or a % of order value? A % aligns incentives with GMV but complicates the funder story (income becomes variable). *My lean: flat fee to start, revisit once volume exists.*
-2. **Who may hold `FACILITATOR_SELLER`?** Is it open application, or granted only by a `COORDINATOR` after training (the Wild Impact 24-topic programme)? *My lean: coordinator-granted — it's a trusted, paid role.*
-3. **Payout mechanism** (D4) — cash via coordinator now, EFT later, or a platform wallet? Blocks `PayoutMethod` finalisation and ties into the payments sprint (Peach/Ozow/PayFast).
-4. **Self-dealing rules** — confirm the guards in §5 (a facilitator can't verify/approve/assist their own store or their own onboards). Any community-size exceptions where the same person unavoidably wears both hats?
-5. **Funder reporting** — do NYDA/SEDA need a specific "youth income generated per community" export? If so, `communityId` on the ledger already supports it; we'd add a report endpoint.
+1. **ASSISTED_TRANSACTION amount** — **Flat fee.** A percentage of `totalAmount` on cash-assisted orders would pay on a number nobody verifies. `EarningRate.percentage` stays nullable and unused for now.
+2. **Who may hold `FACILITATOR_SELLER`** — **Coordinator-granted after training.** Revoke path is part of the design: on revoke, `PENDING` rows freeze (cannot be approved); `APPROVED` unpaid rows still pay out.
+3. **Payout mechanism** — **Platform wallet**, ZAR balance per facilitator, cash-out via **Flash** if the payments sprint confirms feasibility (see D4). Interim: cash via coordinator.
+4. **Self-dealing** — **No exceptions.** A facilitator cannot verify, approve, or assist their own store or their own onboards; a staff `FACILITATOR`/`COORDINATOR` approves any applicant the facilitator captured. Implementation must confirm the `AppUser` ↔ `BusinessProfile` link is unique before the "assister is the seller" guard is relied on.
+5. **Funder reporting** — **Build the export.** Per-community youth-income CSV endpoint (§6); the ledger's `communityId` already supports it.
+6. **Funding source for payouts** — **Open.** Whether earnings are paid from a programme grant (needs a per-period cap) or platform revenue (scales with GMV) is still to be confirmed by Sandile. Until then `EarningRate` carries an optional `monthlyCapPerFacilitator` so either model works without a schema change.
 
 ---
 
 ## 9. Suggested build order (when approved)
 
-1. `AppUserRole.FACILITATOR_SELLER` + role-grant flow (coordinator-assigns).
+0. **Prerequisites:** Flyway baseline migration replacing `ddl-auto=update` (needed for the partial unique index in §4.1 and the `verifiedByUser` backfill in §4.4), and retire the legacy `UserRole` enum so `UnifiedAuthService.requireRole()` works on `AppUserRole`.
+1. `AppUserRole.FACILITATOR_SELLER` + role grant **and revoke** flow (coordinator-assigns; revoke semantics per §8.2).
 2. `EarningRate` entity + config endpoints + seed default rates.
 3. Attribution FKs on `BusinessVerification` / `Applicant` / `Order` (additive migration).
 4. `FacilitatorEarning` ledger + idempotent event hooks in the three existing flows.
@@ -166,7 +172,7 @@ Each step ships behind the existing role checks and adds at least one integratio
 
 ---
 
-## 11. Reviewer feedback & additional ideas
+## 10. Reviewer feedback & additional ideas
 
 Reviewing this spec (Sandile.Codex, Claude in VS Code, Claude chat / BA)? **Append attributed, dated notes below** — don't rewrite the sections above. Raise disagreements with evidence; propose additions freely. The senior (Sandile.Claude) folds accepted changes into the spec body and records the resulting decisions in [`../CODE_REVIEWS.md`](../CODE_REVIEWS.md).
 
