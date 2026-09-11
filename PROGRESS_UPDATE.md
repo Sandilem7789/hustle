@@ -7,6 +7,16 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Branding — thenga.com (Ingwenya Digital (Pty) Ltd)
+- User-facing rebrand from "Hustle Economy — SizoPopa Sonke" to **thenga.com** (SizoPopa Sonke tagline retired)
+- Updated: PWA manifest (`name`/`short_name`/`description`), `index.html` title + description + apple-web-app-title, app shell logo `alt`/`aria-label` and "Join" menu copy, customer login/register/orders + driver-register page copy, hustler agreement/terms text, and all generated-PDF headers (invoice, monthly financial report, survey report)
+- **Internal codename unchanged** — Java package `com.hustle.economy`, DB tables, and role enum values (`HUSTLER`, etc.) intentionally kept to avoid a high-risk package/migration refactor with no user benefit
+- **Still needed:** a new thenga.com logo image asset to replace the current logo file (`15a6d06d-…jpg` / `public/hustle-logo.png`); theme colours left as-is pending a brand palette
+
+### 📐 Design specs on deck (drafted, NOT built)
+- **Facilitator-Seller role + earnings ledger** — `docs/FACILITATOR_SELLER_SPEC.md`. Paid youth-employment layer: earn per verification / onboarded seller / assisted transaction, on top of running a store. New `FACILITATOR_SELLER` role, append-only `FacilitatorEarning` ledger, `EarningRate`, `PayoutBatch`. 5 open questions await Sandile.
+- **Last-mile parcel relay** — `docs/LAST_MILE_DELIVERY_SPEC.md`. Local drivers bridge the gap national couriers won't (Mkuze depot → rural home). Hub-logged parcels, consolidated multi-drop `Trip`s, cash-on-delivery zone tariffs. New `Hub`/`Parcel`/`Trip`/`DeliveryTariff` entities (parallel to `DeliveryJob`, not a rewrite). Hubs run by the Facilitator-Seller layer; reuses the earnings/payout machinery. 7 open questions await Sandile.
+
 ### Navigation & Role-Based Access (Bottom Nav)
 - 5-tab bottom nav: Market, Hustler, Facilitator, Coordinator, Operations
 - Role-based tab greying: tabs dim (opacity 0.35) when the current role can't access them; tapping still navigates (shows inline login gate)
