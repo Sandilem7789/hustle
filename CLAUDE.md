@@ -260,7 +260,7 @@ Implementation:
 ### Team workflow (Senior / Junior)
 - Two developer identities, both driven by Sandile: **Sandile.Claude** (senior, Claude Code sessions) and **Sandile.Codex** (junior, Codex sessions). `AGENTS.md` is the junior's standing brief.
 - Attribution: commits made in Claude sessions carry a `Co-Authored-By: Claude …` trailer; the junior's carry `Co-Authored-By: Codex …`. Any commit or working-tree change with neither trailer, or that this session did not make, was made by the junior — review it, do not silently fix it.
-- At the start of every Claude session: `git fetch --all`, list junior commits since the newest entry in `CODE_REVIEWS.md`, then run the `junior-reviewer` subagent (`.claude/agents/junior-reviewer.md`) on them. Verify its report, append the entry at the top of `CODE_REVIEWS.md`, add its scorecard rows to `JUNIOR_SCORECARD.md`, and recompute the running averages. Reviews live in those files, not only in chat.
+- At the start of every Claude session: `git fetch --all`, list junior commits since the newest entry in `CODE_REVIEWS.md`, then run the `junior-reviewer` subagent (`.claude/agents/junior-reviewer.md`) on them. Verify its report, append the entry at the top of `CODE_REVIEWS.md`, and record its scorecard rows in the private junior scorecard kept in Claude's memory directory — never in the repo. Reviews live in `CODE_REVIEWS.md`, not only in chat.
 - Each entry ends with a *Senior changes since last review* list so the junior can see what the senior touched.
 - Close an entry only after verifying the junior's fix. Answer anything under *Questions for senior* in the same file.
 - `main` is production (auto-deploys). The junior works on `development` / `feature/*`; only the senior merges `development` → `main`.

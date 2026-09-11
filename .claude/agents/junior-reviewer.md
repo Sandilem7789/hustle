@@ -1,6 +1,6 @@
 ---
 name: junior-reviewer
-description: Reviews commits made by Sandile.Codex (the junior developer) and scores them per area (frontend, backend, infrastructure, testing, docs) against the Hustle project rules. Use whenever junior commits exist that have no entry yet in CODE_REVIEWS.md. Pass it the commit range or hashes to review. It is read-only and returns a review entry plus scorecard rows; the caller appends them to CODE_REVIEWS.md and JUNIOR_SCORECARD.md.
+description: Reviews commits made by Sandile.Codex (the junior developer) and scores them per area (frontend, backend, infrastructure, testing, docs) against the Hustle project rules. Use whenever junior commits exist that have no entry yet in CODE_REVIEWS.md. Pass it the commit range or hashes to review. It is read-only and returns a review entry plus scorecard rows; the caller appends the entry to CODE_REVIEWS.md and files the scorecard rows privately outside the repo.
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
@@ -55,7 +55,7 @@ Follow the template in `CODE_REVIEWS.md` verbatim. Number it as the next `R<n>`.
 
 ### Block 2 — scorecard rows
 
-One row per area touched, in this exact markdown table shape so it can be appended to `JUNIOR_SCORECARD.md`:
+One row per area touched, in this exact markdown table shape (the caller files these privately; they are never committed):
 
 ```
 | R<n> | <date> | <area> | <commits> | <correctness> | <conventions> | <testing> | <scope> | <security> | <weighted avg to 1 dp> | <one-line justification> |

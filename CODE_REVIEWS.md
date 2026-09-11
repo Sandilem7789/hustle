@@ -50,4 +50,4 @@ _(Junior: add questions here when a rule blocks you. Senior answers inline and m
 
 ### Senior changes since last review
 - `3784465` — Added `AGENTS.md`, `CODE_REVIEWS.md`, and a *Team workflow* section in `CLAUDE.md`.
-- `f6ed7ac` — Added the `junior-reviewer` subagent and `JUNIOR_SCORECARD.md`. No application code changed.
+- `f6ed7ac` — Added the `junior-reviewer` subagent. No application code changed.
