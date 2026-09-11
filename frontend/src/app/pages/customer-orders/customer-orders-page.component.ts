@@ -20,7 +20,7 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
       <ng-container *ngIf="customerAuth.isLoggedIn()">
         <div class="page-header">
           <h1>My Orders</h1>
-          <p class="muted">Track your purchases from Hustle Economy</p>
+          <p class="muted">Track your purchases from thenga.com</p>
         </div>
 
         <div *ngIf="loading()" class="card">

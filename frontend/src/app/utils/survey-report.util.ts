@@ -107,7 +107,7 @@ function renderSurveyReport(doc: jsPDF, reportText: string, meta: SurveyReportMe
   let y = 18;
 
   doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
-  doc.text('HUSTLE ECONOMY', LM, y); y += 6;
+  doc.text('thenga.com', LM, y); y += 6;
   doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(...MID_GRAY);
   doc.text(meta.templateName, LM, y); y += 5;
   doc.setFontSize(9); doc.setTextColor(...MID_GRAY);

@@ -150,14 +150,14 @@ function renderReport(doc: jsPDF, hustler: ReportHustler, entries: IncomeEntryRe
 
   // header
   doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
-  doc.text('HUSTLE ECONOMY', LM, y); y += 5;
+  doc.text('thenga.com', LM, y); y += 5;
   doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(...MID_GRAY);
-  doc.text('SizoPopa Sonke One Day!', LM, y); y += 4;
+  doc.text('Rural-first community marketplace', LM, y); y += 4;
   doc.setDrawColor(...LT_GRAY); doc.setLineWidth(0.4); doc.line(LM, y, RM, y); y += 4;
 
   doc.setFillColor(...LT_GRAY); doc.roundedRect(LM, y, W, 7, 1, 1, 'F');
   doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
-  doc.text('4 Weeks — Hustle Economy — Financial Reporting Template', LM + W / 2, y + 4.8, { align: 'center' });
+  doc.text('4 Weeks — thenga.com — Financial Reporting Template', LM + W / 2, y + 4.8, { align: 'center' });
   y += 10;
 
   const monthName = new Date(yr, mo - 1, 1).toLocaleString('en-ZA', { month: 'long', year: 'numeric' });

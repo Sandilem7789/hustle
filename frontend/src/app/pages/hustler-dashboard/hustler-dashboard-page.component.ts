@@ -1880,7 +1880,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     let y = 22;
 
     doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
-    doc.text('HUSTLE ECONOMY', lm, y); y += 6;
+    doc.text('thenga.com', lm, y); y += 6;
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
     doc.text('Empowering local hustlers', lm, y); y += 5;
     doc.setDrawColor(14, 165, 233); doc.setLineWidth(0.6); doc.line(lm, y, rm, y);
@@ -1927,7 +1927,7 @@ export class HustlerDashboardPageComponent implements OnInit {
     y += 16; doc.setFontSize(11); doc.setFont('helvetica', 'italic'); doc.setTextColor(15, 23, 42);
     doc.text('Thank you for your business!', lm, y); y += 6;
     doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
-    doc.text('Powered by Hustle Economy', lm, y);
+    doc.text('Powered by thenga.com', lm, y);
 
     doc.save(`${invoiceNo}.pdf`);
   }

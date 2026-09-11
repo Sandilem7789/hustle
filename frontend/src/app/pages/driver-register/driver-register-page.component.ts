@@ -15,7 +15,7 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
       <div class="card" *ngIf="!registered()">
         <div class="card-header">
           <h1>🚗 Driver Registration</h1>
-          <p class="muted">Join the Hustle Economy delivery network</p>
+          <p class="muted">Join the thenga.com delivery network</p>
         </div>
 
         <form (ngSubmit)="onSubmit()" class="form">

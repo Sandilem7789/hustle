@@ -5,7 +5,7 @@
     <div class="sidenav-header">
       <img
         src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
-        alt="Hustle Economy"
+        alt="thenga.com"
         class="sidenav-logo"
       />
       <button type="button" mat-icon-button (click)="sidenav.close()" class="sidenav-close-btn">
@@ -58,12 +58,12 @@
         </div>
       </ng-container>
 
-      <!-- Join Hustle Economy (logged-in user without a store and no pending application) -->
+      <!-- Join thenga.com (logged-in user without a store and no pending application) -->
       <ng-container *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.hasStore() && !unifiedAuth.hasPendingApplication()">
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/apply" (click)="sidenav.close()" class="join-hustle-item">
           <mat-icon matListItemIcon>rocket_launch</mat-icon>
-          <span matListItemTitle>Join Hustle Economy</span>
+          <span matListItemTitle>Join thenga.com</span>
           <span matListItemLine>Apply to sell on the platform</span>
         </a>
       </ng-container>
@@ -125,10 +125,10 @@
         <mat-icon>menu</mat-icon>
       </button>
 
-      <a routerLink="/marketplace" class="toolbar-logo-link" aria-label="Hustle Economy home">
+      <a routerLink="/marketplace" class="toolbar-logo-link" aria-label="thenga.com home">
         <img
           src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
-          alt="Hustle Economy"
+          alt="thenga.com"
           class="toolbar-logo"
         />
       </a>

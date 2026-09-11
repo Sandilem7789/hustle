@@ -14,7 +14,7 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
       <div class="card">
         <div class="card-header">
           <h1>Customer Login</h1>
-          <p class="muted">Sign in to shop at Hustle Economy</p>
+          <p class="muted">Sign in to shop at thenga.com</p>
         </div>
 
         <form (ngSubmit)="onSubmit()" class="form">
@@ -36,7 +36,7 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
         </form>
 
         <p class="register-link">
-          New to Hustle Economy? <a routerLink="/customer/register">Create an account</a>
+          New to thenga.com? <a routerLink="/customer/register">Create an account</a>
         </p>
       </div>
     </div>

@@ -20,7 +20,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     <section class="card">
       <header>
         <p class="eyebrow">Hustler Application</p>
-        <h2>Join Hustle Economy</h2>
+        <h2>Join thenga.com</h2>
         <p class="muted">Tell facilitators who you are, what you sell, and where you operate.</p>
       </header>
 
@@ -142,8 +142,8 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
         </div>
 
         <div class="terms-body" (scroll)="onTermsScroll($event)">
-          <h4>HUSTLE ECONOMY — SELLER (HUSTLER) AGREEMENT</h4>
-          <p>This agreement governs your participation as a seller on the Hustle Economy platform. By signing below you confirm you have read, understood, and agreed to all terms.</p>
+          <h4>thenga.com — SELLER (HUSTLER) AGREEMENT</h4>
+          <p>This agreement governs your participation as a seller on the thenga.com platform. By signing below you confirm you have read, understood, and agreed to all terms.</p>
 
           <h5>1. ELIGIBILITY &amp; TRUTHFULNESS</h5>
           <p>You declare that all information in this application is accurate and complete. You are at least 18 years of age. Providing false information may result in rejection or permanent termination of your account.</p>
@@ -158,7 +158,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
           <p>You set your own prices. A platform commission, as communicated by your Facilitator, may apply to marketplace sales. You will be notified of any changes to commission rates before they take effect.</p>
 
           <h5>5. COMMUNITY CONDUCT</h5>
-          <p>You represent your community as a Hustle Economy seller. Treat every customer, Facilitator, and fellow Hustler with honesty and respect. Fraud, abuse, or discrimination results in immediate suspension and may result in legal action.</p>
+          <p>You represent your community as a thenga.com seller. Treat every customer, Facilitator, and fellow Hustler with honesty and respect. Fraud, abuse, or discrimination results in immediate suspension and may result in legal action.</p>
 
           <h5>6. LOCATION VERIFICATION</h5>
           <p>Your business GPS coordinates will be recorded by your Facilitator during the in-person verification visit. This data is used to calculate delivery distances and display your listing to nearby customers. It is not shared publicly.</p>
@@ -170,10 +170,10 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
           <p>Marketplace earnings are disbursed according to the payout schedule agreed with your Facilitator. Cash sales made outside the platform are your own responsibility. The platform bears no liability for cash disputes.</p>
 
           <h5>9. CHANGES TO TERMS</h5>
-          <p>Hustle Economy may update these terms from time to time. You will be notified and must accept the updated terms to continue selling on the platform.</p>
+          <p>thenga.com may update these terms from time to time. You will be notified and must accept the updated terms to continue selling on the platform.</p>
 
           <h5>10. TERMINATION</h5>
-          <p>Hustle Economy may suspend or permanently remove any seller account that violates these terms, harms customers, engages in fraudulent activity, or brings the platform or the community into disrepute.</p>
+          <p>thenga.com may suspend or permanently remove any seller account that violates these terms, harms customers, engages in fraudulent activity, or brings the platform or the community into disrepute.</p>
 
           <p class="terms-end-marker">— End of Agreement —</p>
         </div>

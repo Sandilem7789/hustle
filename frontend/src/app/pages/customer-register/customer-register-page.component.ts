@@ -14,7 +14,7 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
       <div class="card">
         <div class="card-header">
           <h1>Create Account</h1>
-          <p class="muted">Join Hustle Economy as a customer</p>
+          <p class="muted">Join thenga.com as a customer</p>
         </div>
 
         <form (ngSubmit)="onSubmit()" class="form">
