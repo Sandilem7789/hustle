@@ -1,87 +1,96 @@
-# Hustle Economy (Spring Boot + Angular)
+# thenga.com (Hustle Economy)
 
-Full-stack MVP for onboarding hustlers across KwaZulu-Natal, routing applications through facilitator verification, and showcasing approved hustlers inside community hubs.
+Mobile-first community marketplace and business-management platform for informal-economy hustlers in rural KwaZulu-Natal, South Africa. Onboards hustlers through a facilitator verification pipeline, tracks their income, hosts a community marketplace with customer checkout and driver dispatch, and runs a point-of-sale flow for in-store sales.
 
-## Stack Overview
+**User-facing brand:** thenga.com (Ingwenya Digital (Pty) Ltd). Internal codename and Java package (`com.hustle.economy`), database tables, and role enum values remain `hustle`/`Hustle` — this was a surface rebrand only, not a package rename.
 
-| Layer    | Tech                                                   |
-|----------|--------------------------------------------------------|
+For the full feature history, known gaps, and in-progress design specs, see [`PROGRESS_UPDATE.md`](PROGRESS_UPDATE.md). For project rules (mobile-first mandate, security requirements, API conventions, what not to touch), see [`CLAUDE.md`](CLAUDE.md). For draft specs open for review, see [`docs/README.md`](docs/README.md).
+
+## Stack
+
+| Layer    | Tech |
+|----------|------|
 | Backend  | Java 21 · Spring Boot 3 · Spring Data JPA · PostgreSQL |
-| Frontend | Angular 18 · Tailwind CSS                              |
-| Infra    | Docker Compose (Postgres + API + Angular static site)  |
+| Frontend | Angular 18 (standalone components) · Tailwind CSS |
+| Infra    | Docker Compose locally; Netlify (frontend) + Hostinger VPS behind Traefik (backend) in production |
 
-## Local Development
+## Local development
 
 ### Prerequisites
 - Docker + Docker Compose
-- Node 20+ (only if you want to run Angular outside Docker)
-- Java 21 (only if you want to run Spring Boot outside Docker)
+- Node 20+ (only if running Angular outside Docker)
+- Java 21 (only if running Spring Boot outside Docker)
 
-### 1. Environment configuration
-`backend/src/main/resources/application.properties` already reads the DB connection details from environment variables. When running locally without Docker, export:
-
+### Run everything with Docker Compose
 ```bash
-export DATABASE_URL=jdbc:postgresql://localhost:5432/hustle
-export POSTGRES_USER=postgres
-export POSTGRES_PASSWORD=postgres
-export PORT=8080
-```
-
-### 2. Run everything with Docker Compose
-```bash
-# from repo root
 docker compose up --build
 ```
 Services exposed:
 - API → http://localhost:8080
 - Angular UI → http://localhost:4173
-- Postgres → localhost:5432 (user/password `postgres`)
+- Postgres → localhost:5432
 
-### 3. Running services manually (optional)
-**Backend**
+### Environment configuration
+Copy [`.env.example`](.env.example) to `.env` in the repo root before running Compose. At minimum it needs:
+```
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=change-me
+POSTGRES_DB=hustle
+STAFF_PHONE=your-phone-number   # seeded on first startup — COORDINATOR role
+STAFF_PASSWORD=change-me        # required, no default: the backend will not boot without it
+```
+`N8N_WEBHOOK_URL` / `N8N_WEBHOOK_SECRET` are optional locally (needed only for survey PDF report generation). `R2_ACCESS_KEY` / `R2_SECRET_KEY` are optional — when set, uploaded images go to Cloudflare R2 instead of the local `uploads_data` Docker volume.
+
+### Running services manually (optional)
+**Backend** — no `mvnw` wrapper is checked in; use a local Maven install:
 ```bash
 cd backend
-./mvnw spring-boot:run  # or `mvn spring-boot:run` if Maven is installed
+mvn spring-boot:run
 ```
 
 **Frontend**
 ```bash
 cd frontend
 npm install
-npm start  # Angular dev server on http://localhost:4200
+npm start   # ng serve on http://localhost:4200
 ```
 
-## API Highlights
-- `POST /api/hustlers` – submit a hustler application (personal + business details + optional coordinates).
-- `GET /api/hustlers?status=PENDING` – list applications by status; accepts optional `communityId` filter.
-- `PATCH /api/hustlers/{id}/decision` – facilitator approves or rejects and promotes approved hustlers to business profiles.
-- `GET /api/communities` – list available communities.
-- `GET /api/communities/{id}/hustlers` – list approved hustlers in a community.
-- `POST /api/products` / `GET /api/products` – manage marketplace listings (scaffolded for Phase 2 payments/logistics).
+### Tests
+```bash
+cd backend && mvn test              # integration tests, needs Docker running (Testcontainers)
+cd frontend && npm run test:e2e     # Playwright
+```
 
-## Frontend Screens
-1. **Hero** – Context, CTA, and summary of the Hustle Economy programme.
-2. **Registration Form** – Large reactive form covering business story, mission, target customers, and operating area.
-3. **Facilitator Queue** – Inline status filter + approve/reject actions hitting the Spring API.
-4. **Community Hubs** – Horizontal selector of communities showing the approved hustlers per hub.
+## Architecture
 
-## Docker Images
-- `backend/Dockerfile` – multi-stage build (Maven builder → Temurin JRE runtime).
-- `frontend/Dockerfile` – Node builder → Nginx static container.
+```
+backend/    — Spring Boot 3.x REST API (controller → service → entity/dto/mapper → repository)
+frontend/   — Angular 18 standalone components, signals-based auth
+dashboard/  — Nginx config / static serving
+docs/       — Design specs open for review (not yet built — see docs/README.md)
+tests/      — Integration and E2E suites
+docker-compose.yml       — local dev stack (Postgres, backend, frontend/nginx)
+docker-compose.prod.yml  — production stack on the VPS (no frontend service; Traefik routes instead)
+```
 
-## Testing / Next Steps
-- Finish UI polish + validation states across Angular components.
-- Add authentication (JWT) once facilitator accounts are required.
-- Hook up products/services catalogues to actual media uploads + payments (Phase 2).
-- Extend analytics dashboards for facilitators/programme managers.
+Auth is unified through `AppUser` / `UnifiedAuthService` (single login/register issuing an `X-Auth-Token` session, plus a bridged `X-Customer-Token` for marketplace checkout). Roles (`CUSTOMER`, `HUSTLER`, `DRIVER`, `FACILITATOR`, `COORDINATOR`) are checked server-side on every protected endpoint — never trust a client-supplied role.
 
-## Deployment Notes
-1. `git pull` on the VPS.
-2. `docker compose build --no-cache && docker compose up -d`.
-3. API available on port 8080, Angular site proxied on 4173 (adjust DNS/reverse proxy as needed).
+### Backend controllers (`/api/...`)
+`applicants`, `auth`, `communities`, `customers`, `drivers`, `facilitator`, `hustlers` (application decisions/profile), hustler self-service, `income`, `notifications`, `operations`, `orders`, `products`, `sales` (POS), survey assignments/questions/templates, `uploads`.
 
-Treat the facilitator spreadsheets and application PDFs as sensitive data—none of the PII was checked into the repo, but keep future imports confidential.
+### Frontend surfaces
+Marketplace with category/community filters, hustler dashboard (income, products, orders, POS/barcode scanning), facilitator applicant pipeline + coordinator view, driver dashboard with Leaflet map dispatch, customer checkout/orders, survey forms. PWA-enabled (`@angular/pwa`, `ngsw-config.json`).
 
----
+## Deployment
 
-Mesh Audio Bot do you see this?
+- **Frontend (production):** Netlify, auto-deploys from `main`. `netlify.toml` rewrites `/api/*` to the VPS backend as a same-origin proxy.
+- **Backend (production):** Hostinger VPS, routed through Traefik with Let's Encrypt TLS. `.github/workflows/deploy-vps.yml` runs `docker-compose.prod.yml` on every push to `main` — **never** the plain `docker-compose.yml` in production, it has no Traefik labels and will break routing.
+- Uploaded images persist to the `uploads_data` Docker volume in both compose files (or Cloudflare R2 when configured) — do not remove this mount.
+
+## Team workflow
+
+Two developer identities work this repo: **Sandile.Claude** (senior, reviews everything, only one who merges to `main`) and **Sandile.Codex** (junior, works on `development` / `feature/*`). See [`AGENTS.md`](AGENTS.md) for the junior's brief and [`CODE_REVIEWS.md`](CODE_REVIEWS.md) for the review log and joint decisions.
+
+## Security notes
+
+Treat delivery addresses, GPS coordinates, and phone numbers as PII — never log them, mask phone numbers in list views. See the Security Requirements section of [`CLAUDE.md`](CLAUDE.md) for the full list enforced on every endpoint.
