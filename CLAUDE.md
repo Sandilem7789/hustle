@@ -7,6 +7,7 @@ Hustle Economy is a mobile-first community marketplace and business management p
 **Repo:** https://github.com/Sandilem7789/hustle  
 **Branch:** `main`  
 **Live progress:** See `PROGRESS_UPDATE.md` for the full feature history and known gaps.
+**Business/strategy context:** See [`CONTEXT.md`](CONTEXT.md) for the company (Ingwenya Digital / thenga.com), the pivot to an e-commerce + in-app learning platform, the pending platform role renaming (Merchant/Community Agent/Hub Coordinator — working titles, **not yet implemented**, this file's Roles & Access table below still reflects the current code), and session-start instructions. Check `CONTEXT.md` for ⚠️-flagged updates before starting a session.
 
 ---
 
