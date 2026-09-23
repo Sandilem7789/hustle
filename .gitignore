@@ -14,3 +14,4 @@ yarn.lock
 .idea
 .vscode
 hs_err_pid*.log
+.claude/skills/
