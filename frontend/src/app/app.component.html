@@ -3,11 +3,27 @@
   <!-- ── Hamburger Drawer ─────────────────────────────────── -->
   <mat-sidenav #sidenav mode="over" position="start" class="app-sidenav">
     <div class="sidenav-header">
-      <img
-        src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
-        alt="thenga.com"
-        class="sidenav-logo"
-      />
+      <span class="brand-lockup sidenav-logo" role="img" aria-label="thenga.com">
+        <svg class="brand-icon" viewBox="0 0 512 512" aria-hidden="true">
+          <rect width="512" height="512" rx="96" fill="#00A896"/>
+          <path d="M256 116 L74 226 L256 226 Z" fill="#F5B800"/>
+          <path d="M256 116 L438 226 L256 226 Z" fill="#E91E8C"/>
+          <circle cx="108" cy="228" r="16" fill="#2DB344"/>
+          <circle cx="167" cy="228" r="16" fill="#F06820"/>
+          <circle cx="226" cy="228" r="16" fill="#2DB344"/>
+          <circle cx="286" cy="228" r="16" fill="#F06820"/>
+          <circle cx="345" cy="228" r="16" fill="#2DB344"/>
+          <circle cx="404" cy="228" r="16" fill="#F06820"/>
+          <rect x="92" y="238" width="328" height="160" rx="18" fill="#FFFFFF"/>
+          <rect x="92" y="238" width="328" height="26" rx="13" fill="#F0EAD9"/>
+          <circle cx="176" cy="332" r="22" fill="#2DB344"/>
+          <circle cx="256" cy="326" r="26" fill="#F06820"/>
+          <circle cx="336" cy="332" r="22" fill="#E53935"/>
+        </svg>
+        <span class="brand-word" aria-hidden="true">
+          <span class="bl-t">t</span><span class="bl-h">h</span><span class="bl-e">e</span><span class="bl-n">n</span><span class="bl-g">g</span><span class="bl-a">a</span><span class="brand-tld">.com</span>
+        </span>
+      </span>
       <button type="button" mat-icon-button (click)="sidenav.close()" class="sidenav-close-btn" aria-label="Close menu">
         <mat-icon>close</mat-icon>
       </button>
@@ -165,11 +181,27 @@
       </button>
 
       <a routerLink="/marketplace" class="toolbar-logo-link" aria-label="thenga.com home">
-        <img
-          src="15a6d06d-8e5f-477f-965f-5c33f94a6858.jpg"
-          alt="thenga.com"
-          class="toolbar-logo"
-        />
+        <span class="brand-lockup toolbar-logo" role="img" aria-label="thenga.com">
+          <svg class="brand-icon" viewBox="0 0 512 512" aria-hidden="true">
+            <rect width="512" height="512" rx="96" fill="#00A896"/>
+            <path d="M256 116 L74 226 L256 226 Z" fill="#F5B800"/>
+            <path d="M256 116 L438 226 L256 226 Z" fill="#E91E8C"/>
+            <circle cx="108" cy="228" r="16" fill="#2DB344"/>
+            <circle cx="167" cy="228" r="16" fill="#F06820"/>
+            <circle cx="226" cy="228" r="16" fill="#2DB344"/>
+            <circle cx="286" cy="228" r="16" fill="#F06820"/>
+            <circle cx="345" cy="228" r="16" fill="#2DB344"/>
+            <circle cx="404" cy="228" r="16" fill="#F06820"/>
+            <rect x="92" y="238" width="328" height="160" rx="18" fill="#FFFFFF"/>
+            <rect x="92" y="238" width="328" height="26" rx="13" fill="#F0EAD9"/>
+            <circle cx="176" cy="332" r="22" fill="#2DB344"/>
+            <circle cx="256" cy="326" r="26" fill="#F06820"/>
+            <circle cx="336" cy="332" r="22" fill="#E53935"/>
+          </svg>
+          <span class="brand-word" aria-hidden="true">
+            <span class="bl-t">t</span><span class="bl-h">h</span><span class="bl-e">e</span><span class="bl-n">n</span><span class="bl-g">g</span><span class="bl-a">a</span><span class="brand-tld">.com</span>
+          </span>
+        </span>
       </a>
 
       <span class="toolbar-spacer"></span>

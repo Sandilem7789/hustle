@@ -59,7 +59,7 @@
   ],
   "screenshots": [
     {
-      "src": "hustle-logo.png",
+      "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow"

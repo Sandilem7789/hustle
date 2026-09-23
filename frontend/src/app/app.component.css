@@ -29,13 +29,45 @@
   transform: translateX(-50%);
 }
 
-.toolbar-logo {
-  height: 44px;
+/* ─── Brand lockup (icon + wordmark) ─────────────────────────────────────── */
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.brand-icon {
+  height: 100%;
   width: auto;
-  max-width: 200px;
-  object-fit: contain;
+  flex-shrink: 0;
   display: block;
 }
+
+.brand-word {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.brand-tld {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.bl-t { color: #F5B800; }
+.bl-h { color: #00A896; }
+.bl-e { color: #E91E8C; }
+.bl-n { color: #2DB344; }
+.bl-g { color: #F06820; }
+.bl-a { color: #1B6FD4; }
+
+.toolbar-logo {
+  height: 30px;
+}
+
+.toolbar-logo .brand-icon { height: 30px; }
+.toolbar-logo .brand-word { font-size: 1.2rem; }
 
 /* Mobile has the ☰ Menu item in the bottom nav already — showing it again up
    here too is a redundant second door to the same drawer. Desktop hides the
@@ -100,11 +132,11 @@
 }
 
 .sidenav-logo {
-  height: 42px;
-  width: auto;
-  max-width: 160px;
-  object-fit: contain;
+  height: 32px;
 }
+
+.sidenav-logo .brand-icon { height: 32px; }
+.sidenav-logo .brand-word { font-size: 1.3rem; }
 
 .sidenav-close-btn {
   color: var(--text-secondary);
@@ -410,9 +442,11 @@
   }
 
   .toolbar-logo {
-    height: 52px;
-    max-width: 240px;
+    height: 36px;
   }
+
+  .toolbar-logo .brand-icon { height: 36px; }
+  .toolbar-logo .brand-word { font-size: 1.4rem; }
 
   .toolbar-hamburger-btn {
     display: inline-flex;

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full-bleed background — PWA/maskable icons apply their own corner mask,
+       so this fills edge to edge; the glyph stays inside the safe zone. -->
+  <rect width="512" height="512" fill="#00A896"/>
+
+  <!-- Roof / awning, two-tone -->
+  <path d="M256 116 L74 226 L256 226 Z" fill="#F5B800"/>
+  <path d="M256 116 L438 226 L256 226 Z" fill="#E91E8C"/>
+
+  <!-- Scalloped awning fringe, evenly spaced -->
+  <g>
+    <circle cx="108" cy="228" r="16" fill="#2DB344"/>
+    <circle cx="167" cy="228" r="16" fill="#F06820"/>
+    <circle cx="226" cy="228" r="16" fill="#2DB344"/>
+    <circle cx="286" cy="228" r="16" fill="#F06820"/>
+    <circle cx="345" cy="228" r="16" fill="#2DB344"/>
+    <circle cx="404" cy="228" r="16" fill="#F06820"/>
+  </g>
+
+  <!-- Counter -->
+  <rect x="92" y="238" width="328" height="160" rx="18" fill="#FFFFFF"/>
+  <rect x="92" y="238" width="328" height="26" rx="13" fill="#F0EAD9"/>
+
+  <!-- Produce on the counter -->
+  <circle cx="176" cy="332" r="22" fill="#2DB344"/>
+  <circle cx="256" cy="326" r="26" fill="#F06820"/>
+  <circle cx="336" cy="332" r="22" fill="#E53935"/>
+</svg>
