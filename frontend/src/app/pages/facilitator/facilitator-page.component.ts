@@ -36,7 +36,7 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       border: 1.5px solid #E7E5E4;
       background: none;
       color: #A8A29E;
-      border-radius: 0.75rem;
+      border-radius: 999px;
       padding: 0.6rem 2rem;
       font-size: 0.875rem;
       font-weight: 800;

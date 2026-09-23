@@ -25,7 +25,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     <section class="layout" *ngIf="auth.isLoggedIn()">
     <div class="dashboard-shell">
     <nav class="rail-nav">
-      <div class="rail-brand">HUSTLE</div>
+      <div class="rail-brand">thenga.com</div>
       <button type="button" class="rail-item" [class.rail-active]="tab() === 'sell'" (click)="tab.set('sell')"><span>🧺</span>Sell</button>
       <button type="button" class="rail-item" [class.rail-active]="tab() === 'income'" (click)="tab.set('income')"><span>💰</span>Money</button>
       <button type="button" class="rail-item" [class.rail-active]="tab() === 'products'" (click)="tab.set('products')"><span>📦</span>Stock</button>
@@ -254,11 +254,11 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
               <div class="lc-toggles">
                 <label [class.lc-disabled]="!canToggle('income')">
                   <input type="checkbox" [checked]="showIncome()" (change)="toggleLine('income')" [disabled]="!canToggle('income')" />
-                  <span class="lc-dot" style="background:#22c55e"></span> Income
+                  <span class="lc-dot" style="background:#2DB344"></span> Income
                 </label>
                 <label [class.lc-disabled]="!canToggle('expense')">
                   <input type="checkbox" [checked]="showExpense()" (change)="toggleLine('expense')" [disabled]="!canToggle('expense')" />
-                  <span class="lc-dot" style="background:#f87171"></span> Expenses
+                  <span class="lc-dot" style="background:#E53935"></span> Expenses
                 </label>
                 <label [class.lc-disabled]="!canToggle('profit')">
                   <input type="checkbox" [checked]="showProfit()" (change)="toggleLine('profit')" [disabled]="!canToggle('profit')" />
@@ -773,7 +773,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
 
     /* ── Tab Bar ── */
     .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; min-height: 48px; font-family: inherit; border-bottom: 3px solid transparent; }
+    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; min-height: 48px; font-family: inherit; border-bottom: 3px solid transparent; }
     .tab-active-finances { color: #92400e !important; border-bottom: 3px solid #F5B800 !important; background: rgba(245,184,0,0.12) !important; }
     .tab-active-products { color: #166534 !important; border-bottom: 3px solid #2DB344 !important; background: rgba(45,179,68,0.09) !important; }
     .tab-active-orders   { color: #1e3a8a !important; border-bottom: 3px solid #1B6FD4 !important; background: rgba(27,111,212,0.09) !important; }
@@ -785,7 +785,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
 
     /* ── Log Form ── */
     .log-tabs { display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 1.25rem; }
-    .log-tabs button { flex: 1; padding: 0.65rem; border: none; background: none; font-size: 0.95rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; min-height: 44px; font-family: inherit; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .log-tabs button { flex: 1; padding: 0.65rem; border: none; background: none; font-size: 0.95rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; min-height: 44px; font-family: inherit; border-bottom: 2px solid transparent; margin-bottom: -2px; }
     .logtab-active-income  { color: #166534 !important; border-bottom: 2px solid #2DB344 !important; background: rgba(45,179,68,0.06) !important; }
     .logtab-active-expense { color: #991b1b !important; border-bottom: 2px solid #E53935 !important; background: rgba(229,57,53,0.05) !important; }
     .income-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }

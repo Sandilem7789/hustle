@@ -14,24 +14,9 @@ import { OfflineQueueService } from '../../services/offline-queue.service';
     </div>
   `,
   styles: `
-    .offline-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 999;
-      background: #fef3c7;
-      border-bottom: 1px solid #fbbf24;
-      color: #92400e;
-      font-size: 0.875rem;
-      font-weight: 600;
-      padding: 0.5rem 1rem;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
+    /* .offline-bar itself is intentionally left to the global rule in
+       styles.css (branded orange/white) — do not redefine it here, that
+       previously shadowed the global rule with an unrelated palette. */
   `
 })
 export class OfflineBannerComponent implements OnInit, OnDestroy {

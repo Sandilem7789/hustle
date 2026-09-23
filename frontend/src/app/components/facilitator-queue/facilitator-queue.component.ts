@@ -1014,7 +1014,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
 
     /* Top-level tabs */
     .top-tabs { display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 1.5rem; }
-    .top-tabs button { flex: 1; padding: 0.75rem 0.5rem; border: none; background: none; font-size: 0.85rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; font-family: inherit; min-height: 48px; text-align: center; line-height: 1.25; }
+    .top-tabs button { flex: 1; padding: 0.75rem 0.5rem; border: none; background: none; font-size: 0.85rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: color 0.2s, border-color 0.2s; font-family: inherit; min-height: 48px; text-align: center; line-height: 1.25; }
     .top-tabs button.active { color: #1C1917; border-bottom: 2px solid #F5B800; margin-bottom: -2px; }
 
     .sub-heading { margin: 0 0 1.25rem; font-size: 0.9rem; color: #78716C; }
@@ -1049,7 +1049,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .stage-scroll { overflow-x: auto; margin-bottom: 1rem; -webkit-overflow-scrolling: touch; }
     .stage-scroll::-webkit-scrollbar { display: none; }
     .stage-tabs { display: flex; gap: 0.3rem; white-space: nowrap; padding-bottom: 2px; }
-    .stage-tabs button { padding: 0.4rem 0.85rem; border: 2px solid #E7E5E4; border-radius: 0.75rem; background: white; font-size: 0.78rem; font-weight: 700; color: #78716C; cursor: pointer; font-family: inherit; transition: all 0.15s; min-height: 36px; display: inline-flex; align-items: center; gap: 0.3rem; }
+    .stage-tabs button { padding: 0.4rem 0.85rem; border: 2px solid #E7E5E4; border-radius: 0.75rem; background: white; font-size: 0.78rem; font-weight: 700; color: #78716C; cursor: pointer; font-family: inherit; transition: color 0.15s, border-color 0.15s, background-color 0.15s; min-height: 36px; display: inline-flex; align-items: center; gap: 0.3rem; }
     .stage-tabs button.active { background: #F5B800; border-color: #F5B800; color: #1C1917; }
     .stage-count { background: rgba(28,25,23,0.12); border-radius: 999px; padding: 0 0.4rem; font-size: 0.68rem; font-weight: 800; }
 
@@ -1090,14 +1090,14 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .action-row { margin: 0.75rem 0 0.5rem; }
     .action-row .field-label { display: block; margin-bottom: 0.4rem; }
     .call-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-    .btn-call { background: #F5F0E8; color: #78716C; font-size: 0.8rem; padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 2px solid transparent; min-height: 36px; cursor: pointer; font-family: inherit; font-weight: 700; transition: all 0.15s; }
+    .btn-call { background: #F5F0E8; color: #78716C; font-size: 0.8rem; padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 2px solid transparent; min-height: 36px; cursor: pointer; font-family: inherit; font-weight: 700; transition: color 0.15s, border-color 0.15s, background-color 0.15s; }
     .btn-call.active-call { background: #1C1917; color: white; border-color: #1C1917; }
     .btn-call:disabled { opacity: 0.5; cursor: not-allowed; }
     .stage-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #E7E5E4; }
     .btn-advance { background: #F5B800; color: #1C1917; }
     .approved-msg { color: #2DB344; font-weight: 700; font-size: 0.9rem; margin: 0; }
     .cred-row { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
-    .btn-cred { background: #F5F0E8; color: #1C1917; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; align-self: flex-start; transition: all 0.15s; }
+    .btn-cred { background: #F5F0E8; color: #1C1917; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; align-self: flex-start; transition: border-color 0.15s, background-color 0.15s; }
     .btn-cred:hover { border-color: #F5B800; background: rgba(245,184,0,0.08); }
     .btn-cred:disabled { opacity: 0.5; cursor: not-allowed; }
     .rejected-msg { color: #E53935; font-weight: 700; font-size: 0.9rem; margin: 0.5rem 0 0; }

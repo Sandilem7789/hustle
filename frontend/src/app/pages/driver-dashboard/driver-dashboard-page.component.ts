@@ -189,7 +189,7 @@ import { DriverAuthService } from '../../services/driver-auth.service';
 
     /* Tabs */
     .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    .tab-bar button { flex: 1; padding: 0.85rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: all 0.2s; min-height: 48px; font-family: inherit; }
+    .tab-bar button { flex: 1; padding: 0.85rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; min-height: 48px; font-family: inherit; }
     .tab-bar button.active { color: #1C1917; border-bottom: 3px solid #F5B800; background: rgba(245,184,0,0.05); }
 
     /* Job cards */
