@@ -2,14 +2,14 @@
   <div class="auth-card">
 
     <div class="auth-tabs">
-      <button type="button" [class.auth-tab-active]="activeTab() === 'login'" (click)="activeTab.set('login')">Login</button>
-      <button type="button" [class.auth-tab-active]="activeTab() === 'register'" (click)="activeTab.set('register')">Create Account</button>
+      <button type="button" [class.auth-tab-active]="activeTab() === 'login'" (click)="activeTab.set('login')">{{ 'auth.login' | translate }}</button>
+      <button type="button" [class.auth-tab-active]="activeTab() === 'register'" (click)="activeTab.set('register')">{{ 'auth.register' | translate }}</button>
     </div>
 
     <!-- ── Login ─────────────────────────────── -->
     <form class="auth-form" *ngIf="activeTab() === 'login'" (ngSubmit)="onLogin()" #loginForm="ngForm">
       <label>
-        <span>Phone number</span>
+        <span>{{ 'auth.phone' | translate }}</span>
         <input
           type="tel"
           placeholder="e.g. 0812345678"
@@ -21,7 +21,7 @@
       </label>
 
       <label>
-        <span>Password</span>
+        <span>{{ 'auth.password' | translate }}</span>
         <div class="pwd-wrap">
           <input
             [type]="hideLoginPwd ? 'password' : 'text'"
@@ -39,7 +39,7 @@
       <p *ngIf="loginError" class="auth-error">{{ loginError }}</p>
 
       <button type="submit" class="auth-submit-btn" [disabled]="loginLoading()">
-        {{ loginLoading() ? 'Signing in…' : 'Login' }}
+        {{ loginLoading() ? 'Signing in…' : ('auth.loginButton' | translate) }}
       </button>
     </form>
 
@@ -57,7 +57,7 @@
       </div>
 
       <label>
-        <span>Phone number</span>
+        <span>{{ 'auth.phone' | translate }}</span>
         <input
           type="tel"
           placeholder="e.g. 0812345678"
@@ -74,7 +74,7 @@
       </label>
 
       <label>
-        <span>Password</span>
+        <span>{{ 'auth.password' | translate }}</span>
         <div class="pwd-wrap">
           <input
             [type]="hideRegPwd ? 'password' : 'text'"
@@ -103,7 +103,7 @@
       <p *ngIf="regError" class="auth-error">{{ regError }}</p>
 
       <button type="submit" class="auth-submit-btn" [disabled]="regLoading()">
-        {{ regLoading() ? 'Creating account…' : 'Create Account' }}
+        {{ regLoading() ? 'Creating account…' : ('auth.register' | translate) }}
       </button>
     </form>
 

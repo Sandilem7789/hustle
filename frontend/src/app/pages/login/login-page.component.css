@@ -5,16 +5,16 @@
 }
 
 .auth-card {
-  background: white;
-  border: 1px solid #E7E5E4;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-base);
   border-radius: 1.5rem;
-  box-shadow: 0 4px 24px rgba(28, 25, 23, 0.08);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
 .auth-tabs {
   display: flex;
-  border-bottom: 2px solid #E7E5E4;
+  border-bottom: 2px solid var(--border-base);
 }
 
 .auth-tabs button {
@@ -24,17 +24,17 @@
   background: none;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #A8A29E;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
   min-height: 48px;
   border-bottom: 3px solid transparent;
   margin-bottom: -2px;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
 }
 
 .auth-tab-active {
-  color: #1C1917 !important;
+  color: var(--text-primary) !important;
   border-bottom: 3px solid #F5B800 !important;
   background: rgba(245, 184, 0, 0.06) !important;
 }
@@ -52,7 +52,7 @@ label {
   gap: 0.35rem;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #1C1917;
+  color: var(--text-primary);
 }
 
 .name-row {
@@ -65,7 +65,7 @@ label {
 }
 
 input {
-  border: 2px solid #E7E5E4;
+  border: 2px solid var(--border-base);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   font-size: 1rem;
@@ -74,8 +74,8 @@ input {
   min-height: 48px;
   width: 100%;
   box-sizing: border-box;
-  background: white;
-  color: #1C1917;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }

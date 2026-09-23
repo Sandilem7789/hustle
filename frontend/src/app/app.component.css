@@ -9,10 +9,10 @@
 
 /* ─── Top Toolbar ────────────────────────────────────────────────────────── */
 .app-toolbar {
-  background: #FFFFFF;
-  color: #1C1917;
-  border-bottom: 1px solid #E7E5E4;
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.07);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-base);
+  box-shadow: var(--shadow-card);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -62,7 +62,7 @@
   font-weight: 800;
   line-height: 16px;
   text-align: center;
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--bg-surface);
 }
 
 .toolbar-spacer {
@@ -72,7 +72,7 @@
 .toolbar-login-btn {
   font-weight: 700;
   font-size: 0.875rem;
-  color: #F5B800;
+  color: var(--accent-text-safe);
 }
 
 /* Rainbow accent strip below toolbar */
@@ -88,7 +88,7 @@
 /* ─── Hamburger Sidenav ───────────────────────────────────────────────────── */
 .app-sidenav {
   width: 280px;
-  background: #FFFFFF;
+  background: var(--bg-surface);
 }
 
 .sidenav-header {
@@ -96,7 +96,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 0.75rem 0.75rem;
-  border-bottom: 1px solid #E7E5E4;
+  border-bottom: 1px solid var(--border-base);
 }
 
 .sidenav-logo {
@@ -107,7 +107,7 @@
 }
 
 .sidenav-close-btn {
-  color: #78716C;
+  color: var(--text-secondary);
 }
 
 .sidenav-user {
@@ -116,18 +116,18 @@
   gap: 0.75rem;
   padding: 0.875rem 1rem 0.75rem;
   font-size: 0.9375rem;
-  color: #1C1917;
-  border-bottom: 1px solid #F5F5F4;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-base);
 }
 
 .sidenav-user-name {
   font-weight: 700 !important;
   font-family: 'Nunito', system-ui, sans-serif !important;
-  color: #1C1917;
+  color: var(--text-primary);
 }
 
 .sidenav-user-icon {
-  color: #A8A29E;
+  color: var(--text-muted);
   font-size: 2rem;
   width: 2rem;
   height: 2rem;
@@ -140,8 +140,8 @@
   height: 44px;
   min-height: unset;
   border-radius: 50%;
-  border: 2px solid #E7E5E4;
-  background: #F5F0E8;
+  border: 2px solid var(--border-base);
+  background: var(--bg-muted);
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
@@ -190,7 +190,7 @@
 
 /* Join Hustle Economy — highlighted item */
 .join-hustle-item {
-  color: #F5B800 !important;
+  color: var(--accent-text-safe) !important;
   font-weight: 700;
 }
 
@@ -200,10 +200,94 @@
 
 /* Application Under Review — muted informational state */
 .pending-app-item {
-  color: #78716C !important;
+  color: var(--text-secondary) !important;
   font-style: italic;
   cursor: default;
   pointer-events: none;
+}
+
+/* ─── Theme / language switches ──────────────────────────────────────────── */
+.prefs-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.625rem 1rem;
+}
+
+.prefs-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+
+.prefs-item-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+.prefs-item-label mat-icon {
+  color: var(--text-secondary);
+}
+
+.switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  min-height: unset;
+  border-radius: 999px;
+  border: none;
+  background: var(--bg-muted);
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s;
+}
+
+.switch.on {
+  background: var(--hustle-yellow, #F5B800);
+}
+
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.switch.on .switch-knob {
+  transform: translateX(18px);
+}
+
+/* Language switch is wider to fit an EN/ZU label on the knob */
+.lang-switch {
+  width: 52px;
+}
+
+.lang-switch .switch-knob {
+  width: 26px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.lang-switch.on .switch-knob {
+  transform: translateX(24px);
 }
 
 /* ─── Main Content Area ───────────────────────────────────────────────────── */
@@ -230,9 +314,9 @@
   left: 0;
   right: 0;
   height: 64px;
-  background: #FFFFFF;
-  border-top: 1px solid #E7E5E4;
-  box-shadow: 0 -3px 16px rgba(28, 25, 23, 0.07);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-base);
+  box-shadow: var(--shadow-nav);
   display: flex;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom, 0);
@@ -247,7 +331,7 @@
   gap: 2px;
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #A8A29E;
+  color: var(--text-muted);
   text-decoration: none;
   min-height: 48px;
   font-family: inherit;
@@ -260,7 +344,7 @@
 }
 
 .bottom-nav-item.active {
-  color: #1C1917;
+  color: var(--text-primary);
   font-weight: 800;
 }
 
@@ -288,7 +372,7 @@
 
 .bottom-nav-item:active .bottom-nav-icon {
   transform: scale(0.78);
-  transition: transform 0.06s ease-in;
+  transition: transform 0.08s ease-out;
 }
 
 .bottom-nav-item:active {

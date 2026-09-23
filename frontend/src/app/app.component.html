@@ -8,10 +8,49 @@
         alt="thenga.com"
         class="sidenav-logo"
       />
-      <button type="button" mat-icon-button (click)="sidenav.close()" class="sidenav-close-btn">
+      <button type="button" mat-icon-button (click)="sidenav.close()" class="sidenav-close-btn" aria-label="Close menu">
         <mat-icon>close</mat-icon>
       </button>
     </div>
+
+    <!-- Theme + language switches -->
+    <div class="prefs-row">
+      <div class="prefs-item">
+        <div class="prefs-item-label">
+          <mat-icon>{{ theme.theme() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+          <span>{{ (theme.theme() === 'dark' ? 'theme.dark' : 'theme.light') | translate }}</span>
+        </div>
+        <button
+          type="button"
+          class="switch"
+          role="switch"
+          [class.on]="theme.theme() === 'dark'"
+          [attr.aria-checked]="theme.theme() === 'dark'"
+          [attr.aria-label]="(theme.theme() === 'dark' ? 'theme.dark' : 'theme.light') | translate"
+          (click)="theme.toggle()"
+        >
+          <span class="switch-knob"></span>
+        </button>
+      </div>
+      <div class="prefs-item">
+        <div class="prefs-item-label">
+          <mat-icon>translate</mat-icon>
+          <span>{{ 'lang.label' | translate }}</span>
+        </div>
+        <button
+          type="button"
+          class="switch lang-switch"
+          role="switch"
+          [class.on]="i18n.lang() === 'zu'"
+          [attr.aria-checked]="i18n.lang() === 'zu'"
+          aria-label="isiZulu"
+          (click)="i18n.toggle()"
+        >
+          <span class="switch-knob">{{ i18n.lang() === 'zu' ? 'ZU' : 'EN' }}</span>
+        </button>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
 
     <div *ngIf="unifiedAuth.isLoggedIn()" class="sidenav-user">
       <button type="button" class="avatar-btn" (click)="triggerAvatarUpload()" title="Change profile picture">
@@ -26,25 +65,25 @@
     <mat-nav-list>
       <a mat-list-item routerLink="/marketplace" (click)="sidenav.close()">
         <mat-icon matListItemIcon>storefront</mat-icon>
-        <span matListItemTitle>Browse Market</span>
+        <span matListItemTitle>{{ 'sidenav.browseMarket' | translate }}</span>
       </a>
 
       <ng-container *ngIf="unifiedAuth.isLoggedIn()">
         <a mat-list-item routerLink="/orders" (click)="sidenav.close()">
           <mat-icon matListItemIcon>receipt_long</mat-icon>
-          <span matListItemTitle>My Orders</span>
+          <span matListItemTitle>{{ 'sidenav.myOrders' | translate }}</span>
         </a>
         <a mat-list-item routerLink="/notifications" (click)="sidenav.close()">
           <mat-icon matListItemIcon>notifications</mat-icon>
-          <span matListItemTitle>Notifications</span>
-          <span matListItemLine>Application updates &amp; messages</span>
+          <span matListItemTitle>{{ 'sidenav.notifications' | translate }}</span>
+          <span matListItemLine>{{ 'sidenav.notificationsSub' | translate }}</span>
         </a>
       </ng-container>
 
       <ng-container *ngIf="!unifiedAuth.isLoggedIn()">
         <a mat-list-item routerLink="/login" (click)="sidenav.close()">
           <mat-icon matListItemIcon>login</mat-icon>
-          <span matListItemTitle>Login / Register</span>
+          <span matListItemTitle>{{ 'sidenav.loginRegister' | translate }}</span>
         </a>
       </ng-container>
 
@@ -53,8 +92,8 @@
         <mat-divider></mat-divider>
         <div mat-list-item class="pending-app-item">
           <mat-icon matListItemIcon>hourglass_top</mat-icon>
-          <span matListItemTitle>Application Under Review</span>
-          <span matListItemLine>We'll notify you once approved</span>
+          <span matListItemTitle>{{ 'sidenav.applicationUnderReview' | translate }}</span>
+          <span matListItemLine>{{ 'sidenav.applicationUnderReviewSub' | translate }}</span>
         </div>
       </ng-container>
 
@@ -63,8 +102,8 @@
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/apply" (click)="sidenav.close()" class="join-hustle-item">
           <mat-icon matListItemIcon>rocket_launch</mat-icon>
-          <span matListItemTitle>Join thenga.com</span>
-          <span matListItemLine>Apply to sell on the platform</span>
+          <span matListItemTitle>{{ 'sidenav.joinThenga' | translate }}</span>
+          <span matListItemLine>{{ 'sidenav.joinThengaSub' | translate }}</span>
         </a>
       </ng-container>
 
@@ -73,7 +112,7 @@
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/dashboard" (click)="sidenav.close()">
           <mat-icon matListItemIcon>store</mat-icon>
-          <span matListItemTitle>View My Store</span>
+          <span matListItemTitle>{{ 'sidenav.viewMyStore' | translate }}</span>
         </a>
       </ng-container>
 
@@ -82,16 +121,16 @@
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/facilitator" (click)="sidenav.close()">
           <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
-          <span matListItemTitle>Facilitator Portal</span>
+          <span matListItemTitle>{{ 'sidenav.facilitatorPortal' | translate }}</span>
         </a>
         <ng-container *ngIf="unifiedAuth.isCoordinator()">
           <a mat-list-item routerLink="/coordinator" (click)="sidenav.close()">
             <mat-icon matListItemIcon>manage_accounts</mat-icon>
-            <span matListItemTitle>Coordinator Portal</span>
+            <span matListItemTitle>{{ 'sidenav.coordinatorPortal' | translate }}</span>
           </a>
           <a mat-list-item routerLink="/operations" (click)="sidenav.close()">
             <mat-icon matListItemIcon>map</mat-icon>
-            <span matListItemTitle>Operations</span>
+            <span matListItemTitle>{{ 'sidenav.operations' | translate }}</span>
           </a>
         </ng-container>
       </ng-container>
@@ -101,7 +140,7 @@
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/driver" (click)="sidenav.close()">
           <mat-icon matListItemIcon>local_shipping</mat-icon>
-          <span matListItemTitle>Driver Dashboard</span>
+          <span matListItemTitle>{{ 'sidenav.driverDashboard' | translate }}</span>
         </a>
       </ng-container>
 
@@ -110,7 +149,7 @@
         <mat-divider></mat-divider>
         <a mat-list-item (click)="logout(); sidenav.close()" class="logout-item">
           <mat-icon matListItemIcon>logout</mat-icon>
-          <span matListItemTitle>Logout</span>
+          <span matListItemTitle>{{ 'sidenav.logout' | translate }}</span>
         </a>
       </ng-container>
     </mat-nav-list>
@@ -140,7 +179,7 @@
         type="button"
         mat-icon-button
         routerLink="/checkout"
-        aria-label="Cart"
+        [attr.aria-label]="'toolbar.cart' | translate"
         class="toolbar-cart-btn"
       >
         <mat-icon>shopping_cart</mat-icon>
@@ -154,7 +193,7 @@
         routerLink="/login"
         class="toolbar-login-btn"
       >
-        Login
+        {{ 'toolbar.login' | translate }}
       </button>
     </mat-toolbar>
 
@@ -175,11 +214,11 @@
     <nav class="bottom-nav" *ngIf="!unifiedAuth.isLoggedIn() && !isDriver()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🏪</span>
-        <span>Market</span>
+        <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a routerLink="/login" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">👤</span>
-        <span>Login</span>
+        <span>{{ 'nav.login' | translate }}</span>
       </a>
     </nav>
 
@@ -188,19 +227,19 @@
          *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.isHustler() && !unifiedAuth.isStaff()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🏪</span>
-        <span>Market</span>
+        <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">📦</span>
-        <span>Orders</span>
+        <span>{{ 'nav.orders' | translate }}</span>
       </a>
       <a routerLink="/notifications" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🔔</span>
-        <span>Alerts</span>
+        <span>{{ 'nav.alerts' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
         <span class="bottom-nav-icon">☰</span>
-        <span>Menu</span>
+        <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>
 
@@ -208,19 +247,19 @@
     <nav class="bottom-nav" *ngIf="unifiedAuth.isHustler()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🏪</span>
-        <span>Market</span>
+        <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🏠</span>
-        <span>My Store</span>
+        <span>{{ 'nav.myStore' | translate }}</span>
       </a>
       <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">📦</span>
-        <span>Orders</span>
+        <span>{{ 'nav.orders' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
         <span class="bottom-nav-icon">☰</span>
-        <span>Menu</span>
+        <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>
 
@@ -228,19 +267,19 @@
     <nav class="bottom-nav" *ngIf="unifiedAuth.isStaff()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🏪</span>
-        <span>Market</span>
+        <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a *ngIf="unifiedAuth.hasStore()" routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🏠</span>
-        <span>My Store</span>
+        <span>{{ 'nav.myStore' | translate }}</span>
       </a>
       <a routerLink="/facilitator" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🏛️</span>
-        <span>Facilitator</span>
+        <span>{{ 'nav.facilitator' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
         <span class="bottom-nav-icon">☰</span>
-        <span>Menu</span>
+        <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>
 
@@ -248,11 +287,11 @@
     <nav class="bottom-nav" *ngIf="isDriver()">
       <a routerLink="/driver" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon">🚚</span>
-        <span>Dashboard</span>
+        <span>{{ 'nav.dashboard' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
         <span class="bottom-nav-icon">☰</span>
-        <span>Menu</span>
+        <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>
 

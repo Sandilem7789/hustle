@@ -5,11 +5,12 @@ import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-checkout-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
   template: `
     <div class="layout">
 
@@ -31,7 +32,7 @@ import { CartService } from '../../services/cart.service';
       <ng-container *ngIf="unifiedAuth.isLoggedIn() && cart.items().length > 0">
 
         <div class="card">
-          <h2 class="section-title">Your Cart</h2>
+          <h2 class="section-title">{{ 'checkout.yourCart' | translate }}</h2>
           <div class="cart-items">
             <div *ngFor="let item of cart.items()" class="cart-item">
               <div class="item-info">
@@ -51,25 +52,25 @@ import { CartService } from '../../services/cart.service';
           </div>
 
           <div class="order-total">
-            <span class="total-label">Order Total</span>
+            <span class="total-label">{{ 'checkout.orderTotal' | translate }}</span>
             <span class="total-amount">R {{ cart.total() | number:'1.2-2' }}</span>
           </div>
         </div>
 
         <div class="card">
-          <h2 class="section-title">Order Details</h2>
+          <h2 class="section-title">{{ 'checkout.orderDetails' | translate }}</h2>
 
           <!-- Transaction Type -->
           <div class="field-group">
-            <p class="field-label">Transaction Type</p>
+            <p class="field-label">{{ 'checkout.transactionType' | translate }}</p>
             <div class="radio-group">
               <label class="radio-option" [class.selected]="transactionType === 'B2C'">
                 <input type="radio" name="txType" value="B2C" [(ngModel)]="transactionType" />
-                <span>🧑 Personal Purchase (B2C)</span>
+                <span>{{ 'checkout.personalPurchase' | translate }}</span>
               </label>
               <label class="radio-option" [class.selected]="transactionType === 'B2B'">
                 <input type="radio" name="txType" value="B2B" [(ngModel)]="transactionType" />
-                <span>🏢 Business Purchase (B2B)</span>
+                <span>{{ 'checkout.businessPurchase' | translate }}</span>
               </label>
             </div>
           </div>
@@ -81,15 +82,15 @@ import { CartService } from '../../services/cart.service';
 
           <!-- Fulfillment Type -->
           <div class="field-group">
-            <p class="field-label">Fulfillment Method</p>
+            <p class="field-label">{{ 'checkout.fulfillmentMethod' | translate }}</p>
             <div class="radio-group">
               <label class="radio-option" [class.selected]="fulfillmentType === 'DELIVERY'">
                 <input type="radio" name="fulfillment" value="DELIVERY" [(ngModel)]="fulfillmentType" />
-                <span>🚚 Deliver to me</span>
+                <span>🚚 {{ 'checkout.deliverToMe' | translate }}</span>
               </label>
               <label class="radio-option" [class.selected]="fulfillmentType === 'COLLECTION'">
                 <input type="radio" name="fulfillment" value="COLLECTION" [(ngModel)]="fulfillmentType" />
-                <span>🏪 I will collect</span>
+                <span>🏪 {{ 'checkout.collectMyself' | translate }}</span>
               </label>
             </div>
           </div>
@@ -97,12 +98,12 @@ import { CartService } from '../../services/cart.service';
           <!-- Delivery fields -->
           <ng-container *ngIf="fulfillmentType === 'DELIVERY'">
             <div class="field">
-              <label for="deliveryAddress">Delivery Address *</label>
+              <label for="deliveryAddress">{{ 'checkout.deliveryAddress' | translate }} *</label>
               <input id="deliveryAddress" type="text" [(ngModel)]="deliveryAddress" placeholder="e.g. 12 Main Street, Durban, 4001" required />
             </div>
 
             <button class="btn-secondary" type="button" (click)="useCurrentLocation()" [disabled]="gettingLocation()">
-              {{ gettingLocation() ? '📍 Getting location…' : '📍 Use my current location' }}
+              {{ gettingLocation() ? '📍 Getting location…' : '📍 ' + ('checkout.useCurrentLocation' | translate) }}
             </button>
 
             <p *ngIf="locationCoords()" class="coords-text">
@@ -120,7 +121,7 @@ import { CartService } from '../../services/cart.service';
           <p *ngIf="errorMsg()" class="error-msg">{{ errorMsg() }}</p>
 
           <button class="btn-primary" (click)="placeOrder()" [disabled]="loading()">
-            {{ loading() ? 'Placing order…' : 'Place Order — R ' + (cart.total() | number:'1.2-2') }}
+            {{ loading() ? 'Placing order…' : ('checkout.placeOrder' | translate) + ' — R ' + (cart.total() | number:'1.2-2') }}
           </button>
         </div>
 
@@ -129,9 +130,9 @@ import { CartService } from '../../services/cart.service';
   `,
   styles: `
     .layout { max-width: 600px; margin: 0 auto; padding: 1rem 1rem 5rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    .section-title { margin: 0 0 1.25rem; font-size: 1.15rem; color: #1C1917; font-weight: 800; }
-    .muted { color: #78716C; }
+    .card { background: var(--bg-surface); border-radius: 1.5rem; padding: 1.5rem; box-shadow: var(--shadow-card); border: 1px solid var(--border-base); }
+    .section-title { margin: 0 0 1.25rem; font-size: 1.15rem; color: var(--text-primary); font-weight: 800; }
+    .muted { color: var(--text-secondary); }
 
     /* Cart */
     .cart-items { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -159,7 +160,7 @@ import { CartService } from '../../services/cart.service';
     input:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
 
     .radio-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .radio-option { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border: 1.5px solid #E7E5E4; border-radius: 0.75rem; cursor: pointer; font-size: 0.95rem; color: #78716C; font-weight: 700; transition: all 0.15s; }
+    .radio-option { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border: 1.5px solid #E7E5E4; border-radius: 0.75rem; cursor: pointer; font-size: 0.95rem; color: #78716C; font-weight: 700; transition: border-color 0.15s, background-color 0.15s, color 0.15s; }
     .radio-option.selected { border-color: #F5B800; background: rgba(245,184,0,0.06); color: #1C1917; font-weight: 800; }
     .radio-option input[type="radio"] { width: 16px; height: 16px; accent-color: #F5B800; }
 

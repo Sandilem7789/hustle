@@ -40,6 +40,11 @@
   --border-base:  #E7E5E4;
   --border-focus: var(--hustle-yellow);
 
+  /* Brand-yellow text on a surface — #F5B800 fails contrast on a light
+     surface, so light theme uses a darkened readable variant; dark theme
+     can use the brighter accent directly since it reads fine there. */
+  --accent-text-safe: #92620A;
+
   /* Spacing */
   --space-xs:  0.25rem;
   --space-sm:  0.5rem;
@@ -61,6 +66,32 @@
   --shadow-card: 0 2px 12px rgba(28, 25, 23, 0.08);
   --shadow-card-hover: 0 6px 24px rgba(28, 25, 23, 0.14);
   --shadow-nav:  0 -3px 16px rgba(28, 25, 23, 0.07);
+
+  color-scheme: light;
+}
+
+/* ─── Dark theme ─────────────────────────────────────────────────────────
+   Brand accent hues stay the same in both themes — only surfaces, text,
+   borders, and shadows flip. Applied via [data-theme], set by ThemeService
+   (reads a saved choice, falling back to prefers-color-scheme on first
+   load), so this app never needs a bare prefers-color-scheme media query. */
+:root[data-theme="dark"] {
+  --bg-page:    #17140F;
+  --bg-surface: #211E19;
+  --bg-muted:   #2B2721;
+
+  --text-primary:   #F5F1EA;
+  --text-secondary: #C9C2B5;
+  --text-muted:     #8F887C;
+
+  --border-base:  #3A352D;
+  --accent-text-safe: #F5D061;
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --shadow-nav:  0 -3px 16px rgba(0, 0, 0, 0.35);
+
+  color-scheme: dark;
 }
 
 /* ─── Base Reset ─────────────────────────────────────────────────────────── */
@@ -443,3 +474,13 @@ main.page-shell {
 .leaflet-control { z-index: 8; }
 
 html, body { height: 100%; }
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

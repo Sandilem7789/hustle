@@ -10,7 +10,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { UnifiedAuthService } from './services/unified-auth.service';
 import { DriverAuthService } from './services/driver-auth.service';
 import { CartService } from './services/cart.service';
+import { ThemeService } from './services/theme.service';
+import { TranslationService } from './services/translation.service';
 import { OfflineBannerComponent } from './components/offline-banner/offline-banner.component';
+import { TranslatePipe } from './pipes/translate.pipe';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +22,7 @@ import { OfflineBannerComponent } from './components/offline-banner/offline-bann
     RouterOutlet, RouterLink, RouterLinkActive, CommonModule,
     MatSidenavModule, MatToolbarModule, MatIconModule,
     MatButtonModule, MatListModule, MatDividerModule,
-    OfflineBannerComponent,
+    OfflineBannerComponent, TranslatePipe,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
@@ -31,6 +34,8 @@ export class AppComponent implements OnInit {
   readonly unifiedAuth = inject(UnifiedAuthService);
   readonly driverAuth  = inject(DriverAuthService);
   readonly cart = inject(CartService);
+  readonly theme = inject(ThemeService);
+  readonly i18n = inject(TranslationService);
   private readonly router = inject(Router);
 
   readonly isDriver = computed(() => this.driverAuth.isLoggedIn());

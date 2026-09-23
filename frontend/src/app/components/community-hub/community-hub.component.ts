@@ -5,27 +5,29 @@ import { Router } from '@angular/router';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
+import { TranslationService } from '../../services/translation.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 const CATEGORIES = [
-  { value: 'ALL',         label: 'All' },
-  { value: 'FAST_FOOD',   label: 'Fast Food' },
-  { value: 'GROCERY',     label: 'Grocery' },
-  { value: 'CLOTHING',    label: 'Clothing' },
-  { value: 'SERVICES',    label: 'Services' },
-  { value: 'CRAFTS',      label: 'Crafts & Art' },
-  { value: 'AGRI',        label: 'Agri & Livestock' },
-  { value: 'ELECTRONICS', label: 'Electronics' },
-  { value: 'OTHER',       label: 'Other' },
+  { value: 'ALL',         labelKey: 'category.all' },
+  { value: 'FAST_FOOD',   labelKey: 'category.fastFood' },
+  { value: 'GROCERY',     labelKey: 'category.grocery' },
+  { value: 'CLOTHING',    labelKey: 'category.clothing' },
+  { value: 'SERVICES',    labelKey: 'category.services' },
+  { value: 'CRAFTS',      labelKey: 'category.crafts' },
+  { value: 'AGRI',        labelKey: 'category.agri' },
+  { value: 'ELECTRONICS', labelKey: 'category.electronics' },
+  { value: 'OTHER',       labelKey: 'category.other' },
 ] as const;
 
-const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
-  CATEGORIES.map(c => [c.value, c.label])
+const CATEGORY_LABEL_KEYS: Record<string, string> = Object.fromEntries(
+  CATEGORIES.map(c => [c.value, c.labelKey])
 );
 
 @Component({
   selector: 'app-community-hub',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
     <div class="card">
 
@@ -36,7 +38,7 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
           class="search-input"
           type="search"
           [(ngModel)]="searchQuery"
-          placeholder="Search products, services, businesses…"
+          [placeholder]="'marketplace.searchPlaceholder' | translate"
           autocomplete="off"
         />
         <button *ngIf="searchQuery" class="search-clear" (click)="searchQuery = ''" aria-label="Clear search">✕</button>
@@ -50,17 +52,17 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
           [class.cat-active]="selectedCategory() === cat.value"
           (click)="selectCategory(cat.value)"
         >
-          {{ cat.label }}
+          {{ cat.labelKey | translate }}
         </button>
       </div>
 
       <!-- STATES -->
-      <div *ngIf="loading()" class="state-msg">Loading products…</div>
+      <div *ngIf="loading()" class="state-msg">{{ 'marketplace.loading' | translate }}</div>
       <div *ngIf="!loading() && filteredProducts().length === 0 && products().length > 0" class="state-msg">
-        No results for "{{ searchQuery }}".
+        {{ 'marketplace.noResults' | translate }} "{{ searchQuery }}".
       </div>
       <div *ngIf="!loading() && products().length === 0" class="state-msg">
-        No products or services listed yet in this area.
+        {{ 'marketplace.noProducts' | translate }}
       </div>
 
       <!-- PRODUCT GRID -->
@@ -170,14 +172,14 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
           class="detail-buy-btn"
           (click)="addToCartAndClose(selectedProduct()!)"
         >
-          Add to Cart
+          {{ 'marketplace.addToCart' | translate }}
         </button>
         <button
           *ngIf="!unifiedAuth.isLoggedIn()"
           class="detail-login-btn"
           (click)="goToLogin()"
         >
-          Login to buy
+          {{ 'marketplace.loginToBuy' | translate }}
         </button>
       </div>
     </div>
@@ -185,11 +187,11 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
   styles: `
     /* ── Wrapper card ─────────────────────────────────────────── */
     .card {
-      background: white;
+      background: var(--bg-surface);
       border-radius: 1.5rem;
       padding: 1.25rem;
-      box-shadow: 0 4px 24px rgba(28,25,23,0.08);
-      border: 1px solid #E7E5E4;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-base);
     }
 
     /* ── Search bar ───────────────────────────────────────────── */
@@ -209,14 +211,14 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
     .search-input {
       width: 100%;
       height: 48px;
-      border: 2px solid #E7E5E4;
+      border: 2px solid var(--border-base);
       border-radius: 999px;
       padding: 0 2.75rem;
       font-size: 0.95rem;
       font-family: inherit;
       font-weight: 600;
-      color: #1C1917;
-      background: #FAFAF9;
+      color: var(--text-primary);
+      background: var(--bg-muted);
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
       box-sizing: border-box;
@@ -224,13 +226,13 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
     .search-input:focus {
       border-color: #F5B800;
       box-shadow: 0 0 0 3px rgba(245,184,0,0.2);
-      background: white;
+      background: var(--bg-surface);
     }
-    .search-input::placeholder { color: #A8A29E; font-weight: 600; }
+    .search-input::placeholder { color: var(--text-muted); font-weight: 600; }
     .search-clear {
       position: absolute;
       right: 0.75rem;
-      background: #E7E5E4;
+      background: var(--border-base);
       border: none;
       border-radius: 50%;
       width: 22px;
@@ -238,7 +240,7 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
       min-height: unset;
       font-size: 0.72rem;
       cursor: pointer;
-      color: #78716C;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -256,23 +258,23 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
     }
     .category-scroll::-webkit-scrollbar { display: none; }
     .cat-btn {
-      border: 1.5px solid #E7E5E4;
+      border: 1.5px solid var(--border-base);
       border-radius: 999px;
       padding: 0.35rem 0.9rem;
-      background: #FAFAF9;
+      background: var(--bg-muted);
       cursor: pointer;
       font-size: 0.8rem;
       font-weight: 700;
-      color: #78716C;
+      color: var(--text-secondary);
       white-space: nowrap;
-      transition: all 0.15s;
+      transition: color 0.15s, border-color 0.15s, background-color 0.15s;
       min-height: 36px;
       font-family: inherit;
     }
-    .cat-btn:hover { border-color: #F5B800; color: #1C1917; }
+    .cat-btn:hover { border-color: #F5B800; color: var(--text-primary); }
     .cat-btn.cat-active { background: #F5B800; border-color: #F5B800; color: #1C1917; font-weight: 800; }
 
-    .state-msg { color: #A8A29E; margin-top: 1rem; font-size: 0.9rem; }
+    .state-msg { color: var(--text-muted); margin-top: 1rem; font-size: 0.9rem; }
 
     /* ── Product grid ─────────────────────────────────────────── */
     .product-grid {
@@ -290,10 +292,10 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
 
     /* ── Product card ─────────────────────────────────────────── */
     .product-card {
-      border: 1px solid #E7E5E4;
+      border: 1px solid var(--border-base);
       border-radius: 1rem;
       overflow: hidden;
-      background: white;
+      background: var(--bg-surface);
       cursor: pointer;
       transition: box-shadow 0.18s, transform 0.12s;
       display: flex;
@@ -367,7 +369,7 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
     .card-name {
       font-size: 0.825rem;
       font-weight: 700;
-      color: #1C1917;
+      color: var(--text-primary);
       line-height: 1.3;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -400,7 +402,7 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
       right: 0;
       z-index: 401;
       max-height: 92vh;
-      background: white;
+      background: var(--bg-surface);
       border-radius: 1.25rem 1.25rem 0 0;
       display: flex;
       flex-direction: column;
@@ -504,7 +506,7 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
     .detail-name {
       font-size: 1.2rem;
       font-weight: 800;
-      color: #1C1917;
+      color: var(--text-primary);
       margin: 0 0 0.35rem;
       line-height: 1.25;
     }
@@ -524,7 +526,7 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
 
     .detail-desc {
       font-size: 0.9rem;
-      color: #44403C;
+      color: var(--text-secondary);
       line-height: 1.6;
       margin: 0 0 1rem;
       font-weight: 400;
@@ -537,31 +539,31 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
       gap: 0.875rem;
       margin-bottom: 1rem;
       padding: 0.875rem;
-      background: #FAFAF9;
+      background: var(--bg-muted);
       border-radius: 0.75rem;
-      border: 1px solid #E7E5E4;
+      border: 1px solid var(--border-base);
     }
     .option-label {
       font-size: 0.775rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #78716C;
+      color: var(--text-secondary);
       margin: 0 0 0.4rem;
     }
     .option-values { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .option-chip {
       padding: 0.35rem 0.875rem;
-      border: 1.5px solid #E7E5E4;
+      border: 1.5px solid var(--border-base);
       border-radius: 999px;
-      background: white;
+      background: var(--bg-surface);
       font-size: 0.875rem;
       font-weight: 700;
-      color: #44403C;
+      color: var(--text-secondary);
       cursor: pointer;
       min-height: unset;
       font-family: inherit;
-      transition: all 0.12s;
+      transition: border-color 0.12s, background-color 0.12s, color 0.12s;
     }
     .option-chip:hover { border-color: #F5B800; }
     .option-chip.option-chip-active {
@@ -580,7 +582,7 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
     /* Sticky footer */
     .detail-footer {
       padding: 0.875rem 1.25rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid #E7E5E4;
+      border-top: 1px solid var(--border-base);
       flex-shrink: 0;
     }
 
@@ -603,17 +605,17 @@ const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
     .detail-login-btn {
       width: 100%;
       height: 52px;
-      border: 1.5px solid #E7E5E4;
+      border: 1.5px solid var(--border-base);
       border-radius: 999px;
-      background: white;
-      color: #78716C;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
       transition: border-color 0.15s, color 0.15s;
     }
-    .detail-login-btn:hover { border-color: #F5B800; color: #1C1917; }
+    .detail-login-btn:hover { border-color: #F5B800; color: var(--text-primary); }
   `
 })
 export class CommunityHubComponent implements OnInit {
@@ -621,6 +623,7 @@ export class CommunityHubComponent implements OnInit {
   readonly unifiedAuth = inject(UnifiedAuthService);
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(TranslationService);
 
   readonly categories = CATEGORIES;
 
@@ -661,7 +664,8 @@ export class CommunityHubComponent implements OnInit {
   }
 
   catLabel(value: string): string {
-    return CATEGORY_LABELS[value] ?? value;
+    const key = CATEGORY_LABEL_KEYS[value];
+    return key ? this.i18n.t(key) : value;
   }
 
   openDetail(product: ProductResponse): void {
