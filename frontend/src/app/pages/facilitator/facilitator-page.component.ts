@@ -17,20 +17,25 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       [requiredRoles]="['FACILITATOR','COORDINATOR']"
     ></app-login-gate>
 
-    <section class="layout" *ngIf="authorized()">
-      <app-facilitator-queue></app-facilitator-queue>
-      <div class="signout-row">
-        <button class="signout-btn" (click)="logout()">Sign Out</button>
+    <section class="staff-shell" *ngIf="authorized()">
+      <header class="staff-shell__header">
+        <h1 class="staff-shell__title">Facilitator</h1>
+        <p class="staff-shell__subtitle">Applicant pipeline, active hustlers, surveys and reports</p>
+      </header>
+      <div class="staff-shell__content staff-shell__content--contained">
+        <app-facilitator-queue></app-facilitator-queue>
       </div>
+      <footer class="staff-shell__footer signout-row">
+        <button class="signout-btn" (click)="logout()">Sign Out</button>
+      </footer>
     </section>
   `,
   styles: `
-    .layout { padding: 1rem; max-width: 960px; margin: 0 auto; }
-    @media (max-width: 600px) { .layout { padding: 0.375rem; } }
+    :host { display: block; }
+    app-facilitator-queue { display: block; height: 100%; min-height: 0; }
     .signout-row {
       display: flex;
       justify-content: center;
-      padding: 2rem 0 1rem;
     }
     .signout-btn {
       border: 1.5px solid #E7E5E4;
@@ -45,7 +50,9 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       min-height: 48px;
       transition: border-color 0.15s, color 0.15s;
     }
-    .signout-btn:hover { border-color: #E53935; color: #E53935; }
+    @media (hover: hover) and (pointer: fine) {
+      .signout-btn:hover { border-color: #E53935; color: #E53935; }
+    }
   `
 })
 export class FacilitatorPageComponent {
