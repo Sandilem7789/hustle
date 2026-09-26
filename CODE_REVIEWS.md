@@ -115,6 +115,46 @@ _(none open)_
 
 ---
 
+## R4 — 2026-09-26 — feature/native-staff-dashboard-shells — Native staff dashboard shells
+**Scope:** `843862e` (feat: add native staff dashboard shells)
+**Status:** Open
+**Verdict:** Merge after fixes
+
+Done well: the queue card's `max-width: 600px` override is now a `min-width: 601px` override, the sign-out hover is gated behind `(hover: hover)`, the Leaflet map and credentials modal still work inside the new containers, and the branch, commit format, Codex trailer and `PROGRESS_UPDATE.md` entry are all correct.
+
+Verification: built `843862e` from a clean archive (production `ng build`, served statically, independent of the shared Docker frontend) and ran `frontend/tests/staff-dashboard-shells.spec.ts` — all 4 tests pass. Probed all three routes at 360×640, 390×844 and 1280×900.
+
+### Findings
+- [ ] **Blocking** — The page still scrolls on all three routes at every viewport tested. Material's `mat-sidenav-content` (`overflow-y: auto`) is the real page scroller, not the intended fixed shell. On all 9 route/viewport combinations it measures `scrollHeight = clientHeight + 8`, and setting `scrollTop = 300` moves it by 8px — a swipe starting on the header or footer nudges the whole shell. This breaks the spec's central requirement and contradicts the comment at `frontend/src/styles.css:396-399` ("the page itself never scrolls"). Two causes:
+  - **Mobile:** `.staff-shell` (`styles.css:402-405`) subtracts `var(--bottom-nav-height)` (64px), but the padding actually applied to `main.page-shell` is `72px` from `app.component.css:327` — that component-scoped selector outranks the global one at `styles.css:393-395`.
+  - **Desktop:** `app.component.css:328` keeps `min-height: calc(100vh - 64px - 3px)`, but the desktop toolbar is 72px, so the page is 8px taller than the viewport.
+  - **Fix:** set `.page-shell` padding to `var(--bottom-nav-height)` in `app.component.css`, add a `min-width: 768px` override of `min-height: calc(100vh - 72px - 3px)`. Better: replace the hard-coded `64px`/`72px`/`3px` in both files with one shared `--toolbar-height` variable so the two files can't drift apart again — that drift is the bug.
+- [ ] **Should fix** — The "page did not scroll" test assertion can't fail (`staff-dashboard-shells.spec.ts:60,91`). It checks `document.scrollingElement.scrollTop`, but the document never scrolls in this app — `mat-sidenav-content` does. That's why the 8px defect above passes. The desktop bound `<= 901` (`:95`) only holds because the shell ends exactly at the viewport edge; it doesn't detect the outer scroll either. **Fix:** assert `mat-sidenav-content.scrollHeight <= clientHeight`, then set its `scrollTop` to a large value and confirm it stays at 0. Add a 360×640 case — the smallest target viewport.
+- [ ] **Should fix** — The task note asked for a pinned header with "title + role-appropriate filters/actions." On Facilitator and Coordinator only the four top tabs are pinned — the pipeline header, "+ Add Applicant," and the stage/community filters sit inside `.queue-scroll` (`facilitator-queue.component.ts:26` onward) and scroll away. Either pin the filter/action row above `.queue-scroll`, or post the scope call here before merging — the original note explicitly invited a plan or scope adjustment and none was posted.
+- [ ] **Nit** — The footer adds `env(safe-area-inset-bottom)` on mobile (`styles.css:458`), but on mobile the footer sits above the bottom nav, which already pads the inset itself — with `viewport-fit=cover` this leaves dead space on notched phones. The desktop override then removes the inset in the one layout where the footer does touch the screen edge — the logic is inverted. Drop the inset from the base rule.
+- [ ] **Nit** — Unrequested changes bundled in: max-widths go from 900/960px to 1100px on all three pages, Coordinator banner copy changes, ops header border restyled. None harmful, but out of scope — call these out in the review log next time so they can be evaluated on purpose rather than found by a reviewer.
+- [ ] **Nit** — Very little room left for small phones: at 360×640 the Facilitator queue's scroll area is 267px tall, Operations gets 376px (header + footer + tabs on top of the toolbar and bottom nav). Follows the letter of "pinned footer where one exists," but worth raising under *Questions for senior* whether Sign Out should move into the sidenav menu on mobile instead.
+- [ ] **Nit** — Neither the commit message nor this log states which tests ran — the only claim is in `PROGRESS_UPDATE.md`. Put the actual command and result (e.g. `npx playwright test tests/staff-dashboard-shells.spec.ts — 4 passed`) in the commit body or here, so it can be checked without a rebuild.
+
+No regressions found outside scope: `app-facilitator-queue` and `.staff-shell` are used only by these three pages, `LoginGateComponent` renders outside the shell and is unchanged, the new `:host { display: block; }` doesn't affect the fixed `.pwd-overlay`. No backend or security surface touched.
+
+**Placement note (from review):** strongest at mobile-first CSS structure, weakest at test design — the 4 tests are real and pass, but the key scroll assertion reads an element that never scrolls in this app, so it confirmed the defect instead of catching it. Suggested next step: write the failing Playwright assertion for the `mat-sidenav-content` overflow *before* touching the CSS fix, and show the red-then-green run here.
+
+### Senior changes since last review
+- `6e42dd4` — Resolved the main-vs-development workflow conflict, recorded team direction, closed R2.
+- `b846189`, `edd1601`, `448536a`, `58ba51c` — thenga.com rebrand (user-facing copy) and both design specs (Facilitator-Seller, Last-Mile) drafted, reviewed, and decided (DL-1).
+- `adc734e`, `2ba6eac` — Rewrote root README for the rebrand; added `CONTEXT.md` (pivot context, role renaming pending, not implemented).
+- `983da45`, `c5a38bd` — Gitignored local design skills; added your UI/UX audit task brief (audit-only, phase 0).
+- `1b5e24f`, `c671dea`, `446ca53` — Applied UI/UX audit fixes (a11y, dead code, transitions, rebrand miss); added dark/light theme + English/isiZulu language switch; recorded both in `PROGRESS_UPDATE.md`.
+- `f634c8f` — Replaced the Hustle Economy logo with the new thenga.com mark.
+- `37da335`, `ee771de` — Landed and consolidated your deferred-R1 note; wrote the senior response to your marketplace design proposal (`docs/MARKETPLACE_DESIGN_PROPOSAL.md` §10).
+- `fbcd02b` — Seeded 20 marketplace demo products with generated icons.
+- `326b268` — Fixed the marketplace search reactivity bug (`computed()` reading a plain field).
+- `e8e6f88`, `66f7643` — Relayed Sandile's native-app-shell request (the task this review covers); ran a full-stack architecture audit and assigned the remaining findings to you (see the Notes section above).
+- `cce3785` — Fixed two bugs the audit surfaced directly: a missing auth check on `CommunityController.createCommunity()` and an IDOR in `NotificationService.markRead()`, plus a repeat of the search-reactivity bug in the hustler dashboard's POS search, plus deleted 3 dead route guards.
+
+---
+
 ## R2 — 2026-09-11 — development — Role note and workflow question
 **Scope:** `3d99c12` (docs: record Codex role clarification for Claude)
 **Status:** Closed
