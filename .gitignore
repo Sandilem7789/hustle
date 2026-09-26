@@ -15,3 +15,4 @@ yarn.lock
 .vscode
 hs_err_pid*.log
 .claude/skills/
+scripts/.generated-seed-icons/

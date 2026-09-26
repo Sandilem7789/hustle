@@ -5,6 +5,7 @@ import com.hustle.economy.repository.ApplicantRepository;
 import com.hustle.economy.repository.BusinessProfileRepository;
 import com.hustle.economy.repository.CommunityRepository;
 import com.hustle.economy.repository.HustlerApplicationRepository;
+import com.hustle.economy.repository.ProductRepository;
 import com.hustle.economy.repository.SurveyQuestionRepository;
 import com.hustle.economy.repository.SurveyTemplateRepository;
 import com.hustle.economy.survey.SurveyFieldKeys;
@@ -16,6 +17,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ public class DataInitializer implements ApplicationRunner {
     private final ApplicantRepository applicantRepository;
     private final HustlerApplicationRepository applicationRepository;
     private final BusinessProfileRepository businessProfileRepository;
+    private final ProductRepository productRepository;
     private final SurveyTemplateRepository surveyTemplateRepository;
     private final SurveyQuestionRepository surveyQuestionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -76,6 +79,104 @@ public class DataInitializer implements ApplicationRunner {
         seedStaffAccount();
         seedKwaNgwenyaApplicants();
         seedSurveyTemplates();
+        seedMarketplaceDemoProducts();
+    }
+
+    // ── Marketplace demo products ────────────────────────────────────────────
+    // Fills out the marketplace with realistic KZN informal-economy listings
+    // spread across all 5 seeded communities and all 8 categories, so the
+    // frontend can actually be evaluated with real density instead of the 3
+    // ad-hoc products created by hand while testing the registration flow.
+    // Every mediaUrl points at a flat illustrated icon (not a real photo —
+    // this project has no image-generation tool available) served through the
+    // existing /api/uploads/{filename} path, copied into the uploads_data
+    // volume once; see docs/ for how they were produced.
+    // Idempotent: guarded on whether the first new demo seller already exists.
+    private void seedMarketplaceDemoProducts() {
+        if (businessProfileRepository.findFirstByBusinessName("KwaNibela Green Grocer").isPresent()) return;
+
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // ── Give the two photo-less hand-created products a real image ──────
+        productRepository.findFirstByNameIgnoreCase("Vetkoek").ifPresent(p -> {
+            p.setMediaUrl("/api/uploads/seed-food-fried-dough.png");
+            p.setUpdatedAt(now);
+            productRepository.save(p);
+        });
+        productRepository.findFirstByNameIgnoreCase("Coke 330ml").ifPresent(p -> {
+            p.setMediaUrl("/api/uploads/seed-drink-bottle.png");
+            p.setUpdatedAt(now);
+            productRepository.save(p);
+        });
+
+        // ── Resolve the existing sellers we're adding products to ───────────
+        // Looked up via a known product rather than by business name, because
+        // this dev database already has duplicate "Liskomz Tuck Shop" rows
+        // from earlier manual registration testing — anchoring on the
+        // product that's demonstrably real/in-use avoids picking the wrong one.
+        BusinessProfile isiqalo = productRepository.findFirstByNameIgnoreCase("Vetkoek")
+                .map(Product::getBusiness).orElse(null);
+        BusinessProfile liskomz = productRepository.findFirstByNameIgnoreCase("Handmade Necklace")
+                .map(Product::getBusiness).orElse(null);
+        BusinessProfile tojiwe = businessProfileRepository.findFirstByBusinessName("Tojiwe Camp Park").orElse(null);
+
+        // ── New demo sellers, one per community that had none yet ───────────
+        BusinessProfile kwaNibelaGrocer = createDemoSeller("KwaNibela Green Grocer", "Product", "KwaNibela", now);
+        BusinessProfile makhasaCrafts   = createDemoSeller("Makhasa Crafts Collective", "Product", "KwaMakhasa", now);
+        BusinessProfile jobePoultry     = createDemoSeller("Jobe Poultry & Produce", "Product", "KwaJobe", now);
+        BusinessProfile mnqobokaziTech  = createDemoSeller("Mnqobokazi Mobile Repairs", "Service & Products", "KwaMnqobokazi", now);
+
+        // name, price (ZAR), category, icon filename, seller
+        Object[][] products = {
+            {"White Bread Loaf",           "18.00",   ProductCategory.GROCERY,     "grocery-bread-loaf",   isiqalo},
+            {"Amasi 1L",                   "20.00",   ProductCategory.GROCERY,     "grocery-bottle-liquid",isiqalo},
+            {"Boerewors Roll",             "25.00",   ProductCategory.FAST_FOOD,   "food-bread-roll",      tojiwe},
+            {"Firewood Bundle",            "35.00",   ProductCategory.OTHER,       "other-firewood",       tojiwe},
+            {"Bunny Chow",                 "35.00",   ProductCategory.FAST_FOOD,   "food-bread-roll",      liskomz},
+            {"Amagwinya (Fat Cakes)",      "5.00",    ProductCategory.FAST_FOOD,   "food-fried-dough",     liskomz},
+            {"Fresh Spinach Bunch",        "12.00",   ProductCategory.AGRI,        "agri-leaf",            kwaNibelaGrocer},
+            {"Free-range Eggs (Dozen)",    "45.00",   ProductCategory.AGRI,        "agri-eggs",            kwaNibelaGrocer},
+            {"Butternut Squash",           "15.00",   ProductCategory.AGRI,        "agri-leaf",            kwaNibelaGrocer},
+            {"Sunflower Oil 750ml",        "32.00",   ProductCategory.GROCERY,     "grocery-bottle-liquid",kwaNibelaGrocer},
+            {"Beaded Bracelet Set",        "60.00",   ProductCategory.CRAFTS,      "craft-beads",          makhasaCrafts},
+            {"Woven Grass Basket",         "150.00",  ProductCategory.CRAFTS,      "craft-basket",         makhasaCrafts},
+            {"Clay Cooking Pot",           "120.00",  ProductCategory.CRAFTS,      "craft-clay-pot",       makhasaCrafts},
+            {"Zulu Isicholo Hat",          "250.00",  ProductCategory.CLOTHING,    "clothing-hat",         makhasaCrafts},
+            {"Live Chickens (Each)",       "90.00",   ProductCategory.AGRI,        "agri-poultry",         jobePoultry},
+            {"Goat (Live, Mature)",        "1800.00", ProductCategory.AGRI,        "agri-livestock",       jobePoultry},
+            {"Maize Meal 5kg",             "65.00",   ProductCategory.GROCERY,     "grocery-sack",         jobePoultry},
+            {"Phone Screen Repair",        "250.00",  ProductCategory.SERVICES,    "service-tools",        mnqobokaziTech},
+            {"Solar Power Bank",           "180.00",  ProductCategory.ELECTRONICS, "electronics-device",   mnqobokaziTech},
+            {"Phone Charger (Universal)",  "60.00",   ProductCategory.ELECTRONICS, "electronics-device",   mnqobokaziTech},
+        };
+
+        for (Object[] row : products) {
+            BusinessProfile seller = (BusinessProfile) row[4];
+            if (seller == null) continue; // seller lookup failed — skip rather than seed an orphaned product
+            productRepository.save(Product.builder()
+                    .business(seller)
+                    .name((String) row[0])
+                    .description((String) row[0])
+                    .price(new BigDecimal((String) row[1]))
+                    .category((ProductCategory) row[2])
+                    .mediaUrl("/api/uploads/seed-" + row[3] + ".png")
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build());
+        }
+    }
+
+    private BusinessProfile createDemoSeller(String businessName, String businessType, String communityName, OffsetDateTime now) {
+        Community community = communityRepository.findByNameIgnoreCase(communityName).orElse(null);
+        if (community == null) return null;
+        return businessProfileRepository.save(BusinessProfile.builder()
+                .community(community)
+                .businessName(businessName)
+                .businessType(businessType)
+                .status(ApplicationStatus.APPROVED)
+                .active(true)
+                .createdAt(now)
+                .build());
     }
 
     private void seedStaffAccount() {

@@ -12,6 +12,7 @@ import java.util.UUID;
 public interface BusinessProfileRepository extends JpaRepository<BusinessProfile, UUID> {
     Optional<BusinessProfile> findByApplication_Id(UUID applicationId);
     List<BusinessProfile> findByCommunity_IdAndStatus(UUID communityId, ApplicationStatus status);
+    Optional<BusinessProfile> findFirstByBusinessName(String businessName);
 
     @Query("SELECT bp FROM BusinessProfile bp JOIN FETCH bp.application a JOIN FETCH bp.community c WHERE bp.status = 'APPROVED'")
     List<BusinessProfile> findAllApprovedFetched();
