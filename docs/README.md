@@ -14,8 +14,9 @@ These are *specifications for future sprints* — design only, not yet built. No
 |---|---|
 | [`FACILITATOR_SELLER_SPEC.md`](FACILITATOR_SELLER_SPEC.md) | Paid Facilitator-Seller role + append-only earnings ledger + payouts. The youth-employment layer. Has 5 open questions. |
 | [`LAST_MILE_DELIVERY_SPEC.md`](LAST_MILE_DELIVERY_SPEC.md) | Last-mile parcel relay — local drivers bridge the gap national couriers won't (Mkuze depot → rural home). Hub-logged parcels, multi-drop trips, cash-on-delivery zone tariffs. Has 7 open questions. |
+| [`MARKETPLACE_DESIGN_PROPOSAL.md`](MARKETPLACE_DESIGN_PROPOSAL.md) | Redesign of the marketplace browse screen and product card — seller trust signal, locality/community filtering actually wired up, a real search-reactivity bug fix, contrast fixes, mobile/desktop wireframes, and a logo-simplification option. Authored by Sandile.Codex; senior response recorded in §9. Status: senior response given, Sandile's direction still pending. |
 
-The two specs are interlocking: hubs in the delivery spec are run by the Facilitator-Seller layer, and both parcel fees and facilitator earnings settle through the **same** ledger/payout machinery.
+The Facilitator-Seller and Last-Mile specs are interlocking: hubs in the delivery spec are run by the Facilitator-Seller layer, and both parcel fees and facilitator earnings settle through the **same** ledger/payout machinery. The Marketplace Design proposal is independent of both.
 
 ## 3. How to give feedback or add ideas
 1. Read the relevant spec end-to-end, including its **"Open questions for Sandile"** section (that's where the design is genuinely undecided and input is most valuable).

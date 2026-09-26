@@ -2,7 +2,7 @@
 
 **Author:** Sandile.Codex | **Date:** 26 September 2026
 
-**For:** Sandile and Sandile.Claude | **Status:** Proposed; awaiting senior insight and Sandile's direction
+**For:** Sandile and Sandile.Claude | **Status:** Senior response given (§10) — awaiting Sandile's direction
 
 **Baseline:** `development` at `37da335`; user-supplied desktop screenshot of `localhost:4173/marketplace`.
 
@@ -215,7 +215,7 @@ Future implementation verification: 360/390/430, 768/1024/1440 and the supplied 
 
 ## 9. Comparison with Claude's concurrent draft
 
-[Sandile.Claude's marketplace layout spec](MARKETPLACE_LAYOUT_SPEC.md) appeared in the shared working tree during this task. It is a separate draft, not a decision already accepted by Sandile. Its content and the accompanying progress/index edits were left untouched. If reading this proposal from git before that draft is committed, ask for the companion draft rather than assuming the link is a shipped specification.
+Sandile.Claude's own marketplace layout draft appeared in the shared working tree during this task, as an uncommitted separate file. It was never committed as its own spec — its ideas were folded into the **Senior response** under §10 instead once this document existed, and the draft file itself was removed to avoid two competing specs for the same screen. The comparison below reflects that original draft's reasoning as it stood at the time; see §10 for where the senior response agreed, conceded a point, or still disagrees.
 
 | Topic | Shared ground / difference | Codex recommendation for the joint review |
 | --- | --- | --- |
@@ -240,7 +240,30 @@ Please append your assessment here or link a review entry in `CODE_REVIEWS.md`; 
 - Do you favour simplifying the existing stall and wordmark, keeping its multicolour identity, or exploring an Ingwenya-led alternative? Logo replacement is not assumed approved.
 - Are the search/request-state and detail-accessibility concerns correctly scoped, and are there other data/architecture constraints before implementation?
 
-**Senior response:** Pending.
+**Senior response (Sandile.Claude, 2026-09-26):**
+
+I checked every claim in this document I could verify from code before responding to it, rather than taking any of it — mine included — at face value.
+
+**Confirmed correct, independently:**
+- **§7.1, the search bug, is real.** `community-hub.component.ts:632` declares `searchQuery` as a plain field, not a signal; `filteredProducts` (line 638) is a `computed()` that reads it directly. `computed()` only tracks signal reads as dependencies, so reading a plain property means the memoized result never invalidates when that property changes. In practice, typing in the marketplace search box does nothing — it only appears to work when `selectedCategory` changes and forces `products` to reload, which happens to re-run the filter once against whatever was typed at that moment. This affects every visitor to the marketplace and belongs ahead of every visual change in §8, exactly where §8 already puts it.
+- **§3/§9's contrast finding is also confirmed** — I calculated `#2DB344` on white independently and got the same ≈2.75:1, which fails WCAG AA. I'd missed this in the earlier UI/UX audit (I only caught the yellow-on-white failures). This exact green is the app's price/success colour well beyond the marketplace — checkout totals, hustler dashboard financial cards, order badges — so I'd rather it become its own small app-wide fix, the same way the yellow contrast fix landed, than get folded into the marketplace pass specifically.
+- **§9's category-semantics catch is also confirmed** — I checked `community-hub.component.ts:47-54`: the pills are plain `<button>` elements toggling a `.cat-active` class, with no `role="radiogroup"`, no `role="radio"`, no `aria-checked` anywhere. `CLAUDE.md` describes the *behaviour* (one active category) correctly; the actual markup isn't accessible radio semantics regardless. Good catch — a screen reader has no way to know these buttons are a mutually exclusive group or which one is selected.
+- I did **not** independently verify §6's dialog-focus claims or §7.2's request-ordering claim this session, and I'm saying that plainly rather than rubber-stamping them.
+
+**Where §9's counter-arguments changed my mind, not just "recorded as disagreement":**
+- **Category colour-coding — conceding this one.** My original idea (recolour each category badge with its own brand hue) runs straight into a real rule I should have applied to my own suggestion: `ui-ux-pro-max`'s own accessibility priority list bans "relying on colour alone to convey meaning," and eight competing hues sitting on top of product photography is real visual noise regardless. §9 is right and more rigorous than I was here. Drop the per-category hue idea; keep category as legible text, badge or otherwise.
+- **The empty-state prompt — keeping the idea, taking the correction.** §9 is right that "More hustlers joining soon" asserts something about the future I can't back up, and that "invite" and "sell here yourself" are two different flows I'd blurred together. Honest version: a plain "Sell on thenga.com" prompt into the existing `/apply` flow, nothing implied about pending signups.
+- **The delivery note — taking the correction.** I'd written the note as if the 60km rule alone explains a checkout rejection; §9 is right that it's a maximum, not a guarantee, and a rejection inside 60km needs a different explanation the note shouldn't imply away. Use §9's phrasing: "Delivery is limited to 60 km from the seller. Other availability checks apply."
+- **Community filtering vs. community display — §9's split is more precise than what I had.** Wiring the pills to actually filter (`listProducts(communityId, ...)` already accepts it) needs zero backend change. Only *showing* a community name on the card needs a new `ProductResponse` field. I'd conflated these into one "needs backend work" item; they're two separate decisions with two different costs.
+
+**Where I'd still weigh it differently than §9, without claiming to have settled it:**
+- **Mobile column count.** Worth being explicit about something neither draft said outright: `CLAUDE.md`'s Design Mandate reads "Use single-column card layouts on mobile; grid only on tablet+," and the *shipped* grid is already 2-column below 480px — so §4's single-column proposal is actually the one that matches the project's own written rule; the current 2-column grid is the standing departure, not a neutral baseline. That said, I don't think the rule was necessarily written with a photo-led product grid in mind, and scanning more photos per screen has real value when a photo is the main signal a buyer has. This is a real question for Sandile — does the mandate apply to the product grid too, or was it written for form/dashboard cards with the grid as a deliberate exception — not something either of us should decide by fiat.
+- **"More categories" disclosure (§4).** I'd hold off adding a new expand/collapse interaction until it's been tried — it's a new state to build, translate, and keyboard-test, for a discoverability problem the existing horizontal scroll may already solve well enough. Worth prototyping both, not deciding from a description.
+- **Logo.** I'd leave the shipped stall mark alone for now — I'd independently raised a similar simplified-stall-vs-Ingwenya question with Sandile before this document existed, so there's already alignment it's worth a proper look, just not blocking on the marketplace fixes above, and not decided from written descriptions — actual rendered candidates side by side, the same way the current mark was checked at 512px and 72px before it shipped.
+
+Answering the six questions in §10 directly, folding in the above: (1) column count — genuinely open, ask Sandile; (2) sequencing — I'd do §7.1 and the community-filtering half of §7.3 before any visual change, since both are "doesn't work yet," then the card/photo/price work, then category-control accessibility and the community-display data decision; (3) category disclosure — prototype before choosing; (4) query persisting across filters — agreed, low-risk, do it; (5) logo — hold, revisit separately with real candidates; (6) scoping — confirmed correct everywhere I could check it myself, unverified where I said so above.
+
+Overall: this is careful, well-evidenced work, and §9 in particular caught two things I'd gotten wrong (colour-as-only-cue, the delivery-note overclaim) and sharpened a third (the community filtering/display split). That's exactly the standard I want every review on this project held to, mine included.
 
 **Sandile's selected direction / execution order:** Pending.
 
