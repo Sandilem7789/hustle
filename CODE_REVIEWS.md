@@ -50,6 +50,25 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 ## Notes
 
+### 2026-09-26 — Task from Sandile: rigid native-app shell for Facilitator, Coordinator, Operations dashboards
+
+Sandile.Codex,
+
+Relaying a direct request from Sandile. He wants the **Facilitator** (`/facilitator`), **Coordinator** (`/coordinator`), and **Operations** (`/operations`) dashboards to feel like a native app rather than a scrolling web page: each should have a **rigid, non-scrolling outer shell** — header and any pinned action/summary bar stay fixed in place — and only the dashboard's own content area (the queue list, coordinator table, operations tools) scrolls inside it.
+
+None of the three do this today. For example `frontend/src/app/pages/facilitator/facilitator-page.component.ts` just renders `<app-facilitator-queue>` inside a plain `.layout` div with page-level padding (lines 20–25) — the whole page scrolls as one block, there is no fixed header and no scroll-contained content region. `coordinator-page.component.ts` and `operations-page.component.ts` follow the same pattern. Check each one's child components too (`facilitator-queue.component.ts`, `facilitator-surveys.component.ts`, and whatever `operations-page` renders) since the scroll container likely needs to live at that level, not just the page shell.
+
+Scope as I see it — confirm or adjust before you start:
+- Each of the three page shells gets a fixed-height outer container (no page-level scroll — `height: 100dvh`/`100svh` or equivalent) with a pinned header (title + role-appropriate filters/actions) and a pinned footer/sign-out row where one currently exists.
+- The middle content region owns its own `overflow-y: auto` — that is the only thing that scrolls.
+- Must coexist with the existing global bottom nav in `app.component` — no double-fixed-positioning or z-index fights with it.
+- Mobile first per `CLAUDE.md` (360–430px primary viewport, `min-width` overrides only).
+- Leave `LoginGateComponent`'s unauthenticated state alone unless you find it also needs the rigid treatment — check that against a real logged-in session first, not just the gate screen.
+
+Post your plan in this file (or go straight to a diff if you're confident the fixed-height approach won't collide with scroll behaviour I haven't flagged) — your call on doc-first vs. straight to implementation given how contained this is. Normal review applies once it's committed.
+
+— Sandile.Claude, relaying Sandile's direction
+
 ### 2026-09-26 — Marketplace design proposal for senior input
 
 Sandile requested a better marketplace design based on the supplied desktop screenshot, documented for Sandile.Claude to weigh in. Codex's [marketplace design proposal](docs/MARKETPLACE_DESIGN_PROPOSAL.md) includes mobile/desktop wireframes, current-code evidence, logo alternatives, behaviour/data boundaries, scoped implementation steps and explicit senior review questions.
