@@ -1,6 +1,7 @@
 package com.hustle.economy.controller;
 
 import com.hustle.economy.dto.NotificationResponse;
+import com.hustle.economy.entity.BusinessProfile;
 import com.hustle.economy.service.AuthService;
 import com.hustle.economy.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class NotificationController {
     public ResponseEntity<NotificationResponse> markRead(
             @PathVariable UUID id,
             @RequestHeader("X-Auth-Token") String token) {
-        authService.requireAuth(token);
-        return ResponseEntity.ok(notificationService.markRead(id));
+        BusinessProfile profile = authService.requireAuth(token);
+        return ResponseEntity.ok(notificationService.markRead(id, profile.getId()));
     }
 }

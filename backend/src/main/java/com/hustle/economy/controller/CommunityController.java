@@ -3,6 +3,8 @@ package com.hustle.economy.controller;
 import com.hustle.economy.dto.CommunityRequest;
 import com.hustle.economy.entity.BusinessProfile;
 import com.hustle.economy.entity.Community;
+import com.hustle.economy.entity.UserRole;
+import com.hustle.economy.service.AuthService;
 import com.hustle.economy.service.CommunityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class CommunityController {
 
     private final CommunityService communityService;
+    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<List<Community>> listCommunities() {
@@ -30,7 +33,10 @@ public class CommunityController {
     }
 
     @PostMapping
-    public ResponseEntity<Community> createCommunity(@RequestBody @Valid CommunityRequest request) {
+    public ResponseEntity<Community> createCommunity(
+            @RequestBody @Valid CommunityRequest request,
+            @RequestHeader("X-Auth-Token") String token) {
+        authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
         return ResponseEntity.ok(communityService.createCommunity(request));
     }
 }

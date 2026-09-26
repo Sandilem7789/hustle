@@ -7,6 +7,16 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Full-stack architecture audit + security fixes (2026-09-26)
+- Ran a structured audit of every backend layer (controller → service → entity/DTO/mapper → repository → config) and every frontend layer (services, components, state, routing) against the conventions in `CLAUDE.md`. Full findings in `docs/ARCHITECTURE_AUDIT_CLAUDE.md`.
+- Fixed immediately (small, unambiguous, no design tradeoff):
+  - `CommunityController.createCommunity()` had **no auth check at all** — any unauthenticated caller could create arbitrary communities. Added the same `FACILITATOR`/`COORDINATOR` role check used by every other admin-write endpoint. Verified live: unauthenticated POST now returns 400 (missing header) instead of creating a row. No frontend caller exists for this endpoint today, so zero blast radius.
+  - `NotificationService.markRead()` had an IDOR — it never checked the notification's owner, so any authenticated hustler could mark another hustler's notification read by guessing a UUID. Now takes the caller's business-profile ID and throws 403 on mismatch.
+  - Same `computed()`-reads-a-plain-field reactivity bug as the marketplace search fix (below), found live in the hustler dashboard's POS "Search or scan" box (`posSearchQuery`). Fixed the same way: converted to a signal.
+  - Deleted 3 fully-dead route guard files (`hustler.guard.ts`, `facilitator.guard.ts`, `coordinator.guard.ts`) — confirmed zero references anywhere, `app.routes.ts` uses `LoginGateComponent` for gating instead and never wired these in.
+- Everything else (Order list N+1 query, missing phone masking on two facilitator/coordinator endpoints, `DispatchService` ignoring its own community filter, missing global exception handler, checkout/customer-orders using a full-page redirect instead of `LoginGateComponent`, mobile-first CSS inversions in two product grids, dead offline-queue code) is handed to Sandile.Codex via `CODE_REVIEWS.md` since each involves either a design call or enough surface area to warrant a normal reviewed diff.
+- One structural finding — the backend running five parallel auth/session mechanisms (`AppUserSession`, legacy `HustlerSession`, `CustomerAuthService`, fully-separate `DriverAuthService`) and the frontend mirroring it with four parallel signal stores — is flagged for Sandile's direction, not assigned to anyone yet, since `CLAUDE.md` reserves auth-mechanism changes for explicit discussion first.
+
 ### Marketplace search fix (2026-09-26)
 - Fixed the top-priority bug from `docs/MARKETPLACE_DESIGN_PROPOSAL.md`: typing in the marketplace search box never filtered the product grid. Root cause: `searchQuery` on `CommunityHubComponent` was a plain class field, but `filteredProducts` was an Angular `computed()` — `computed()` only re-runs when a signal it reads via a getter changes, so writes to a plain field never invalidated it.
 - Fix: `searchQuery` is now a `signal('')`, read as `searchQuery()` everywhere (template interpolation, the computed filter, the clear button, `selectCategory()`'s reset), with the input bound via `[ngModel]`/`(ngModelChange)` instead of `[(ngModel)]` (Angular's two-way `[()]` sugar doesn't work directly against a signal).

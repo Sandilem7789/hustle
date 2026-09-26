@@ -448,7 +448,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
           <div class="card pos-sell-card">
             <div class="search-scan-row">
               <span class="search-icon">🔍</span>
-              <input type="text" class="search-input" placeholder="Search or scan" [(ngModel)]="posSearchQuery" [ngModelOptions]="{standalone:true}" />
+              <input type="text" class="search-input" placeholder="Search or scan" [ngModel]="posSearchQuery()" (ngModelChange)="posSearchQuery.set($event)" [ngModelOptions]="{standalone:true}" />
               <button type="button" class="scan-chip" (click)="openPosScanModal()">▦ Scan</button>
             </div>
 
@@ -464,7 +464,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
                   <span class="quick-name">＋ more</span>
                 </button>
               </div>
-              <p *ngIf="posSearchQuery.trim() && posVisibleProducts().length === 0" class="muted" style="margin-top:0.5rem">No products match "{{ posSearchQuery }}".</p>
+              <p *ngIf="posSearchQuery().trim() && posVisibleProducts().length === 0" class="muted" style="margin-top:0.5rem">No products match "{{ posSearchQuery() }}".</p>
             </ng-container>
 
             <div class="pos-divider"></div>
@@ -1388,7 +1388,7 @@ export class HustlerDashboardPageComponent implements OnInit {
   // ── Sell (POS) ───────────────────────────────────────────────────────────
   posView = signal<'sell' | 'history'>('sell');
   posBasket = signal<{ productId?: string; itemName: string; unitPrice: number; quantity: number }[]>([]);
-  posSearchQuery = '';
+  posSearchQuery = signal('');
   posShowAllProducts = signal(false);
   posScanError = signal('');
   posUnknownBarcode = signal<string | null>(null);
@@ -1405,20 +1405,20 @@ export class HustlerDashboardPageComponent implements OnInit {
   private readonly POS_QUICK_PREVIEW = 6;
 
   posFilteredProducts = computed(() => {
-    const q = this.posSearchQuery.trim().toLowerCase();
+    const q = this.posSearchQuery().trim().toLowerCase();
     const list = this.products();
     return q ? list.filter(p => p.name.toLowerCase().includes(q)) : list;
   });
 
   posVisibleProducts = computed(() => {
     const list = this.posFilteredProducts();
-    return this.posShowAllProducts() || this.posSearchQuery.trim()
+    return this.posShowAllProducts() || this.posSearchQuery().trim()
       ? list
       : list.slice(0, this.POS_QUICK_PREVIEW);
   });
 
   posHasMoreProducts = computed(() =>
-    !this.posShowAllProducts() && !this.posSearchQuery.trim() && this.posFilteredProducts().length > this.POS_QUICK_PREVIEW
+    !this.posShowAllProducts() && !this.posSearchQuery().trim() && this.posFilteredProducts().length > this.POS_QUICK_PREVIEW
   );
 
   basketTotal = computed(() => this.posBasket().reduce((s, i) => s + i.unitPrice * i.quantity, 0));

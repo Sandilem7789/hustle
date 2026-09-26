@@ -8,8 +8,10 @@ import com.hustle.economy.mapper.SurveyMapper;
 import com.hustle.economy.repository.NotificationRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -43,9 +45,12 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationResponse markRead(UUID notificationId) {
+    public NotificationResponse markRead(UUID notificationId, UUID callerBusinessProfileId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new EntityNotFoundException("Notification not found"));
+        if (!notification.getBusinessProfile().getId().equals(callerBusinessProfileId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
         notification.setRead(true);
         return mapper.toResponse(notificationRepository.save(notification));
     }
