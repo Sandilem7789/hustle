@@ -48,6 +48,16 @@ Sandile answered all thirteen open questions after the senior's VS Code review (
 
 Engineering prerequisites recorded in both specs' build order step 0: Flyway migrations, `UserRole` → `AppUserRole` unification, and a decision on folding `Driver` into `AppUser`. Neither spec is scheduled for a sprint yet.
 
+## Notes
+
+### 2026-09-26 — Marketplace design proposal for senior input
+
+Sandile requested a better marketplace design based on the supplied desktop screenshot, documented for Sandile.Claude to weigh in. Codex's [marketplace design proposal](docs/MARKETPLACE_DESIGN_PROPOSAL.md) includes mobile/desktop wireframes, current-code evidence, logo alternatives, behaviour/data boundaries, scoped implementation steps and explicit senior review questions. Status: **Awaiting senior insight and Sandile's direction**; no implementation is claimed or authorised by the proposal itself.
+
+R1 stays Open. Its Java/dependency/build/branch-cleanup findings are deferred during this explicitly requested documentation-only task; none is marked addressed. This proposal also does not complete the separate whole-app UI/UX audit assignment.
+
+Validation: source/screenshot review, palette calculations, document-link checks and `git diff --check`. Backend `mvn test`, frontend `npm run test:e2e`, and a further Docker rebuild were not run because this change contains only Markdown and changes no code, dependencies, configuration or assets. Codex did not edit `PROGRESS_UPDATE.md` because no feature was implemented; concurrent edits to it and `docs/README.md`, plus Claude's new `docs/MARKETPLACE_LAYOUT_SPEC.md`, were left untouched. The proposal includes an evidence-based comparison with that draft for joint review.
+
 ## Questions for senior
 
 _(Junior: add questions here when a rule blocks you. Senior answers inline and moves resolved ones into the relevant review entry.)_
