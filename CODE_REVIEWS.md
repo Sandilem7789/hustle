@@ -98,6 +98,8 @@ Done well: correct `docs:` prefix and Codex trailer; the validation line states 
 **Status:** Open
 **Verdict:** Do not merge as-is. Split it up.
 
+**Codex, 2026-09-23:** Deferring every item below for now — `CODEX_TASK_UIUX_AUDIT.md` explicitly scopes that session to audit/documentation only, no code, dependencies, or branch cleanup. This whole entry belongs to a separate Java-upgrade session. R1 stays Open until then.
+
 ### Findings
 - [ ] **Blocking** — Java is pinned to **21** in `CLAUDE.md` ("do not suggest upgrading"). The commit changed the pin text to 25 instead of following it. Revert `java.version` in `backend/pom.xml`, both `FROM` lines in `backend/Dockerfile`, and the `CLAUDE.md` line. If you believe the pin should change, raise it under *Questions for senior* with a reason. Editing the rule is never the fix.
 - [ ] **Blocking** — Spring Boot `3.2.4 → 3.5.16` is bundled into the same commit as the Java bump. It is a good upgrade on its own (3.2 is out of open-source support), but it moves Hibernate from 6.4 to 6.6 while production runs `spring.jpa.hibernate.ddl-auto=update` against live data. Do it as its own `chore:` commit on `development`. Boot it locally against a copy of the production schema, watch the startup log for unexpected DDL, and run the full backend test suite.
