@@ -37,11 +37,12 @@ const CATEGORY_LABEL_KEYS: Record<string, string> = Object.fromEntries(
         <input
           class="search-input"
           type="search"
-          [(ngModel)]="searchQuery"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
           [placeholder]="'marketplace.searchPlaceholder' | translate"
           autocomplete="off"
         />
-        <button *ngIf="searchQuery" class="search-clear" (click)="searchQuery = ''" aria-label="Clear search">✕</button>
+        <button *ngIf="searchQuery()" class="search-clear" (click)="searchQuery.set('')" aria-label="Clear search">✕</button>
       </div>
 
       <!-- CATEGORY PILLS -->
@@ -59,7 +60,7 @@ const CATEGORY_LABEL_KEYS: Record<string, string> = Object.fromEntries(
       <!-- STATES -->
       <div *ngIf="loading()" class="state-msg">{{ 'marketplace.loading' | translate }}</div>
       <div *ngIf="!loading() && filteredProducts().length === 0 && products().length > 0" class="state-msg">
-        {{ 'marketplace.noResults' | translate }} "{{ searchQuery }}".
+        {{ 'marketplace.noResults' | translate }} "{{ searchQuery() }}".
       </div>
       <div *ngIf="!loading() && products().length === 0" class="state-msg">
         {{ 'marketplace.noProducts' | translate }}
@@ -630,13 +631,13 @@ export class CommunityHubComponent implements OnInit {
   products        = signal<ProductResponse[]>([]);
   selectedCategory = signal<string>('ALL');
   loading         = signal(true);
-  searchQuery     = '';
+  searchQuery     = signal('');
   selectedProduct = signal<ProductResponse | null>(null);
 
   private selectedOptions: Record<string, string> = {};
 
   filteredProducts = computed(() => {
-    const q = this.searchQuery.trim().toLowerCase();
+    const q = this.searchQuery().trim().toLowerCase();
     if (!q) return this.products();
     return this.products().filter(p =>
       p.name?.toLowerCase().includes(q) ||
@@ -650,7 +651,7 @@ export class CommunityHubComponent implements OnInit {
 
   selectCategory(cat: string): void {
     this.selectedCategory.set(cat);
-    this.searchQuery = '';
+    this.searchQuery.set('');
     this.loadProducts();
   }
 
