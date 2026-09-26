@@ -50,6 +50,32 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 ## Notes
 
+### 2026-09-26 — Full-stack architecture audit: tasks assigned to Codex
+
+Sandile.Codex,
+
+Sandile asked for a full structural review of the app to find architecture gaps. Ran it as two independent passes (backend layering, frontend layering) against `CLAUDE.md`'s own conventions — every finding below is verified against real code, full detail in `docs/ARCHITECTURE_AUDIT_CLAUDE.md`. I fixed the small, no-design-tradeoff items directly (commit `cce3785`): a missing auth check on `CommunityController.createCommunity()`, an IDOR in `NotificationService.markRead()`, a repeat of the marketplace search reactivity bug in the hustler dashboard's POS search, and 3 fully-dead route guard files. The rest is assigned to you below — pick your own order, but I'd start with the N+1 and phone masking since both are real user-facing correctness/privacy issues, not just cleanup.
+
+**Backend**
+1. `OperationsController.stats()` (lines 21–62) builds aggregation logic inline with three repositories injected directly — extract to an `OperationsService`.
+2. `CommunityController.listCommunities()`/`listHustlers()` return raw JPA entities (`Community`, `BusinessProfile`) instead of DTOs — the only controller doing this. Add DTOs + a mapper. Note: `spring.jpa.open-in-view=false` with no Hibernate-Jackson module means `listHustlers()` is a live `LazyInitializationException` risk on the `community` field today — reproduce it before you fix it so we know the DTO fix actually closes it.
+3. `IncomeService.updateIncome()` ignores the `businessProfileId`/`id` path variable — no check the income entry belongs to the calling hustler. Add the ownership check (mirror the pattern already used in `ProductService`/`SaleService`/`OrderService`).
+4. `OrderService` throws raw `RuntimeException` in two spots instead of `ResponseStatusException` — bring in line with the rest of the class.
+5. `DispatchService.listOpenJobs(driverCommunityId)` takes the community as a parameter and never uses it — any driver sees every open job nationwide, not just their community. This one contradicts the documented dispatch flow directly, so please confirm the intended scope (same community only? nearest N communities?) here before changing the query.
+6. `OrderRepository.findByCustomer_Id...`/`findByHustlerProfile_Id...` have no `JOIN FETCH` despite both associations being lazy and `Order.items` being eager — 3 round trips per row on `/api/orders/my` and `/api/orders/incoming`, the two most-polled dashboard endpoints. Apply the same `JOIN FETCH` pattern already used in `ProductRepository`/`ApplicantRepository`.
+7. Phone masking is documented as a hard rule (`CLAUDE.md`) but isn't implemented on `ApplicantResponse`/`ApplicantService.toResponse()` or `HustlerApplicationMapper` — raw phones ship on `/api/applicants` and `HustlerApplicationController.listApplications`. `DispatchService.maskPhone` already has a working implementation to reuse/extract.
+8. No `@ControllerAdvice`/`@RestControllerAdvice` exists anywhere — error responses don't consistently produce the documented `{message, code}` envelope. Add a global handler for `ResponseStatusException` at minimum.
+9. Smaller/lower priority: reconcile the upload size limit (10MB in `application.properties` vs. 5MB documented in `CLAUDE.md` — pick one and fix the other), and sync `WebConfig`'s CORS allow-list with what's actually documented.
+
+**Frontend**
+10. `checkout-page.component.ts` and `customer-orders-page.component.ts` use a bare "go to `/login`" redirect card instead of `LoginGateComponent` — full-page redirect, drops in-page context, exactly what `LoginGateComponent` exists to avoid. Convert both to the standard pattern used everywhere else.
+11. `business-page.component.ts` and `hustler-dashboard-page.component.ts` — `.product-grid`/`.product-list` base CSS defaults to multi-column with a `max-width: 600px` override collapsing to 1 column. Per `CLAUDE.md` this must be inverted: single-column base, `min-width` adds columns for tablet+. `facilitator-queue.component.ts`'s `.detail-grid`/`.edit-grid` has the same backwards pattern, lower priority since it's staff-only.
+12. `OfflineQueueService.enqueue()`/`processQueue()` are never called from anywhere — only `getQueue()` is used, to show a count that can never move off zero. The offline-banner UI implies a working queue that doesn't exist. Either wire it up for real or remove the count display until it does — your call, but don't leave UI implying a feature that's fully inert.
+
+**Not assigned — flagged for Sandile, not in scope for either of us to just pick up:** the backend is running five parallel auth/session mechanisms at once (`AppUserSession`, legacy `HustlerSession` still checked as a fallback, `CustomerAuthService`, and a fully independent `DriverAuthService`/`X-Driver-Token` never folded into `AppUser` despite `AppUserRole.DRIVER` existing as if it should have been) and the frontend mirrors it with four parallel signal stores. `CLAUDE.md` reserves auth-mechanism changes for explicit discussion first, so this needs Sandile's direction before anyone touches it, however tempting a cleanup it is.
+
+— Sandile.Claude
+
 ### 2026-09-26 — Task from Sandile: rigid native-app shell for Facilitator, Coordinator, Operations dashboards
 
 Sandile.Codex,
