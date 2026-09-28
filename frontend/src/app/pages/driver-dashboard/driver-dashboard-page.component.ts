@@ -200,7 +200,7 @@ import { DriverAuthService } from '../../services/driver-auth.service';
     .job-card { border: 1px solid #E7E5E4; border-radius: 1rem; padding: 1rem; background: #FAFAF9; }
     .job-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.6rem; }
     .job-seller { margin: 0; font-weight: 800; font-size: 0.95rem; color: #1C1917; }
-    .payout { font-size: 1.15rem; font-weight: 800; color: #2DB344; white-space: nowrap; }
+    .payout { font-size: 1.15rem; font-weight: 800; color: var(--success-text); white-space: nowrap; }
     .job-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
     .meta-chip { font-size: 0.78rem; color: #78716C; background: #F5F0E8; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; }
     .btn-accept { width: 100%; height: 48px; border: none; border-radius: 999px; font-size: 0.95rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
@@ -224,7 +224,7 @@ import { DriverAuthService } from '../../services/driver-auth.service';
     .btn-status:disabled { opacity: 0.5; cursor: not-allowed; }
     .pickup { background: #F5B800; color: #1C1917; }
     .enroute { background: #00A896; color: white; }
-    .delivered { background: #2DB344; color: white; }
+    .delivered { background: var(--success-fill); color: white; }
 
     .proof-upload { display: flex; flex-direction: column; gap: 0.25rem; }
     .proof-upload label { font-size: 0.875rem; font-weight: 700; color: #1C1917; }
@@ -232,8 +232,8 @@ import { DriverAuthService } from '../../services/driver-auth.service';
 
     /* Earnings */
     .total-earnings { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(45,179,68,0.07); border: 1px solid rgba(45,179,68,0.2); border-radius: 0.75rem; margin-bottom: 1rem; }
-    .earnings-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #2DB344; }
-    .earnings-amount { font-size: 1.5rem; font-weight: 800; color: #2DB344; }
+    .earnings-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--success-text); }
+    .earnings-amount { font-size: 1.5rem; font-weight: 800; color: var(--success-text); }
     .earnings-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .earnings-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #E7E5E4; }
 

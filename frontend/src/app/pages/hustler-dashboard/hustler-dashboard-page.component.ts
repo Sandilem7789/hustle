@@ -762,7 +762,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
       justify-content: center;
       flex-shrink: 0;
     }
-    .fin-income .fin-icon-wrap { background: rgba(45,179,68,0.15);  color: #2DB344; }
+    .fin-income .fin-icon-wrap { background: rgba(45,179,68,0.15);  color: var(--success-text); }
     .fin-expense .fin-icon-wrap { background: rgba(229,57,53,0.12); color: #E53935; }
     .fin-profit  .fin-icon-wrap { background: rgba(27,111,212,0.12); color: #1B6FD4; }
     .fin-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
@@ -808,17 +808,17 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .primary.span-2 { grid-column: span 2; }
     @media (max-width: 600px) { .primary.span-2 { grid-column: span 1; } }
     .primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    .success { color: #2DB344; font-weight: 700; margin-top: 0.75rem; }
+    .success { color: var(--success-text); font-weight: 700; margin-top: 0.75rem; }
     .scan-hint-text { text-align: center; font-size: 0.85rem; color: #78716C; margin: 0.5rem 0 0; }
     .error   { color: #E53935; font-weight: 700; margin-top: 0.75rem; }
     .checkbox-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: #1C1917; cursor: pointer; flex-direction: row; }
-    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #2DB344; flex-shrink: 0; min-height: unset !important; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--success-fill); flex-shrink: 0; min-height: unset !important; }
     .service-section { background: rgba(45,179,68,0.05); border: 1px solid rgba(45,179,68,0.2); border-radius: 0.75rem; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-    .service-heading { margin: 0; font-weight: 800; font-size: 0.9rem; color: #2DB344; }
+    .service-heading { margin: 0; font-weight: 800; font-size: 0.9rem; color: var(--success-text); }
     .service-section label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; font-weight: 700; color: #1C1917; }
     .service-section input { border-radius: 0.6rem; border: 2px solid #E7E5E4; padding: 0.55rem 0.8rem; font-size: 0.95rem; font-family: inherit; width: 100%; box-sizing: border-box; background: white; outline: none; min-height: 44px; }
     .service-section input:focus { border-color: #F5B800; }
-    .invoice-btn { border: 2px solid #2DB344; color: #2DB344; font-weight: 800; padding: 0.65rem 1rem; border-radius: 999px; background: white; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: background 0.15s; }
+    .invoice-btn { border: 2px solid #2DB344; color: var(--success-text); font-weight: 800; padding: 0.65rem 1rem; border-radius: 999px; background: white; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: background 0.15s; }
     .invoice-btn:hover:not(:disabled) { background: rgba(45,179,68,0.08); }
     .invoice-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -892,7 +892,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .history-item.expense-item:hover { background: rgba(229,57,53,0.02); }
     .history-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; }
     .history-date { font-size: 0.82rem; font-weight: 700; color: #78716C; min-width: 80px; flex-shrink: 0; }
-    .history-amount { font-size: 0.95rem; font-weight: 800; color: #2DB344; margin-left: auto; }
+    .history-amount { font-size: 0.95rem; font-weight: 800; color: var(--success-text); margin-left: auto; }
     .history-amount.expense-amt { color: #E53935; }
     .history-chevron { font-size: 1.1rem; color: #A8A29E; transition: transform 0.2s ease-out; flex-shrink: 0; margin-left: 0.25rem; display: inline-block; }
     .history-chevron-open { transform: rotate(90deg); }
@@ -900,13 +900,13 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .detail-chip { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; text-transform: uppercase; align-self: flex-start; }
     .detail-notes { font-size: 0.84rem; color: #78716C; margin: 0; }
     .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; flex-shrink: 0; }
-    .income-badge  { background: rgba(45,179,68,0.12); color: #2DB344; }
+    .income-badge  { background: rgba(45,179,68,0.12); color: var(--success-text); }
     .expense-badge { background: rgba(229,57,53,0.1);  color: #E53935; }
     .expense-amt { color: #E53935; font-weight: 700; }
     .period-summary { display: flex; align-items: center; margin-top: 1rem; background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 0.75rem; overflow: hidden; }
     .ps-item { flex: 1; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
     .ps-label   { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #A8A29E; font-weight: 800; }
-    .ps-income  { font-size: 1rem; font-weight: 800; color: #2DB344; }
+    .ps-income  { font-size: 1rem; font-weight: 800; color: var(--success-text); }
     .ps-expense { font-size: 1rem; font-weight: 800; color: #E53935; }
     .ps-divider { width: 1px; background: #E7E5E4; align-self: stretch; }
 
@@ -929,7 +929,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .shop-left { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
     .shop-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
     .shop-name-badge { font-size: 1.1rem; font-weight: 800; color: #1C1917; }
-    .approved-badge { background: rgba(45,179,68,0.12); color: #2DB344; border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.75rem; font-weight: 800; }
+    .approved-badge { background: rgba(45,179,68,0.12); color: var(--success-text); border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.75rem; font-weight: 800; }
     .add-product-btn { background: #F5B800; color: #1C1917; border: none; border-radius: 999px; padding: 0.55rem 1.2rem; font-size: 0.9rem; font-weight: 800; cursor: pointer; font-family: inherit; min-height: 40px; box-shadow: 0 3px 10px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
     .add-product-btn:hover { box-shadow: 0 5px 16px rgba(245,184,0,0.5); }
     .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem; }
@@ -939,7 +939,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .product-body { padding: 0.9rem 0.9rem 0.4rem; }
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; font-weight: 800; color: #1C1917; }
     .product-cat-badge { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.68rem; font-weight: 800; padding: 0.1rem 0.5rem; border-radius: 999px; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
-    .price { font-weight: 800; color: #2DB344; margin-top: 0.4rem; }
+    .price { font-weight: 800; color: var(--success-text); margin-top: 0.4rem; }
     .card-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.3rem; }
     .edit-btn   { background: rgba(28,25,23,0.75); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; min-height: unset; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .delete-btn { background: rgba(229,57,53,0.85); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; min-height: unset; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -991,7 +991,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .order-line { display: flex; justify-content: space-between; font-size: 0.88rem; color: #1C1917; }
     .order-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid #E7E5E4; margin-bottom: 0.75rem; }
     .order-actions { display: flex; gap: 0.5rem; }
-    .btn-confirm    { flex: 1; height: 44px; min-height: unset; border: none; border-radius: 999px; background: #2DB344; color: white; font-weight: 800; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+    .btn-confirm    { flex: 1; height: 44px; min-height: unset; border: none; border-radius: 999px; background: var(--success-fill); color: white; font-weight: 800; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
     .btn-cancel-order { flex: 1; height: 44px; min-height: unset; border: none; border-radius: 999px; background: #E53935; color: white; font-weight: 800; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
     .btn-confirm:disabled, .btn-cancel-order:disabled { opacity: 0.5; cursor: not-allowed; }
     .field-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #A8A29E; }
@@ -999,8 +999,8 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .order-status-pending   { background: #F5F0E8; color: #78716C; }
     .order-status-confirmed { background: rgba(27,111,212,0.1); color: #1B6FD4; }
     .order-status-cancelled { background: rgba(229,57,53,0.1); color: #E53935; }
-    .order-status-delivered { background: rgba(45,179,68,0.12); color: #2DB344; }
-    .order-status-collected { background: rgba(45,179,68,0.12); color: #2DB344; }
+    .order-status-delivered { background: rgba(45,179,68,0.12); color: var(--success-text); }
+    .order-status-collected { background: rgba(45,179,68,0.12); color: var(--success-text); }
 
     /* ── Logout button ── */
     .logout-btn {
@@ -1040,7 +1040,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .quick-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; border: 1.5px solid #E7E5E4; border-radius: 0.85rem; padding: 0.7rem 0.8rem; background: #FAFAF9; cursor: pointer; font-family: inherit; min-height: 60px; text-align: left; transition: border-color 0.15s, background 0.15s; }
     .quick-tile:hover, .quick-tile:active { border-color: #F5B800; background: rgba(245,184,0,0.06); }
     .quick-name { font-size: 0.85rem; font-weight: 700; color: #1C1917; }
-    .quick-price { font-size: 0.78rem; font-weight: 700; color: #2DB344; }
+    .quick-price { font-size: 0.78rem; font-weight: 700; color: var(--success-text); }
     .basket-list { display: flex; flex-direction: column; margin-top: 0.75rem; border: 1px solid #E7E5E4; border-radius: 0.75rem; overflow: hidden; }
     .basket-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid #E7E5E4; }
     .basket-row:last-child { border-bottom: none; }
@@ -1054,7 +1054,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .basket-remove { background: none; border: none; color: #A8A29E; font-size: 1rem; cursor: pointer; min-height: unset; width: 28px; height: 28px; flex-shrink: 0; font-family: inherit; }
     .basket-remove:hover { color: #E53935; }
     .pos-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.85rem; border-top: 2px solid #E7E5E4; font-size: 1.1rem; font-weight: 800; color: #1C1917; }
-    .complete-sale-btn { display: block; width: 100%; margin-top: 1rem; border: none; border-radius: 999px; padding: 1.1rem; font-size: 1.05rem; font-weight: 800; background: #2DB344; color: white; cursor: pointer; font-family: inherit; min-height: 56px; box-shadow: 0 4px 14px rgba(45,179,68,0.35); transition: box-shadow 0.15s; }
+    .complete-sale-btn { display: block; width: 100%; margin-top: 1rem; border: none; border-radius: 999px; padding: 1.1rem; font-size: 1.05rem; font-weight: 800; background: var(--success-fill); color: white; cursor: pointer; font-family: inherit; min-height: 56px; box-shadow: 0 4px 14px rgba(45,179,68,0.35); transition: box-shadow 0.15s; }
     .complete-sale-btn:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(45,179,68,0.5); }
     .complete-sale-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
     .barcode-label { font-size: 0.72rem; color: #A8A29E; margin: 0.2rem 0 0; }
@@ -1068,7 +1068,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .pos-success-overlay { z-index: 300; align-items: center; }
     .scanner-overlay { z-index: 250; }
     .pos-success-sheet { background: white; border-radius: 1.5rem; padding: 2.25rem 1.75rem; width: 100%; max-width: 340px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; animation: slideUp 0.25s ease; }
-    .pos-success-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(45,179,68,0.12); color: #2DB344; font-size: 2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem; }
+    .pos-success-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(45,179,68,0.12); color: var(--success-text); font-size: 2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem; }
     .pos-success-label { font-size: 0.95rem; font-weight: 700; color: #78716C; margin: 0; }
     .pos-success-total { font-size: 1.9rem; font-weight: 900; color: #1C1917; margin: 0 0 0.75rem; }
     .pos-success-sheet .primary { width: 100%; }
@@ -1080,7 +1080,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .sale-history-main { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
     .sale-history-time { font-size: 0.78rem; font-weight: 700; color: #78716C; }
     .sale-history-items { font-size: 0.85rem; color: #1C1917; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
-    .sale-history-total { font-size: 0.95rem; font-weight: 800; color: #2DB344; flex-shrink: 0; }
+    .sale-history-total { font-size: 0.95rem; font-weight: 800; color: var(--success-text); flex-shrink: 0; }
 
     /* ── Desktop shell: rail nav + main column + quick log panel ── */
     .dashboard-shell { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -1143,7 +1143,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .ms-profit { font-size: 1.6rem; font-weight: 900; color: #1C1917; }
     .ms-inout-row { display: flex; gap: 1.5rem; margin-top: 0.3rem; font-size: 0.9rem; font-weight: 700; color: #1C1917; }
     .ms-arrow { font-weight: 900; margin-right: 0.15rem; }
-    .ms-up { color: #2DB344; }
+    .ms-up { color: var(--success-text); }
     .ms-down { color: #E53935; }
     .ms-inout-label { margin-left: 0.3rem; font-weight: 600; }
     .money-quicklog-row { display: flex; gap: 0.75rem; }
@@ -1159,7 +1159,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
     .compact-history-row:last-child { border-bottom: none; }
     .ch-date { color: #A8A29E; font-weight: 700; min-width: 52px; flex-shrink: 0; }
     .ch-cat { flex: 1; color: #1C1917; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ch-amt { font-weight: 800; color: #2DB344; flex-shrink: 0; }
+    .ch-amt { font-weight: 800; color: var(--success-text); flex-shrink: 0; }
     .ch-amt.ch-neg { color: #E53935; }
     .more-toggle-btn {
       align-self: center; background: none; border: none; color: #1B6FD4; font-weight: 700;

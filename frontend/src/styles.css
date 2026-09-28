@@ -45,6 +45,13 @@
      can use the brighter accent directly since it reads fine there. */
   --accent-text-safe: #92620A;
 
+  /* Brand green and teal fail AA as text on light surfaces (#2DB344 is
+     2.75:1, #00A896 about 3:1). Money, success and seller text use these
+     instead; the raw brand hues stay for logo art and non-text graphics. */
+  --success-text: #1E7B34;   /* 5.3:1 on white, 4.7:1 on --bg-muted       */
+  --success-fill: #1E7B34;   /* white text on it: 5.3:1                   */
+  --brand-text:   #006B60;   /* 6.4:1 on white                            */
+
   /* Spacing */
   --space-xs:  0.25rem;
   --space-sm:  0.5rem;
@@ -86,6 +93,8 @@
 
   --border-base:  #3A352D;
   --accent-text-safe: #F5D061;
+  --success-text: #2DB344;   /* the brand green reads 6:1 on dark surfaces */
+  --brand-text:   #74D9C9;
 
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
   --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.45);

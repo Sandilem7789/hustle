@@ -291,7 +291,7 @@ import * as L from 'leaflet';
       font-weight: 900;
       color: #1C1917;
     }
-    .stat-val.approved { color: #2DB344; }
+    .stat-val.approved { color: var(--success-text); }
     .stat-val.active { color: #1B6FD4; }
     .stat-label {
       display: block;

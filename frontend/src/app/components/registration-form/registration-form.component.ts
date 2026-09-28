@@ -358,7 +358,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      background: #2DB344;
+      background: var(--success-fill);
       display: flex;
       align-items: center;
       justify-content: center;

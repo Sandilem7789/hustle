@@ -144,7 +144,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     .qty-btn { width: 32px; height: 32px; border: 1.5px solid #E7E5E4; border-radius: 50%; background: white; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; min-height: unset; font-weight: 800; color: #1C1917; transition: border-color 0.15s; }
     .qty-btn:hover { border-color: #F5B800; }
     .qty { font-weight: 800; min-width: 1.5rem; text-align: center; color: #1C1917; }
-    .item-price { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; color: #2DB344; white-space: nowrap; }
+    .item-price { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; color: var(--success-text); white-space: nowrap; }
     .remove-btn { background: none; border: none; color: #A8A29E; cursor: pointer; font-size: 0.85rem; min-height: unset; padding: 0; transition: color 0.15s; }
     .remove-btn:hover { color: #E53935; }
     .order-total { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #E7E5E4; }
@@ -167,7 +167,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     .btn-secondary { height: 48px; border: 1.5px solid #E7E5E4; border-radius: 999px; background: white; color: #78716C; font-size: 0.9rem; font-weight: 700; cursor: pointer; width: 100%; margin-bottom: 0.5rem; font-family: inherit; transition: border-color 0.15s, color 0.15s; }
     .btn-secondary:hover { border-color: #F5B800; color: #1C1917; }
     .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .coords-text { font-size: 0.85rem; color: #2DB344; font-weight: 700; margin: 0 0 0.75rem; }
+    .coords-text { font-size: 0.85rem; color: var(--success-text); font-weight: 700; margin: 0 0 0.75rem; }
     .location-error { font-size: 0.85rem; color: #E53935; margin: 0 0 0.75rem; font-weight: 700; }
     .collection-note { background: rgba(0,168,150,0.05); border: 1px solid rgba(0,168,150,0.2); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; font-size: 0.9rem; color: #00665E; font-weight: 700; }
     .collection-note p { margin: 0; }

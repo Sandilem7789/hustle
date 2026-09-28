@@ -76,7 +76,7 @@ import { CartService } from '../../services/cart.service';
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; color: #1C1917; font-weight: 800; }
     .cat-tag { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; margin-bottom: 0.4rem; text-transform: uppercase; }
     .desc { font-size: 0.85rem; margin: 0.3rem 0 0.5rem; line-height: 1.4; color: #78716C; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .price { font-weight: 800; color: #2DB344; font-size: 1rem; margin: 0 0 0.75rem; }
+    .price { font-weight: 800; color: var(--success-text); font-size: 1rem; margin: 0 0 0.75rem; }
 
     .buy-btn { width: 100%; border: none; border-radius: 0.75rem; padding: 0.65rem 1rem; font-size: 0.9rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; min-height: 44px; font-family: inherit; transition: box-shadow 0.15s; }
     .buy-btn:hover { box-shadow: 0 4px 14px rgba(245,184,0,0.4); }

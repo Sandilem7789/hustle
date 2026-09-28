@@ -1095,7 +1095,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .btn-call:disabled { opacity: 0.5; cursor: not-allowed; }
     .stage-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #E7E5E4; }
     .btn-advance { background: #F5B800; color: #1C1917; }
-    .approved-msg { color: #2DB344; font-weight: 700; font-size: 0.9rem; margin: 0; }
+    .approved-msg { color: var(--success-text); font-weight: 700; font-size: 0.9rem; margin: 0; }
     .cred-row { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
     .btn-cred { background: #F5F0E8; color: #1C1917; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; align-self: flex-start; transition: border-color 0.15s, background-color 0.15s; }
     .btn-cred:hover { border-color: #F5B800; background: rgba(245,184,0,0.08); }
@@ -1118,7 +1118,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .profit-chip.negative { background: rgba(229,57,53,0.08); }
     .profit-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #A8A29E; }
     .profit-val { font-size: 0.95rem; font-weight: 800; }
-    .profit-chip.positive .profit-val { color: #2DB344; }
+    .profit-chip.positive .profit-val { color: var(--success-text); }
     .profit-chip.negative .profit-val { color: #E53935; }
     .hc-detail { border-top: 1px solid #E7E5E4; padding: 1rem 1.25rem; }
     @media (max-width: 600px) { .hc-detail { padding: 0.75rem; } }
@@ -1130,7 +1130,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .stat-box { flex: 1; min-width: 100px; background: #FAFAF9; border-radius: 0.75rem; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.25rem; border: 1px solid #E7E5E4; }
     .stat-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #A8A29E; }
     .stat-val { font-size: 1rem; font-weight: 800; color: #1C1917; }
-    .stat-val.income { color: #2DB344; }
+    .stat-val.income { color: var(--success-text); }
     .stat-val.expense { color: #E53935; }
     .income-history-section { margin-top: 0.5rem; }
     .income-entry-row { border: 1px solid #E7E5E4; border-radius: 0.75rem; margin-bottom: 0.4rem; overflow: hidden; background: white; }
@@ -1142,7 +1142,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .badge-income { background: rgba(45,179,68,0.12); color: #166534; }
     .badge-expense { background: rgba(229,57,53,0.1); color: #E53935; }
     .income-amount { font-size: 0.9rem; font-weight: 800; margin-left: auto; }
-    .income-amount.income { color: #2DB344; }
+    .income-amount.income { color: var(--success-text); }
     .income-amount.expense { color: #E53935; }
     /* Edit button — compact height */
     .btn-edit-sm { background: #F5F0E8; border: 1px solid #E7E5E4; border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit; color: #1C1917; flex-shrink: 0; height: 28px; min-height: unset; line-height: 1; margin-left: 0.4rem; }
@@ -1219,7 +1219,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .btn { border: none; padding: 0.5rem 1.1rem; border-radius: 0.75rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 40px; transition: opacity 0.15s; }
     .btn:hover { opacity: 0.85; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .approve { background: #2DB344; color: white; }
+    .approve { background: var(--success-fill); color: white; }
     .reject { background: #E53935; color: white; }
     .empty-msg { margin-top: 1rem; color: #78716C; }
     .edit-footer { margin: 1rem 0 0; border-top: 1px dashed #E7E5E4; padding-top: 0.75rem; }
@@ -1240,7 +1240,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .hc-footer { border-top: 1px dashed #E7E5E4; padding-top: 0.75rem; margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .btn-edit { background: #F5B800; color: #1C1917; }
     .btn-deactivate { background: #E53935; color: white; }
-    .btn-activate { background: #2DB344; color: white; }
+    .btn-activate { background: var(--success-fill); color: white; }
     .btn-cancel { background: #F5F0E8; color: #78716C; }
     .confirm-overlay { position: relative; margin-top: 0.5rem; }
     .confirm-box { background: rgba(240,104,32,0.05); border: 1px solid rgba(240,104,32,0.25); border-radius: 0.75rem; padding: 1rem 1.25rem; }
@@ -1291,7 +1291,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
 
     /* Criteria result read-only */
     .criteria-result { display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.4rem; }
-    .crit-yes { color: #2DB344; }
+    .crit-yes { color: var(--success-text); }
     .crit-no { color: #E53935; }
     .phase-notes { font-size: 0.85rem; color: #78716C; margin: 0.3rem 0 0; }
 
@@ -1309,7 +1309,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     .photo-add-btn { width: 72px; height: 72px; border-radius: 0.5rem; border: 2px dashed #E7E5E4; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; font-weight: 700; color: #A8A29E; background: #FAFAF9; }
     .photo-add-btn:hover { border-color: #F5B800; color: #1C1917; }
     .mt-sm { margin-top: 0.75rem; }
-    .btn-activate-acc { background: #2DB344; color: white; }
+    .btn-activate-acc { background: var(--success-fill); color: white; }
     .btn-reinstate { background: rgba(245,184,0,0.12); color: #92400E; border: 1px solid rgba(245,184,0,0.4); font-weight: 700; }
     .rejected-reason { background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.5rem; padding: 0.5rem 0.75rem; margin-bottom: 0.6rem; font-size: 0.85rem; }
     .reason-text { color: #B71C1C; font-weight: 600; }
