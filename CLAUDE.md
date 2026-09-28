@@ -19,7 +19,7 @@ This app is used primarily on mobile devices in rural KZN. Every UI decision mus
 - Use bottom navigation bars, not top-heavy navbars with dropdowns
 - Touch targets must be at least 48×48px
 - Avoid hover-only interactions — all controls must be tappable
-- Use single-column card layouts on mobile; grid only on tablet+
+- Use single-column card layouts on mobile; grid only on tablet+. **Exception:** the marketplace product catalogue keeps a 2-column photo grid on mobile, because the photo is the buyer's main signal (Sandile's decision, 2026-09-28, recorded in `docs/MARKETPLACE_DESIGN_PROPOSAL.md` §10)
 - Forms must use large inputs, visible labels, and native pickers where possible
 - Limit the use of modals — prefer in-page flows or dedicated routes on mobile
 - Images must be lazy-loaded and compressed — bandwidth in rural areas is limited

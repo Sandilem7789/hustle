@@ -40,15 +40,15 @@ Senior changes considered: `c671dea` added theme/i18n support and `f634c8f` repl
 
 ## 2. Skills applied and judgement
 
-Local skill paths are relative to the repository; `.claude/skills/` is gitignored and may not exist in another checkout.
+Local skill paths are relative to the repository; `.claude/skills/` is gitignored and may not exist in another checkout. **Note (2026-09-28):** `frontend-design`, `emil-design-eng`, and `animate` were retired after this proposal was written — see `.claude/skills/_retired/README.md`. The rows below record what this proposal actually consulted at the time; the "now" column names each one's active replacement.
 
-| Skill | Application to this proposal |
-| --- | --- |
-| `.claude/skills/impeccable/SKILL.md`, `reference/shape.md`, `reference/operate.md` | Task-first hierarchy, explicit states, familiar controls, a written proposal before implementation |
-| `.claude/skills/frontend-design/SKILL.md` | Deliberate typography/palette and composition; local products and sellers supply identity |
-| `.claude/skills/ui-ux-pro-max/SKILL.md` | Touch size, labels, contrast, responsive layout and image-space reservation |
-| `.claude/skills/emil-design-eng/SKILL.md` | Before/after review, consistent interactions, restrained feedback and interruption handling |
-| `.claude/skills/animate/SKILL.md`, `.claude/skills/improve-animations/SKILL.md` | Motion decision principles consulted; no animation implementation or whole-app motion audit |
+| Skill | Application to this proposal | Now |
+| --- | --- | --- |
+| `.claude/skills/impeccable/SKILL.md`, `reference/shape.md`, `reference/operate.md` | Task-first hierarchy, explicit states, familiar controls, a written proposal before implementation | `impeccable` (unchanged) |
+| `.claude/skills/frontend-design/SKILL.md` | Deliberate typography/palette and composition; local products and sellers supply identity | `design-taste-frontend` |
+| `.claude/skills/ui-ux-pro-max/SKILL.md` | Touch size, labels, contrast, responsive layout and image-space reservation | `ui-ux-pro-max` (unchanged) |
+| `.claude/skills/emil-design-eng/SKILL.md` | Before/after review, consistent interactions, restrained feedback and interruption handling | `impeccable` (`reference/animate.md`, `reference/craft-floor.md`) |
+| `.claude/skills/animate/SKILL.md`, `.claude/skills/improve-animations/SKILL.md` | Motion decision principles consulted; no animation implementation or whole-app motion audit | `impeccable animate` and `improve-animations` (unchanged) |
 
 The Impeccable context launcher failed because its engine was not installed and its cache directory was not writable. Its documented manual-context fallback was used. Existing `CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, review log, progress history and code supplied context; no `PRODUCT.md`/`DESIGN.md` was invented.
 
@@ -265,7 +265,12 @@ Answering the six questions in §10 directly, folding in the above: (1) column c
 
 Overall: this is careful, well-evidenced work, and §9 in particular caught two things I'd gotten wrong (colour-as-only-cue, the delivery-note overclaim) and sharpened a third (the community filtering/display split). That's exactly the standard I want every review on this project held to, mine included.
 
-**Sandile's selected direction / execution order:** Pending.
+**Sandile's selected direction / execution order (2026-09-28):**
+- **Scope:** implement the marketplace per this spec, plus the app-wide `#2DB344` contrast fix as its own change.
+- **Mobile grid:** keep the 2-column photo grid below 768px. This is a deliberate exception to `CLAUDE.md`'s single-column mandate for the product catalogue only (recorded there). The rest of §4's card content (seller name, readable price, 48px action) applies inside the 2-column card.
+- **Categories:** native radios showing All, Fast Food and Grocery, plus an inline "More categories" disclosure, as §4 specifies.
+- **Query persistence (§7.4):** agreed in the senior response; the query survives category and community changes.
+- **Logo:** unchanged, still held for a separate review with rendered candidates.
 
 ## 11. Validation and references
 

@@ -11,14 +11,12 @@ Sandile asked for the UI/UX of the entire app to be improved. That's the right g
 
 ## Tools: the installed design skills
 
-Seven design skills are installed at `.claude/skills/` on this machine (gitignored — local disk only, not in git, so they travel with this machine's checkout, not with a fresh clone):
+Four design skills are installed at `.claude/skills/` on this machine (gitignored — local disk only, not in git, so they travel with this machine's checkout, not with a fresh clone). Three siblings that used to overlap this territory — `frontend-design`, `emil-design-eng`, `animate` — were retired 2026-09-28 (moved to `.claude/skills/_retired/`, see its `README.md`) once a skill-standards audit found them duplicating or conflicting with the skills below; use the current four:
 
-- `impeccable` — general interface critique/audit framework: hierarchy, IA, cognitive load, accessibility, responsive behavior, anti-patterns, typography, spacing, color, motion, UX copy, error/empty states.
-- `frontend-design` — aesthetic direction, typography, avoiding templated/generic defaults.
-- `design-taste-frontend` — anti-slop audit lens for redesigns specifically.
+- `impeccable` — general interface critique/audit framework: hierarchy, IA, cognitive load, accessibility, responsive behavior, anti-patterns, typography, spacing, color, motion (including component-level animation via `impeccable animate`), UX copy, error/empty states. Now the one system of record for frontend craft and motion, superseding `emil-design-eng` and `animate`.
+- `design-taste-frontend` — anti-slop audit lens for landing pages, portfolios, and redesigns; the one skill for aesthetic direction and avoiding templated/generic defaults, superseding `frontend-design`.
 - `ui-ux-pro-max` — style/palette/font-pairing/UX-guideline reference data.
-- `emil-design-eng` — UI polish, component design, and "invisible detail" philosophy.
-- `animate` / `improve-animations` — motion-specific: `improve-animations` is itself an audit-then-plan skill, which is the model this whole task follows.
+- `improve-animations` — motion-specific, whole-codebase audit-then-plan skill, which is the model this whole task follows.
 
 Read each `SKILL.md` before starting. If your tool doesn't have a `Skill`-invocation mechanism the way Claude Code does, just read the markdown files at those paths directly and apply their frameworks manually — they're plain instructions, nothing Claude-specific in the content itself.
 
