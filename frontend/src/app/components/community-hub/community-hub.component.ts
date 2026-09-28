@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { ApiService, ProductResponse } from '../../services/api.service';
+import { Router, RouterLink } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
+import { MatIconModule } from '@angular/material/icon';
+import { ApiService, Community, ProductResponse } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
 import { TranslationService } from '../../services/translation.service';
@@ -20,621 +22,711 @@ const CATEGORIES = [
   { value: 'OTHER',       labelKey: 'category.other' },
 ] as const;
 
+const PRIMARY_CATEGORIES = new Set(['ALL', 'FAST_FOOD', 'GROCERY']);
+const DISTANCE_CAPPED = new Set(['FAST_FOOD', 'GROCERY']);
+
 const CATEGORY_LABEL_KEYS: Record<string, string> = Object.fromEntries(
   CATEGORIES.map(c => [c.value, c.labelKey])
 );
 
+const CATEGORY_ICONS: Record<string, string> = {
+  FAST_FOOD: 'lunch_dining',
+  GROCERY: 'local_grocery_store',
+  CLOTHING: 'checkroom',
+  SERVICES: 'handyman',
+  CRAFTS: 'palette',
+  AGRI: 'agriculture',
+  ELECTRONICS: 'devices',
+};
+
+type LoadState = 'loading' | 'ready' | 'error';
+
 @Component({
   selector: 'app-community-hub',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, A11yModule, MatIconModule, TranslatePipe],
   template: `
-    <div class="card">
+    <section class="market" aria-labelledby="market-title" [attr.inert]="selectedProduct() ? '' : null">
+      <h1 id="market-title" class="market-title">{{ 'marketplace.title' | translate }}</h1>
 
-      <!-- SEARCH BAR -->
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input
-          class="search-input"
-          type="search"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          [placeholder]="'marketplace.searchPlaceholder' | translate"
-          autocomplete="off"
-        />
-        <button *ngIf="searchQuery()" class="search-clear" (click)="searchQuery.set('')" aria-label="Clear search">✕</button>
-      </div>
-
-      <!-- CATEGORY PILLS -->
-      <div class="category-scroll">
-        <button
-          *ngFor="let cat of categories"
-          class="cat-btn"
-          [class.cat-active]="selectedCategory() === cat.value"
-          (click)="selectCategory(cat.value)"
-        >
-          {{ cat.labelKey | translate }}
-        </button>
-      </div>
-
-      <!-- STATES -->
-      <div *ngIf="loading()" class="state-msg">{{ 'marketplace.loading' | translate }}</div>
-      <div *ngIf="!loading() && filteredProducts().length === 0 && products().length > 0" class="state-msg">
-        {{ 'marketplace.noResults' | translate }} "{{ searchQuery() }}".
-      </div>
-      <div *ngIf="!loading() && products().length === 0" class="state-msg">
-        {{ 'marketplace.noProducts' | translate }}
-      </div>
-
-      <!-- PRODUCT GRID -->
-      <div class="product-grid" *ngIf="!loading() && filteredProducts().length > 0">
-        <article
-          *ngFor="let p of filteredProducts()"
-          class="product-card"
-          (click)="openDetail(p)"
-          role="button"
-          [attr.aria-label]="p.name"
-        >
-          <!-- Image — takes ~65% of card height via aspect-ratio -->
-          <div class="card-img-wrap">
-            <img
-              *ngIf="p.mediaUrl"
-              [src]="resolveUrl(p.mediaUrl)"
-              [alt]="p.name"
-              class="product-img"
-              loading="lazy"
-            />
-            <div class="no-img" *ngIf="!p.mediaUrl">
-              {{ p.name.charAt(0).toUpperCase() }}
-            </div>
-            <span *ngIf="p.category" class="card-cat-badge">{{ catLabel(p.category) }}</span>
-          </div>
-
-          <!-- Info — ~35% of card -->
-          <div class="card-info">
-            <span class="card-name">{{ p.name }}</span>
-            <span class="card-price">R {{ p.price | number:'1.2-2' }}</span>
-          </div>
-        </article>
-      </div>
-    </div>
-
-    <!-- ── Product Detail Sheet ──────────────────────────────────── -->
-    <div
-      class="detail-overlay"
-      *ngIf="selectedProduct()"
-      (click)="closeDetail()"
-      aria-hidden="true"
-    ></div>
-
-    <div
-      class="detail-sheet"
-      *ngIf="selectedProduct()"
-      role="dialog"
-      [attr.aria-label]="selectedProduct()!.name"
-      (click)="$event.stopPropagation()"
-    >
-      <!-- Image header -->
-      <div class="detail-img-wrap">
-        <img
-          *ngIf="selectedProduct()!.mediaUrl"
-          [src]="resolveUrl(selectedProduct()!.mediaUrl!)"
-          [alt]="selectedProduct()!.name"
-          class="detail-img"
-        />
-        <div class="detail-no-img" *ngIf="!selectedProduct()!.mediaUrl">
-          {{ selectedProduct()!.name.charAt(0).toUpperCase() }}
+      <div class="search">
+        <label class="field-label" for="market-search">{{ 'marketplace.searchLabel' | translate }}</label>
+        <div class="search-box">
+          <mat-icon class="search-icon" aria-hidden="true">search</mat-icon>
+          <input
+            #searchInput
+            id="market-search"
+            class="search-input"
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            [placeholder]="'marketplace.searchPlaceholder' | translate"
+          />
+          <button
+            *ngIf="searchQuery()"
+            type="button"
+            class="icon-btn search-clear"
+            (click)="clearSearch(searchInput)"
+            [attr.aria-label]="'marketplace.clearSearch' | translate"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
         </div>
-        <button class="detail-close" (click)="closeDetail()" aria-label="Close">✕</button>
-        <span *ngIf="selectedProduct()!.category" class="detail-cat-badge">
-          {{ catLabel(selectedProduct()!.category!) }}
-        </span>
       </div>
 
-      <!-- Scrollable body -->
-      <div class="detail-body">
-        <h2 class="detail-name">{{ selectedProduct()!.name }}</h2>
-        <a
-          class="detail-shop"
-          (click)="goToBusiness(selectedProduct()!.businessId); closeDetail()"
-          role="button"
-        >
-          {{ selectedProduct()!.businessName }}
-        </a>
+      <fieldset class="filter" *ngIf="communities().length">
+        <legend class="field-label">{{ 'marketplace.community' | translate }}</legend>
+        <div class="pill-scroll">
+          <label class="pill">
+            <input type="radio" name="community" class="pill-input" value="ALL"
+              [checked]="selectedCommunity() === 'ALL'" (change)="selectCommunity('ALL')" />
+            <span class="pill-face">{{ 'marketplace.allCommunities' | translate }}</span>
+          </label>
+          <label class="pill" *ngFor="let c of communities(); trackBy: trackById">
+            <input type="radio" name="community" class="pill-input" [value]="c.id"
+              [checked]="selectedCommunity() === c.id" (change)="selectCommunity(c.id)" />
+            <span class="pill-face">{{ c.name }}</span>
+          </label>
+        </div>
+      </fieldset>
 
-        <p class="detail-desc">{{ selectedProduct()!.description }}</p>
+      <fieldset class="filter">
+        <legend class="field-label">{{ 'marketplace.category' | translate }}</legend>
+        <div class="radio-row" id="category-options">
+          <label class="radio" *ngFor="let cat of visibleCategories(); trackBy: trackByValue">
+            <input type="radio" name="category" class="radio-input" [value]="cat.value"
+              [checked]="selectedCategory() === cat.value" (change)="selectCategory(cat.value)" />
+            <span>{{ cat.labelKey | translate }}</span>
+          </label>
+          <button
+            type="button"
+            class="more-btn"
+            aria-controls="category-options"
+            [attr.aria-expanded]="showAllCategories()"
+            (click)="showAllCategories.set(!showAllCategories())"
+          >
+            {{ (showAllCategories() ? 'marketplace.fewerCategories' : 'marketplace.moreCategories') | translate }}
+            <mat-icon aria-hidden="true">{{ showAllCategories() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+        </div>
+        <p class="delivery-note" *ngIf="isDistanceCapped()">{{ 'marketplace.deliveryNote' | translate }}</p>
+      </fieldset>
 
-        <!-- Options / variants (shows when backend provides them) -->
-        <ng-container *ngIf="selectedProduct()!.options?.length">
-          <div class="options-section">
-            <div *ngFor="let opt of selectedProduct()!.options" class="option-group">
-              <p class="option-label">{{ opt.name }}</p>
-              <div class="option-values">
-                <button
-                  *ngFor="let val of opt.values"
-                  class="option-chip"
-                  [class.option-chip-active]="isOptionSelected(opt.name, val)"
-                  (click)="selectOption(opt.name, val)"
-                >
-                  {{ val }}
-                </button>
-              </div>
-            </div>
+      <p class="sr-only" aria-live="polite">{{ announcement() }}</p>
+
+      <!-- Loading: static placeholders the same shape as real cards -->
+      <ng-container *ngIf="loadState() === 'loading'">
+        <p class="result-count">{{ 'marketplace.loading' | translate }}</p>
+        <ul class="grid" role="list" aria-hidden="true">
+          <li class="p-card p-skeleton" *ngFor="let s of skeletons">
+            <div class="p-media"></div>
+            <div class="p-body"><span class="sk-line"></span><span class="sk-line sk-short"></span></div>
+          </li>
+        </ul>
+      </ng-container>
+
+      <div class="state" *ngIf="loadState() === 'error'" role="alert">
+        <mat-icon class="state-icon" aria-hidden="true">wifi_off</mat-icon>
+        <p class="state-text">{{ 'marketplace.loadError' | translate }}</p>
+        <button type="button" class="action-btn" (click)="loadProducts()">{{ 'marketplace.retry' | translate }}</button>
+      </div>
+
+      <ng-container *ngIf="loadState() === 'ready'">
+        <div class="state" *ngIf="products().length === 0">
+          <mat-icon class="state-icon" aria-hidden="true">storefront</mat-icon>
+          <p class="state-text">{{ 'marketplace.noListings' | translate }}</p>
+          <div class="state-actions">
+            <button *ngIf="selectedCommunity() !== 'ALL'" type="button" class="action-btn" (click)="selectCommunity('ALL')">
+              {{ 'marketplace.showAllCommunities' | translate }}
+            </button>
+            <a routerLink="/apply" class="action-link">{{ 'marketplace.sellHere' | translate }}</a>
           </div>
+        </div>
+
+        <div class="state" *ngIf="products().length > 0 && filteredProducts().length === 0">
+          <mat-icon class="state-icon" aria-hidden="true">search_off</mat-icon>
+          <p class="state-text">{{ noMatchesText() }}</p>
+          <button type="button" class="action-btn" (click)="clearSearch(searchInput)">{{ 'marketplace.clearSearch' | translate }}</button>
+        </div>
+
+        <ng-container *ngIf="filteredProducts().length > 0">
+          <p class="result-count" aria-hidden="true">{{ countLabel() }}</p>
+          <ul class="grid" role="list">
+            <li class="p-card" *ngFor="let p of filteredProducts(); trackBy: trackById">
+              <div class="p-media">
+                <img
+                  *ngIf="p.mediaUrl && !brokenImages().has(p.id); else noPhoto"
+                  [src]="resolveUrl(p.mediaUrl)"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="400"
+                  height="300"
+                  (error)="markBroken(p.id)"
+                />
+                <ng-template #noPhoto>
+                  <div class="p-fallback">
+                    <mat-icon aria-hidden="true">{{ categoryIcon(p.category) }}</mat-icon>
+                    <span>{{ 'marketplace.noPhoto' | translate }}</span>
+                  </div>
+                </ng-template>
+              </div>
+              <div class="p-body">
+                <h2 class="p-name">
+                  <button type="button" class="p-open" [attr.aria-describedby]="'meta-' + p.id" (click)="openDetail(p)">
+                    {{ p.name }}
+                  </button>
+                </h2>
+                <div class="p-meta" [id]="'meta-' + p.id">
+                  <p class="p-seller">{{ p.businessName }}</p>
+                  <p class="p-price">R {{ p.price | number:'1.2-2' }}</p>
+                </div>
+              </div>
+            </li>
+          </ul>
         </ng-container>
+      </ng-container>
+    </section>
 
-        <p class="detail-price">R {{ selectedProduct()!.price | number:'1.2-2' }}</p>
-      </div>
+    <ng-container *ngIf="selectedProduct() as sp">
+      <div class="sheet-scrim" (click)="closeDetail()" aria-hidden="true"></div>
+      <div
+        class="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sheet-title"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        (keydown.escape)="closeDetail()"
+      >
+        <div class="sheet-media">
+          <img
+            *ngIf="sp.mediaUrl && !brokenImages().has(sp.id); else sheetNoPhoto"
+            [src]="resolveUrl(sp.mediaUrl)"
+            [alt]="sp.name"
+            (error)="markBroken(sp.id)"
+          />
+          <ng-template #sheetNoPhoto>
+            <div class="p-fallback p-fallback-lg">
+              <mat-icon aria-hidden="true">{{ categoryIcon(sp.category) }}</mat-icon>
+              <span>{{ 'marketplace.noPhoto' | translate }}</span>
+            </div>
+          </ng-template>
+          <button type="button" class="icon-btn sheet-close" (click)="closeDetail()" [attr.aria-label]="'marketplace.close' | translate">
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
 
-      <!-- Sticky footer -->
-      <div class="detail-footer">
-        <button
-          *ngIf="unifiedAuth.isLoggedIn()"
-          class="detail-buy-btn"
-          (click)="addToCartAndClose(selectedProduct()!)"
-        >
-          {{ 'marketplace.addToCart' | translate }}
-        </button>
-        <button
-          *ngIf="!unifiedAuth.isLoggedIn()"
-          class="detail-login-btn"
-          (click)="goToLogin()"
-        >
-          {{ 'marketplace.loginToBuy' | translate }}
-        </button>
+        <div class="sheet-body">
+          <h2 id="sheet-title" class="sheet-title">{{ sp.name }}</h2>
+          <a class="sheet-seller" [routerLink]="['/business', sp.businessId]" (click)="closeDetail()">
+            <mat-icon aria-hidden="true">storefront</mat-icon>{{ sp.businessName }}
+          </a>
+          <p class="sheet-category" *ngIf="sp.category">{{ catLabel(sp.category) }}</p>
+          <p class="sheet-desc" *ngIf="sp.description">{{ sp.description }}</p>
+
+          <fieldset class="option-group" *ngFor="let opt of sp.options; let i = index">
+            <legend class="field-label">{{ opt.name }}</legend>
+            <div class="option-values">
+              <label class="pill" *ngFor="let val of opt.values">
+                <input type="radio" class="pill-input" [name]="'opt-' + i" [value]="val"
+                  [checked]="isOptionSelected(opt.name, val)" (change)="selectOption(opt.name, val)" />
+                <span class="pill-face">{{ val }}</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <p class="sheet-price">R {{ sp.price | number:'1.2-2' }}</p>
+        </div>
+
+        <div class="sheet-footer">
+          <button *ngIf="unifiedAuth.isLoggedIn()" type="button" class="buy-btn" (click)="addToCartAndClose(sp)">
+            {{ 'marketplace.addToCart' | translate }}
+          </button>
+          <button *ngIf="!unifiedAuth.isLoggedIn()" type="button" class="login-btn" (click)="goToLogin()">
+            {{ 'marketplace.loginToBuy' | translate }}
+          </button>
+        </div>
       </div>
-    </div>
+    </ng-container>
   `,
   styles: `
-    /* ── Wrapper card ─────────────────────────────────────────── */
-    .card {
-      background: var(--bg-surface);
-      border-radius: 1.5rem;
-      padding: 1.25rem;
-      box-shadow: var(--shadow-card);
-      border: 1px solid var(--border-base);
+    :host { display: block; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
     }
 
-    /* ── Search bar ───────────────────────────────────────────── */
-    .search-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.875rem;
+    /* ── Page frame: one shared left edge, bounded on wide screens ── */
+    .market {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 1rem 1rem 1.5rem;
     }
+    @media (min-width: 768px) { .market { padding: 1.5rem 1.5rem 2.5rem; } }
+
+    .market-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin: 0 0 1rem;
+    }
+    @media (min-width: 768px) { .market-title { font-size: 1.875rem; } }
+
+    .field-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin: 0 0 0.375rem;
+      padding: 0;
+    }
+
+    /* ── Search ─────────────────────────────────────────────────── */
+    .search { margin-bottom: 1rem; }
+    .search-box { position: relative; display: flex; align-items: center; }
     .search-icon {
       position: absolute;
-      left: 0.9rem;
-      font-size: 1rem;
+      left: 0.875rem;
+      color: var(--text-secondary);
       pointer-events: none;
-      line-height: 1;
     }
     .search-input {
       width: 100%;
       height: 48px;
+      padding: 0 3.25rem 0 2.875rem;
       border: 2px solid var(--border-base);
-      border-radius: 999px;
-      padding: 0 2.75rem;
-      font-size: 0.95rem;
-      font-family: inherit;
-      font-weight: 600;
-      color: var(--text-primary);
-      background: var(--bg-muted);
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      box-sizing: border-box;
-    }
-    .search-input:focus {
-      border-color: #F5B800;
-      box-shadow: 0 0 0 3px rgba(245,184,0,0.2);
+      border-radius: var(--radius-sm);
       background: var(--bg-surface);
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
     }
     .search-input::placeholder { color: var(--text-muted); font-weight: 600; }
-    .search-clear {
-      position: absolute;
-      right: 0.75rem;
-      background: var(--border-base);
-      border: none;
+    .search-input::-webkit-search-cancel-button { display: none; }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.25);
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      min-height: 48px;
+      padding: 0;
       border-radius: 50%;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    .icon-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: -3px; }
+    .search-clear { position: absolute; right: 0; }
+
+    /* ── Filters: native radios, styled ─────────────────────────── */
+    .filter { border: 0; margin: 0 0 1rem; padding: 0; min-width: 0; }
+
+    .pill-scroll {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-right: 1.5rem;
+      /* The fade tells the thumb there is more to the right */
+      mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+    }
+    .pill-scroll::-webkit-scrollbar { display: none; }
+
+    .pill {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      min-height: 48px;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+    }
+    .pill-input {
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+      margin: 0;
+    }
+    .pill-face {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 0 1rem;
+      border: 1.5px solid var(--border-base);
+      border-radius: var(--radius-pill);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+    }
+    .pill-input:checked + .pill-face {
+      background: var(--hustle-yellow);
+      border-color: var(--hustle-yellow);
+      color: #1C1917;
+      font-weight: 800;
+    }
+    .pill-input:focus-visible + .pill-face { outline: 3px solid var(--text-primary); outline-offset: 2px; }
+
+    .radio-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      column-gap: 1.25rem;
+    }
+    .radio {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 48px;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .radio-input {
+      appearance: none;
+      -webkit-appearance: none;
+      flex-shrink: 0;
       width: 22px;
       height: 22px;
-      min-height: unset;
-      font-size: 0.72rem;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+      border: 2px solid var(--text-secondary);
+      border-radius: 50%;
+      background: var(--bg-surface);
       cursor: pointer;
+      transition: border-color 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+    }
+    .radio-input:checked {
+      border-color: var(--text-primary);
+      background: var(--hustle-yellow);
+      box-shadow: inset 0 0 0 3px var(--bg-surface);
+    }
+    .radio-input:focus { box-shadow: none; }
+    .radio-input:checked:focus { box-shadow: inset 0 0 0 3px var(--bg-surface); }
+    .radio-input:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+    .radio:has(.radio-input:checked) { font-weight: 800; }
+
+    .more-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.125rem;
+      min-height: 48px;
+      padding: 0 0.25rem;
+      background: transparent;
+      color: var(--brand-text);
+      font-size: 0.9375rem;
+      font-weight: 800;
+      border-radius: var(--radius-sm);
+    }
+    .more-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 0; }
+
+    .delivery-note {
+      margin: 0.25rem 0 0;
+      font-size: 0.875rem;
+      line-height: 1.45;
       color: var(--text-secondary);
+      max-width: 60ch;
+    }
+
+    /* ── Results ────────────────────────────────────────────────── */
+    .result-count {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin: 0.25rem 0 0.75rem;
+    }
+
+    .grid {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    @media (min-width: 640px)  { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; } }
+    @media (min-width: 1024px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; } }
+
+    .p-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-base);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .p-card:active { transform: scale(0.98); }
+    @media (hover: hover) and (pointer: fine) {
+      .p-card:hover { border-color: var(--text-muted); }
+    }
+
+    /* Whole photos, never cropped: a buyer judges the item by its picture */
+    .p-media {
+      aspect-ratio: 4 / 3;
+      background: var(--bg-muted);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
     }
-
-    /* ── Category row ─────────────────────────────────────────── */
-    .category-scroll {
-      display: flex;
-      gap: 0.4rem;
-      overflow-x: auto;
-      padding-bottom: 0.5rem;
-      margin-bottom: 0.875rem;
-      scrollbar-width: none;
-    }
-    .category-scroll::-webkit-scrollbar { display: none; }
-    .cat-btn {
-      border: 1.5px solid var(--border-base);
-      border-radius: 999px;
-      padding: 0.35rem 0.9rem;
-      background: var(--bg-muted);
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      transition: color 0.15s, border-color 0.15s, background-color 0.15s;
-      min-height: 36px;
-      font-family: inherit;
-    }
-    .cat-btn:hover { border-color: #F5B800; color: var(--text-primary); }
-    .cat-btn.cat-active { background: #F5B800; border-color: #F5B800; color: #1C1917; font-weight: 800; }
-
-    .state-msg { color: var(--text-muted); margin-top: 1rem; font-size: 0.9rem; }
-
-    /* ── Product grid ─────────────────────────────────────────── */
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
-      margin-top: 0.25rem;
-    }
-    @media (min-width: 480px) {
-      .product-grid { grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
-    }
-    @media (min-width: 768px) {
-      .product-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
-    }
-
-    /* ── Product card ─────────────────────────────────────────── */
-    .product-card {
-      border: 1px solid var(--border-base);
-      border-radius: 1rem;
-      overflow: hidden;
-      background: var(--bg-surface);
-      cursor: pointer;
-      transition: box-shadow 0.18s, transform 0.12s;
-      display: flex;
-      flex-direction: column;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .product-card:hover {
-      box-shadow: 0 6px 20px rgba(28,25,23,0.13);
-    }
-    .product-card:active { transform: scale(0.975); }
-
-    /* Image wrapper — padding-top trick gives a fixed 65% aspect */
-    .card-img-wrap {
-      position: relative;
-      width: 100%;
-      padding-top: 68%;
-      flex-shrink: 0;
-      background: #F5F0E8;
-    }
-
-    .product-img {
-      position: absolute;
-      inset: 0;
+    .p-media img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
 
-    /* No-image placeholder */
-    .no-img {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.25rem;
-      font-weight: 900;
-      color: #D6D3D1;
-      background: linear-gradient(135deg, #F5F0E8 0%, #E7E5E4 100%);
-      letter-spacing: -0.02em;
-    }
-
-    /* Category badge overlaid on image */
-    .card-cat-badge {
-      position: absolute;
-      top: 0.5rem;
-      left: 0.5rem;
-      background: rgba(28,25,23,0.6);
-      color: white;
-      font-size: 0.6rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 0.2rem 0.55rem;
-      border-radius: 999px;
-      backdrop-filter: blur(4px);
-      white-space: nowrap;
-    }
-
-    /* Info section — ~35% of card height is implicit from content */
-    .card-info {
-      padding: 0.625rem 0.75rem 0.75rem;
+    .p-fallback {
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
-      flex: 1;
-      justify-content: space-between;
-    }
-
-    .card-name {
-      font-size: 0.825rem;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
       font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.3;
+    }
+    .p-fallback mat-icon { width: 32px; height: 32px; font-size: 32px; }
+    .p-fallback-lg mat-icon { width: 56px; height: 56px; font-size: 56px; }
+
+    .p-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding: 0.625rem 0.75rem 0.75rem;
+      gap: 0.25rem;
+    }
+    .p-name { margin: 0; font-size: 1rem; line-height: 1.3; }
+    .p-open {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-    }
-
-    .card-price {
-      font-size: 0.9rem;
+      min-height: 0;
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      color: var(--text-primary);
+      font: inherit;
       font-weight: 800;
-      color: #2DB344;
-      margin-top: 0.25rem;
+      text-align: left;
+    }
+    .p-open:active { transform: none; }
+    /* One real button, stretched to cover the card: whole-card tap target, no nested controls */
+    .p-open::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-md); }
+    .p-open:focus-visible { outline: none; }
+    .p-open:focus-visible::after { outline: 3px solid var(--border-focus); outline-offset: -3px; }
+
+    .p-meta { display: flex; flex-direction: column; gap: 0.125rem; margin-top: auto; }
+    .p-seller {
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .p-price {
+      margin: 0;
+      font-size: 1.0625rem;
+      font-weight: 900;
+      color: var(--success-text);
+      font-variant-numeric: tabular-nums;
     }
 
-    /* ── Detail overlay backdrop ──────────────────────────────── */
-    .detail-overlay {
+    .p-skeleton .p-media { background: var(--bg-muted); }
+    .sk-line { display: block; height: 0.875rem; border-radius: 4px; background: var(--bg-muted); }
+    .sk-line.sk-short { width: 55%; margin-top: 0.375rem; }
+
+    /* ── Empty / error states ───────────────────────────────────── */
+    .state {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1.5rem 0;
+      max-width: 36rem;
+    }
+    .state-icon { width: 40px; height: 40px; font-size: 40px; color: var(--text-muted); }
+    .state-text { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); line-height: 1.45; }
+    .state-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+    .action-btn {
+      min-height: 48px;
+      padding: 0 1.25rem;
+      border-radius: var(--radius-sm);
+      background: var(--hustle-yellow);
+      color: #1C1917;
+      font-size: 0.9375rem;
+      font-weight: 800;
+    }
+    .action-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
+    .action-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 48px;
+      color: var(--brand-text);
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── Detail sheet ───────────────────────────────────────────── */
+    .sheet-scrim {
       position: fixed;
       inset: 0;
       z-index: 400;
-      background: rgba(28,25,23,0.55);
-      animation: fadeIn 0.2s ease-out both;
+      background: rgba(28, 25, 23, 0.55);
+      animation: scrimIn 200ms ease-out both;
     }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scrimIn { from { opacity: 0; } }
 
-    /* ── Detail bottom sheet ──────────────────────────────────── */
-    .detail-sheet {
+    .sheet {
       position: fixed;
-      bottom: 0;
       left: 0;
       right: 0;
+      bottom: 0;
       z-index: 401;
       max-height: 92vh;
-      background: var(--bg-surface);
-      border-radius: 1.25rem 1.25rem 0 0;
+      max-height: 92dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      animation: slideUp 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      animation: sheetUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to   { transform: translateY(0); }
-    }
+    @keyframes sheetUp { from { transform: translateY(100%); } }
     @media (min-width: 600px) {
-      .detail-sheet {
+      .sheet {
         left: 50%;
         right: auto;
-        bottom: 50%;
-        transform: translate(-50%, 50%);
-        width: 100%;
+        bottom: auto;
+        top: 50%;
+        width: calc(100% - 3rem);
         max-width: 480px;
-        border-radius: 1.25rem;
         max-height: 86vh;
-        animation: zoomIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+        border-radius: var(--radius-lg);
+        transform: translate(-50%, -50%);
+        animation: sheetIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
       }
-      @keyframes zoomIn {
-        from { opacity: 0; transform: translate(-50%, 50%) scale(0.95); }
-        to   { opacity: 1; transform: translate(-50%, 50%) scale(1); }
-      }
+      @keyframes sheetIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); } }
     }
 
-    /* Image header */
-    .detail-img-wrap {
+    .sheet-media {
       position: relative;
-      width: 100%;
-      height: 240px;
       flex-shrink: 0;
-      background: #F5F0E8;
-    }
-    @media (min-width: 400px) { .detail-img-wrap { height: 260px; } }
-
-    .detail-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .detail-no-img {
-      width: 100%;
-      height: 100%;
+      height: 240px;
+      background: var(--bg-muted);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 4rem;
-      font-weight: 900;
-      color: #D6D3D1;
-      background: linear-gradient(135deg, #F5F0E8 0%, #E7E5E4 100%);
     }
-
-    .detail-close {
+    .sheet-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .sheet-close {
       position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      width: 36px;
-      height: 36px;
-      min-height: unset;
-      border-radius: 50%;
-      border: none;
-      background: rgba(28,25,23,0.55);
-      color: white;
-      font-size: 0.875rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(4px);
-      transition: background 0.15s;
-    }
-    .detail-close:hover { background: rgba(28,25,23,0.75); }
-
-    .detail-cat-badge {
-      position: absolute;
-      bottom: 0.75rem;
-      left: 0.75rem;
-      background: rgba(245,184,0,0.92);
-      color: #1C1917;
-      font-size: 0.65rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 0.25rem 0.7rem;
-      border-radius: 999px;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(28, 25, 23, 0.6);
+      color: #FFFFFF;
     }
 
-    /* Scrollable body */
-    .detail-body {
+    .sheet-body {
       flex: 1;
       overflow-y: auto;
       padding: 1.25rem 1.25rem 0.5rem;
-      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
-
-    .detail-name {
-      font-size: 1.2rem;
+    .sheet-title { margin: 0 0 0.25rem; font-size: 1.25rem; font-weight: 900; line-height: 1.25; color: var(--text-primary); }
+    .sheet-seller {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      min-height: 44px;
+      color: var(--brand-text);
+      font-size: 0.9375rem;
       font-weight: 800;
-      color: var(--text-primary);
-      margin: 0 0 0.35rem;
-      line-height: 1.25;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
+    .sheet-seller mat-icon { width: 20px; height: 20px; font-size: 20px; }
+    .sheet-category { margin: 0 0 0.75rem; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
+    .sheet-desc { margin: 0 0 1rem; font-size: 0.9375rem; line-height: 1.6; color: var(--text-secondary); max-width: 65ch; }
 
-    .detail-shop {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 800;
-      color: #00A896;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.875rem;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .detail-shop:hover { text-decoration: underline; }
+    .option-group { border: 0; margin: 0 0 1rem; padding: 0; min-width: 0; }
+    .option-values { display: flex; flex-wrap: wrap; gap: 0 0.5rem; }
 
-    .detail-desc {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin: 0 0 1rem;
-      font-weight: 400;
-    }
-
-    /* Options / variants */
-    .options-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.875rem;
-      margin-bottom: 1rem;
-      padding: 0.875rem;
-      background: var(--bg-muted);
-      border-radius: 0.75rem;
-      border: 1px solid var(--border-base);
-    }
-    .option-label {
-      font-size: 0.775rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-secondary);
-      margin: 0 0 0.4rem;
-    }
-    .option-values { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .option-chip {
-      padding: 0.35rem 0.875rem;
-      border: 1.5px solid var(--border-base);
-      border-radius: 999px;
-      background: var(--bg-surface);
-      font-size: 0.875rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      cursor: pointer;
-      min-height: unset;
-      font-family: inherit;
-      transition: border-color 0.12s, background-color 0.12s, color 0.12s;
-    }
-    .option-chip:hover { border-color: #F5B800; }
-    .option-chip.option-chip-active {
-      background: #F5B800;
-      border-color: #F5B800;
-      color: #1C1917;
-    }
-
-    .detail-price {
+    .sheet-price {
+      margin: 0.25rem 0 0;
       font-size: 1.5rem;
-      font-weight: 800;
-      color: #2DB344;
-      margin: 0;
+      font-weight: 900;
+      color: var(--success-text);
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Sticky footer */
-    .detail-footer {
+    .sheet-footer {
+      flex-shrink: 0;
       padding: 0.875rem 1.25rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
       border-top: 1px solid var(--border-base);
-      flex-shrink: 0;
     }
-
-    .detail-buy-btn {
+    .buy-btn,
+    .login-btn {
       width: 100%;
       height: 52px;
-      border: none;
-      border-radius: 999px;
-      background: #F5B800;
-      color: #1C1917;
+      border-radius: var(--radius-sm);
       font-size: 1rem;
       font-weight: 800;
-      cursor: pointer;
-      font-family: inherit;
-      box-shadow: 0 4px 14px rgba(245,184,0,0.35);
-      transition: box-shadow 0.15s;
     }
-    .detail-buy-btn:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
-
-    .detail-login-btn {
-      width: 100%;
-      height: 52px;
-      border: 1.5px solid var(--border-base);
-      border-radius: 999px;
-      background: var(--bg-surface);
-      color: var(--text-secondary);
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .detail-login-btn:hover { border-color: #F5B800; color: var(--text-primary); }
+    .buy-btn { background: var(--hustle-yellow); color: #1C1917; }
+    .login-btn { background: var(--bg-surface); color: var(--text-primary); border: 2px solid var(--border-base); }
+    .buy-btn:focus-visible,
+    .login-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
   `
 })
-export class CommunityHubComponent implements OnInit {
+export class CommunityHubComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   readonly unifiedAuth = inject(UnifiedAuthService);
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslationService);
 
-  readonly categories = CATEGORIES;
+  readonly skeletons = [0, 1, 2, 3];
 
-  products        = signal<ProductResponse[]>([]);
-  selectedCategory = signal<string>('ALL');
-  loading         = signal(true);
-  searchQuery     = signal('');
-  selectedProduct = signal<ProductResponse | null>(null);
+  products          = signal<ProductResponse[]>([]);
+  communities       = signal<Community[]>([]);
+  selectedCategory  = signal<string>('ALL');
+  selectedCommunity = signal<string>('ALL');
+  searchQuery       = signal('');
+  loadState         = signal<LoadState>('loading');
+  showAllCategories = signal(false);
+  selectedProduct   = signal<ProductResponse | null>(null);
+  brokenImages      = signal<ReadonlySet<string>>(new Set());
+  announcement      = signal('');
 
   private selectedOptions: Record<string, string> = {};
+  private requestSeq = 0;
+  private announceTimer?: ReturnType<typeof setTimeout>;
 
   filteredProducts = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
@@ -647,21 +739,92 @@ export class CommunityHubComponent implements OnInit {
     );
   });
 
-  ngOnInit(): void { this.loadProducts(); }
+  // Keeps a selected extra category visible while the list is collapsed
+  visibleCategories = computed(() => {
+    if (this.showAllCategories()) return [...CATEGORIES];
+    const selected = this.selectedCategory();
+    return CATEGORIES.filter(c => PRIMARY_CATEGORIES.has(c.value) || c.value === selected);
+  });
+
+  isDistanceCapped = computed(() => DISTANCE_CAPPED.has(this.selectedCategory()));
+
+  countLabel = computed(() => {
+    this.i18n.lang();
+    const n = this.filteredProducts().length;
+    return n === 1 ? this.i18n.t('marketplace.itemsOne') : this.i18n.t('marketplace.itemsMany').replace('{n}', String(n));
+  });
+
+  noMatchesText = computed(() => {
+    this.i18n.lang();
+    return this.i18n.t('marketplace.noMatches').replace('{q}', this.searchQuery().trim());
+  });
+
+  constructor() {
+    // Announce result counts only once typing pauses, not on every keystroke
+    effect(() => {
+      const state = this.loadState();
+      const text = state === 'ready' ? this.countLabel() : '';
+      clearTimeout(this.announceTimer);
+      this.announceTimer = setTimeout(() => this.announcement.set(text), 700);
+    });
+  }
+
+  ngOnInit(): void {
+    this.api.listCommunities().subscribe({
+      next: list => this.communities.set(list),
+      error: () => this.communities.set([])
+    });
+    this.loadProducts();
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.announceTimer);
+    document.body.style.overflow = '';
+  }
 
   selectCategory(cat: string): void {
     this.selectedCategory.set(cat);
-    this.searchQuery.set('');
+    this.loadProducts();
+  }
+
+  selectCommunity(id: string): void {
+    this.selectedCommunity.set(id);
     this.loadProducts();
   }
 
   loadProducts(): void {
-    this.loading.set(true);
+    // Only the newest request may update the screen, so rapid filter taps can't show stale results
+    const seq = ++this.requestSeq;
+    this.loadState.set('loading');
     const cat = this.selectedCategory();
-    this.api.listProducts(undefined, cat === 'ALL' ? undefined : cat).subscribe({
-      next: list => { this.products.set(list); this.loading.set(false); },
-      error: () => this.loading.set(false)
+    const community = this.selectedCommunity();
+    this.api.listProducts(
+      community === 'ALL' ? undefined : community,
+      cat === 'ALL' ? undefined : cat
+    ).subscribe({
+      next: list => {
+        if (seq !== this.requestSeq) return;
+        this.products.set(list);
+        this.loadState.set('ready');
+      },
+      error: () => {
+        if (seq !== this.requestSeq) return;
+        this.loadState.set('error');
+      }
     });
+  }
+
+  clearSearch(input: HTMLInputElement): void {
+    this.searchQuery.set('');
+    input.focus();
+  }
+
+  markBroken(id: string): void {
+    this.brokenImages.update(set => new Set(set).add(id));
+  }
+
+  categoryIcon(category?: string): string {
+    return (category && CATEGORY_ICONS[category]) || 'storefront';
   }
 
   catLabel(value: string): string {
@@ -695,12 +858,12 @@ export class CommunityHubComponent implements OnInit {
   }
 
   goToLogin(): void {
+    this.closeDetail();
     this.router.navigate(['/login'], { queryParams: { return: '/marketplace' } });
   }
 
-  goToBusiness(businessId: string): void {
-    this.router.navigate(['/business', businessId]);
-  }
+  trackById = (_: number, item: { id: string }) => item.id;
+  trackByValue = (_: number, item: { value: string }) => item.value;
 
   resolveUrl(u: string): string { return u.startsWith('http') ? u : this.api.baseUrl + u; }
 }
