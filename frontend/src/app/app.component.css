@@ -5,6 +5,9 @@
 /* ─── Full-height container ──────────────────────────────────────────────── */
 .app-container {
   height: 100vh;
+  /* Material paints its own light-grey default here, which hid dark mode on any page without its own card */
+  background-color: var(--bg-page);
+  color: var(--text-primary);
 }
 
 /* ─── Top Toolbar ────────────────────────────────────────────────────────── */
