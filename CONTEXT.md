@@ -43,9 +43,9 @@ Learning is not gatekept — it is built into the merchant's daily experience. T
 
 ## 3. Platform Roles
 
-> **Note:** Role names below are working titles. Final naming is to be confirmed and updated here before implementation. All references to "Facilitator" and "Coordinator" from the Hustle Economy Programme context must be replaced with the agreed platform role names throughout the codebase.
+> ⚠️ **Final (decided 9 October 2026):** these role names are confirmed. They replace Hustler, Facilitator and Coordinator in the UI and in the role enums; the rename is implemented in Phase 1 of `docs/THENGA_PLATFORM_PLAN.md`. Every account can buy, so Buyer is not a separate role. One account per person, identified by **phone number**; email is optional, for recovery, security and backup contact. Anyone applies to sell from the app's menu, and a Community Agent verifies them in one step (interview conversation plus business check). See the plan for every decision and task.
 
-| Working Title | Description |
+| Role | Description |
 |---|---|
 | **Merchant** *(was: Seller)* | Lists products or services, receives orders, gets paid, accesses in-app learning. Primary user of the platform. |
 | **Community Agent** *(was: Facilitator-Seller)* | Everything a Merchant does, plus: verifies other merchants, confirms transactions, assists with onboarding, handles cash payments and last-mile delivery. This is where youth employment is created — young people in communities like KwaNgwenya earn per verification, per onboarded merchant, per assisted transaction. |

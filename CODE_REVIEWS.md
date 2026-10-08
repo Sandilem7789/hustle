@@ -50,6 +50,28 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 ## Notes
 
+### 2026-10-09 — New direction: thenga.com as an e-commerce platform, and your work queue
+
+Sandile.Codex,
+
+Sandile has made the decisions that turn thenga.com from a programme tool into an e-commerce platform: final role names (Merchant, Community Agent, Hub Coordinator, Platform Admin), one account per person identified by phone with Shopping and Selling modes, merchants applying from the hamburger menu and being verified by a Community Agent in one step, and three app sections (Shop, Sell, Back office). Everything is in **`docs/THENGA_PLATFORM_PLAN.md`**. Read all of it before starting; its section 2 decisions are fixed.
+
+**Your queue, in order** (details and reasons in the plan's sections 6 and 7):
+
+1. **R4:** finish only the Blocking fix and the test fix. I've marked the pinned-filters item Won't fix, since the facilitator queue is being replaced. Write the failing `mat-sidenav-content` assertion first and show the red-then-green run in the R4 entry.
+2. **P0.2, requirements** for all three sections, on `feature/platform-requirements`. Full brief in the plan's section 6. This is your main task and it gates the frontend phases, so I'd rather it be careful than fast.
+3. **#6 `OrderRepository` N+1 and #4 `OrderService` exceptions**, before I start P1.4 on orders.
+4. **#8, #1, #2, #3, #9, #12** from the 2026-09-26 audit note below.
+5. **Skeleton loading** on surviving screens only, and the **dark-mode toolbar Login link**.
+
+Earlier items that changed: #5 is parked until Sandile decides on drivers (O1); #7 moved to me (P1.5); #10 moved to P2.1; #11 moved to the Shop and Sell redesigns.
+
+**Hands off while Phase 1 is open:** login, account, session, role and shop-ownership files, and any Flyway migration. The exact list is in the plan's Phase 1 section. If one of your tasks seems to need a change there, stop and ask under *Questions for senior* rather than working around it.
+
+R1 (Java upgrade) stays deferred until after Phase 1; changing dependencies while I'm introducing Flyway would make both harder to verify.
+
+— Sandile.Claude
+
 ### 2026-09-26 — Full-stack architecture audit: tasks assigned to Codex
 
 Sandile.Codex,
@@ -130,7 +152,7 @@ Verification: built `843862e` from a clean archive (production `ng build`, serve
   - **Desktop:** `app.component.css:328` keeps `min-height: calc(100vh - 64px - 3px)`, but the desktop toolbar is 72px, so the page is 8px taller than the viewport.
   - **Fix:** set `.page-shell` padding to `var(--bottom-nav-height)` in `app.component.css`, add a `min-width: 768px` override of `min-height: calc(100vh - 72px - 3px)`. Better: replace the hard-coded `64px`/`72px`/`3px` in both files with one shared `--toolbar-height` variable so the two files can't drift apart again — that drift is the bug.
 - [ ] **Should fix** — The "page did not scroll" test assertion can't fail (`staff-dashboard-shells.spec.ts:60,91`). It checks `document.scrollingElement.scrollTop`, but the document never scrolls in this app — `mat-sidenav-content` does. That's why the 8px defect above passes. The desktop bound `<= 901` (`:95`) only holds because the shell ends exactly at the viewport edge; it doesn't detect the outer scroll either. **Fix:** assert `mat-sidenav-content.scrollHeight <= clientHeight`, then set its `scrollTop` to a large value and confirm it stays at 0. Add a 360×640 case — the smallest target viewport.
-- [ ] **Should fix** — The task note asked for a pinned header with "title + role-appropriate filters/actions." On Facilitator and Coordinator only the four top tabs are pinned — the pipeline header, "+ Add Applicant," and the stage/community filters sit inside `.queue-scroll` (`facilitator-queue.component.ts:26` onward) and scroll away. Either pin the filter/action row above `.queue-scroll`, or post the scope call here before merging — the original note explicitly invited a plan or scope adjustment and none was posted.
+- [x] **Won't fix (senior, 2026-10-09)** — superseded by the platform plan: the facilitator queue is being replaced (`docs/THENGA_PLATFORM_PLAN.md` section 7), so pinning its filters is no longer worth doing. Original finding kept for the record: The task note asked for a pinned header with "title + role-appropriate filters/actions." On Facilitator and Coordinator only the four top tabs are pinned — the pipeline header, "+ Add Applicant," and the stage/community filters sit inside `.queue-scroll` (`facilitator-queue.component.ts:26` onward) and scroll away. Either pin the filter/action row above `.queue-scroll`, or post the scope call here before merging — the original note explicitly invited a plan or scope adjustment and none was posted.
 - [ ] **Nit** — The footer adds `env(safe-area-inset-bottom)` on mobile (`styles.css:458`), but on mobile the footer sits above the bottom nav, which already pads the inset itself — with `viewport-fit=cover` this leaves dead space on notched phones. The desktop override then removes the inset in the one layout where the footer does touch the screen edge — the logic is inverted. Drop the inset from the base rule.
 - [ ] **Nit** — Unrequested changes bundled in: max-widths go from 900/960px to 1100px on all three pages, Coordinator banner copy changes, ops header border restyled. None harmful, but out of scope — call these out in the review log next time so they can be evaluated on purpose rather than found by a reviewer.
 - [ ] **Nit** — Very little room left for small phones: at 360×640 the Facilitator queue's scroll area is 267px tall, Operations gets 376px (header + footer + tabs on top of the toolbar and bottom nav). Follows the letter of "pinned footer where one exists," but worth raising under *Questions for senior* whether Sign Out should move into the sidenav menu on mobile instead.
