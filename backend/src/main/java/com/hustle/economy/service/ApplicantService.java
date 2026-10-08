@@ -216,8 +216,10 @@ public class ApplicantService {
                         .submittedAt(OffsetDateTime.now())
                         .build()));
 
-        if (application.getAppUser() == null) {
-            application.setAppUser(appUser);
+        // An app-submitted application may have no community; the shop created on approval requires one
+        if (application.getAppUser() == null || application.getCommunity() == null) {
+            if (application.getAppUser() == null) application.setAppUser(appUser);
+            if (application.getCommunity() == null) application.setCommunity(applicant.getCommunity());
             application = applicationRepository.save(application);
         }
 
