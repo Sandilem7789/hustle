@@ -8,7 +8,7 @@ Hustle Economy is a mobile-first community marketplace and business management p
 **Branch:** `main`  
 **Live progress:** See `PROGRESS_UPDATE.md` for the full feature history and known gaps.
 **Business/strategy context:** See [`CONTEXT.md`](CONTEXT.md) for the company (Ingwenya Digital / thenga.com), the pivot to an e-commerce + in-app learning platform, and session-start instructions. Check `CONTEXT.md` for ⚠️-flagged updates before starting a session.
-**Platform plan:** [`docs/THENGA_PLATFORM_PLAN.md`](docs/THENGA_PLATFORM_PLAN.md) holds Sandile's 2026-10-09 decisions (final roles Merchant / Community Agent / Hub Coordinator / Platform Admin, one phone-identified account with Shopping/Selling modes, agent-verified merchant onboarding, Shop / Sell / Back office sections) and the phased work. Until Phase 1 lands, the Roles & Access table below still describes the current code.
+**Platform plan:** [`docs/THENGA_PLATFORM_PLAN.md`](docs/THENGA_PLATFORM_PLAN.md) holds Sandile's 2026-10-09 decisions (final roles Merchant / Community Agent / Hub Coordinator / Platform Admin, one phone-identified account with Shopping/Selling modes, agent-verified merchant onboarding, drivers as their own role with need-to-know access, Shop / Sell / Drive / Back office sections) and the phased work. Until Phase 1 lands, the Roles & Access table below still describes the current code.
 
 ---
 

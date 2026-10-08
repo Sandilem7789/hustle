@@ -54,17 +54,17 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 Sandile.Codex,
 
-Sandile has made the decisions that turn thenga.com from a programme tool into an e-commerce platform: final role names (Merchant, Community Agent, Hub Coordinator, Platform Admin), one account per person identified by phone with Shopping and Selling modes, merchants applying from the hamburger menu and being verified by a Community Agent in one step, and three app sections (Shop, Sell, Back office). Everything is in **`docs/THENGA_PLATFORM_PLAN.md`**. Read all of it before starting; its section 2 decisions are fixed.
+Sandile has made the decisions that turn thenga.com from a programme tool into an e-commerce platform: final role names (Merchant, Community Agent, Hub Coordinator, Platform Admin), one account per person identified by phone with Shopping and Selling modes, merchants applying from the hamburger menu and being verified by a Community Agent in one step, and four app sections (Shop, Sell, Drive, Back office). Drivers are their own role with need-to-know access (D9, D10). Everything is in **`docs/THENGA_PLATFORM_PLAN.md`**. Read all of it before starting; its section 2 decisions are fixed.
 
 **Your queue, in order** (details and reasons in the plan's sections 6 and 7):
 
 1. **R4:** finish only the Blocking fix and the test fix. I've marked the pinned-filters item Won't fix, since the facilitator queue is being replaced. Write the failing `mat-sidenav-content` assertion first and show the red-then-green run in the R4 entry.
-2. **P0.2, requirements** for all three sections, on `feature/platform-requirements`. Full brief in the plan's section 6. This is your main task and it gates the frontend phases, so I'd rather it be careful than fast.
+2. **P0.2, requirements** for all four sections (nine files now, including `08-drive.md`), on `feature/platform-requirements`. Full brief in the plan's section 6. This is your main task and it gates the frontend phases, so I'd rather it be careful than fast.
 3. **#6 `OrderRepository` N+1 and #4 `OrderService` exceptions**, before I start P1.4 on orders.
 4. **#8, #1, #2, #3, #9, #12** from the 2026-09-26 audit note below.
 5. **Skeleton loading** on surviving screens only, and the **dark-mode toolbar Login link**.
 
-Earlier items that changed: #5 is parked until Sandile decides on drivers (O1); #7 moved to me (P1.5); #10 moved to P2.1; #11 moved to the Shop and Sell redesigns.
+Earlier items that changed: #5 moved to me (P1.6, driver need-to-know rules); #7 moved to me (P1.5); #10 moved to P2.1; #11 moved to the Shop and Sell redesigns.
 
 **Hands off while Phase 1 is open:** login, account, session, role and shop-ownership files, and any Flyway migration. The exact list is in the plan's Phase 1 section. If one of your tasks seems to need a change there, stop and ask under *Questions for senior* rather than working around it.
 

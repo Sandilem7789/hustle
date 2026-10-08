@@ -43,12 +43,13 @@ Learning is not gatekept — it is built into the merchant's daily experience. T
 
 ## 3. Platform Roles
 
-> ⚠️ **Final (decided 9 October 2026):** these role names are confirmed. They replace Hustler, Facilitator and Coordinator in the UI and in the role enums; the rename is implemented in Phase 1 of `docs/THENGA_PLATFORM_PLAN.md`. Every account can buy, so Buyer is not a separate role. One account per person, identified by **phone number**; email is optional, for recovery, security and backup contact. Anyone applies to sell from the app's menu, and a Community Agent verifies them in one step (interview conversation plus business check). See the plan for every decision and task.
+> ⚠️ **Final (decided 9 October 2026):** these role names are confirmed. They replace Hustler, Facilitator and Coordinator in the UI and in the role enums; the rename is implemented in Phase 1 of `docs/THENGA_PLATFORM_PLAN.md`. Every account can buy, so Buyer is not a separate role. One account per person, identified by **phone number**; email is optional, for recovery, security and backup contact. Anyone applies to sell from the app's menu, and a Community Agent verifies them in one step (interview conversation plus business check). Merchants and drivers must be 18 or older. See the plan for every decision and task.
 
 | Role | Description |
 |---|---|
 | **Merchant** *(was: Seller)* | Lists products or services, receives orders, gets paid, accesses in-app learning. Primary user of the platform. |
-| **Community Agent** *(was: Facilitator-Seller)* | Everything a Merchant does, plus: verifies other merchants, confirms transactions, assists with onboarding, handles cash payments and last-mile delivery. This is where youth employment is created — young people in communities like KwaNgwenya earn per verification, per onboarded merchant, per assisted transaction. |
+| **Driver** | A service provider who sells delivery to merchants. Takes delivery jobs from a queue and follows a route to the seller for collection and to the buyer for delivery. Sees only what each step of their own job needs. Verified by a Community Agent. |
+| **Community Agent** *(was: Facilitator, and Facilitator-Seller)* | Everything a Merchant does, plus: verifies merchants and drivers in the areas closest to where they live, confirms transactions, assists with onboarding, handles cash payments. This is where youth employment is created. Paying agents per verification or onboarding (`docs/FACILITATOR_SELLER_SPEC.md`) is designed but out of scope for now. |
 | **Hub Coordinator** *(was: Coordinator)* | Manages a cluster of Community Agents in a defined area. Oversees onboarding quality, dispute resolution, and area-level reporting. |
 | **Buyer** | Browses, orders, pays. May route through a Community Agent for cash handling or delivery. |
 | **Platform Admin** | Sandile / Ingwenya Digital team. Full platform management access. |

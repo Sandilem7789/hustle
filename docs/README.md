@@ -11,12 +11,12 @@ These are *specifications for future sprints* — design only, not yet built. No
 
 ## 2. Specs open for review
 
-**Start with [`THENGA_PLATFORM_PLAN.md`](THENGA_PLATFORM_PLAN.md).** It records Sandile's 2026-10-09 decisions (final role names, one phone-identified account with Shopping/Selling modes, agent-verified merchant onboarding, Shop / Sell / Back office) and the phased work. It overrides anything older below where they conflict: "Facilitator-Seller" in the older specs is now **Community Agent**.
+**Start with [`THENGA_PLATFORM_PLAN.md`](THENGA_PLATFORM_PLAN.md).** It records Sandile's 2026-10-09 decisions (final role names, one phone-identified account with Shopping/Selling modes, agent-verified merchant onboarding, drivers as their own role, Shop / Sell / Drive / Back office) and the phased work. It overrides anything older below where they conflict: "Facilitator-Seller" in the older specs is now **Community Agent**.
 
 | Spec | What it covers |
 |---|---|
-| [`THENGA_PLATFORM_PLAN.md`](THENGA_PLATFORM_PLAN.md) | Decisions D1 to D8, open questions O1 to O5, keep/transform/retire for every screen and API area, phases with owners. |
-| [`FACILITATOR_SELLER_SPEC.md`](FACILITATOR_SELLER_SPEC.md) | Paid Facilitator-Seller role + append-only earnings ledger + payouts. The youth-employment layer. Has 5 open questions. |
+| [`THENGA_PLATFORM_PLAN.md`](THENGA_PLATFORM_PLAN.md) | Decisions D1 to D13, open questions, keep/transform/retire for every screen and API area, phases with owners. |
+| [`FACILITATOR_SELLER_SPEC.md`](FACILITATOR_SELLER_SPEC.md) | Paid Facilitator-Seller (now Community Agent) earnings ledger + payouts. **On the shelf:** out of scope for now per the platform plan (D13). |
 | [`LAST_MILE_DELIVERY_SPEC.md`](LAST_MILE_DELIVERY_SPEC.md) | Last-mile parcel relay — local drivers bridge the gap national couriers won't (Mkuze depot → rural home). Hub-logged parcels, multi-drop trips, cash-on-delivery zone tariffs. Has 7 open questions. |
 | [`MARKETPLACE_DESIGN_PROPOSAL.md`](MARKETPLACE_DESIGN_PROPOSAL.md) | Redesign of the marketplace browse screen and product card — seller trust signal, locality/community filtering actually wired up, a real search-reactivity bug fix, contrast fixes, mobile/desktop wireframes, and a logo-simplification option. Authored by Sandile.Codex; senior response and Sandile's direction recorded in §10. Status: built 2026-09-28. |
 
