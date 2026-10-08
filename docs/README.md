@@ -15,7 +15,7 @@ These are *specifications for future sprints* — design only, not yet built. No
 
 | Spec | What it covers |
 |---|---|
-| [`THENGA_PLATFORM_PLAN.md`](THENGA_PLATFORM_PLAN.md) | Decisions D1 to D13, open questions, keep/transform/retire for every screen and API area, phases with owners. |
+| [`THENGA_PLATFORM_PLAN.md`](THENGA_PLATFORM_PLAN.md) | Decisions D1 to D18, open questions, keep/transform/retire for every screen and API area, phases with owners. |
 | [`FACILITATOR_SELLER_SPEC.md`](FACILITATOR_SELLER_SPEC.md) | Paid Facilitator-Seller (now Community Agent) earnings ledger + payouts. **On the shelf:** out of scope for now per the platform plan (D13). |
 | [`LAST_MILE_DELIVERY_SPEC.md`](LAST_MILE_DELIVERY_SPEC.md) | Last-mile parcel relay — local drivers bridge the gap national couriers won't (Mkuze depot → rural home). Hub-logged parcels, multi-drop trips, cash-on-delivery zone tariffs. Has 7 open questions. |
 | [`MARKETPLACE_DESIGN_PROPOSAL.md`](MARKETPLACE_DESIGN_PROPOSAL.md) | Redesign of the marketplace browse screen and product card — seller trust signal, locality/community filtering actually wired up, a real search-reactivity bug fix, contrast fixes, mobile/desktop wireframes, and a logo-simplification option. Authored by Sandile.Codex; senior response and Sandile's direction recorded in §10. Status: built 2026-09-28. |

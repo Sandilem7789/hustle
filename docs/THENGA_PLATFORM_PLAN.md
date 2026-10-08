@@ -31,6 +31,11 @@ thenga.com is now an **e-commerce platform for people who want to sell online**,
 | **D11** | **Sellers and drivers must be 18 or older.** |
 | **D12** | **Community Agents verify applicants in the areas closest to where they live.** An agent records a home location, and applications are offered to the nearest agents. |
 | **D13** | **Paid Community Agent work is out of scope for now.** `docs/FACILITATOR_SELLER_SPEC.md` stays a design on the shelf. |
+| **D14** | **A seller does not need an existing business.** Someone may start their business on thenga.com. |
+| **D15** | **Inactive shops are suspended.** A shop with no sales for 3 months is suspended automatically and disappears from Shop. It goes live again only after the merchant contacts thenga.com and staff reactivate it. *(Interpretation recorded by Sandile.Claude: "a sale" is a completed thenga.com order; the 3 months start at final approval or the last completed order. Offline sales the merchant logs at the point of sale do not count, because they cannot be checked.)* |
+| **D16** | **Delivery fee, paid by the buyer at checkout:** **R80** when the order total is under R1,200, **R50** when it is R1,200 or more. Only delivery orders pay it; collection orders do not. The server calculates it; the amounts are configuration, not code. |
+| **D17** | **Two-step approval.** The Community Agent verifies and approves first. The applicant then appears on the Hub Coordinator dashboard under **"Merchants awaiting final approval"**, and the Hub Coordinator gives final approval. Only then does the shop go live. *(Assumption recorded by Sandile.Claude: driver applicants follow the same two steps.)* |
+| **D18** | **Banning merchants.** A merchant who has already joined can be banned from the Hub Coordinator dashboard and from the Community Agent tools. A ban hides the shop and stops selling, and records who banned, when and why. *(Assumptions recorded by Sandile.Claude: an agent can ban only merchants in their own area; only a Hub Coordinator or Platform Admin can lift a ban.)* |
 
 ### Open questions for Sandile
 
@@ -39,12 +44,14 @@ These do not block Phase 0 or Phase 1. Each blocks the phase noted.
 | # | Question | Blocks |
 |---|---|---|
 | ~~O1~~ | ~~Drivers~~ | Answered by D9 and D10 |
-| **O2** | Age is answered (D11). Still open: must a seller already run a business, or can someone start one on thenga.com? | Phase 1.5 |
+| ~~O2~~ | ~~Who can sell~~ | Answered by D11 and D14 |
 | **O3** | Programme data: 102 seeded cohort-8 applicants, interview records, monthly check-ins. Keep read-only for funder reports, export and archive, or delete? | Phase 1.3 |
 | **O4** | Agent area is answered (D12). Still open: is a Hub Coordinator's area a fixed set of communities? | Phase 6 |
 | ~~O5~~ | ~~Agent pay~~ | Answered by D13 |
-| **O6** | Who pays the driver, and how is the delivery fee set? The buyer at checkout, the merchant, or split? Per job, per kilometre, or a flat fee per zone (the zone tariff decided for parcels in DL-1)? | Phase 1.6, Phase 5 |
-| **O7** | After a Community Agent verifies an applicant, who presses Approve: the same agent, or a Hub Coordinator? A second person is safer, especially if agents are ever paid per onboarded merchant (D13). | Phase 1.5 |
+| ~~O6~~ | ~~Delivery fee~~ | Answered by D16; driver share is O8 |
+| ~~O7~~ | ~~Who approves~~ | Answered by D17 |
+| **O8** | Does the driver receive the whole delivery fee, or does thenga.com keep a share? | Phase 5 |
+| **O9** | Should a merchant be warned before their shop is suspended for inactivity (for example at 2 months and 1 week before)? Recommended, so suspension never comes as a surprise. | Phase 1.7 |
 
 ---
 
@@ -55,7 +62,7 @@ These do not block Phase 0 or Phase 1. Each blocks the phase noted.
 | **Shop** `/` | Everyone, logged in or not | Browse, search, view a merchant's shop, buy, pay, track orders | Shop, Search, Orders, Account |
 | **Sell** `/sell` | Merchants; Community Agents see extra tabs | Today's summary, incoming orders, products, point of sale, money in and out, learning | Today, Orders, Products, Learn, More |
 | **Drive** `/drive` | Drivers | Jobs I can take next, my current job with its route and steps (collected, en route, delivered, proof of delivery), my earnings | Jobs, Current, Earnings |
-| **Back office** `/ops` | Hub Coordinators, Platform Admin | Merchant and driver approvals oversight, agent management, disputes, area reports and map | Desktop first is acceptable |
+| **Back office** `/ops` | Hub Coordinators, Platform Admin | "Merchants awaiting final approval" (D17), banning and lifting bans (D18), reactivating suspended shops (D15), agent management, disputes, area reports and map | Desktop first is acceptable |
 
 The hamburger menu is shared: language, theme, "Sell on thenga.com" (or "Switch to Selling" for merchants), "Drive for thenga.com" (or "Switch to Driving" for drivers), account, sign out.
 
@@ -132,9 +139,10 @@ Login, identity and data migration are high risk, so Claude owns all of Phase 1.
 | P1.1 | Account model: `AppUser` is the only identity; phone unique and required; email optional and unique when present; `BusinessProfile` gets an owning `AppUser` link; one role enum with `MERCHANT`, `DRIVER`, `COMMUNITY_AGENT`, `HUB_COORDINATOR`, `PLATFORM_ADMIN`; date of birth captured for the 18+ rule (D11); agents and drivers record a home location (D12) | L | Integration tests: sign-up by phone, duplicate phone rejected, optional email, one account owns at most one shop |
 | P1.2 | One session and one token. Retire the customer, hustler and driver session paths behind a short compatibility window so the live frontend keeps working during the switch. | L | Every protected endpoint authenticates through one path; old tokens rejected after the window |
 | P1.3 | Data migration: existing customers, hustler applications and drivers into `AppUser`; HUSTLER to MERCHANT, FACILITATOR to COMMUNITY_AGENT, COORDINATOR to HUB_COORDINATOR; shops linked to owners. Programme data per O3. | L | Migration rehearsed on a copy of production; counts reconcile; rollback written |
-| P1.4 | Orders: buyer is an `AppUser`; optional buyer shop; server sets B2C or B2B from the endpoint used (D7); purchase-order reference only on B2B; self-purchase blocked | M | Tests: a plain account cannot create a B2B order; a merchant cannot buy from their own shop |
-| P1.5 | Merchant and driver applications and agent verification endpoints (apply, offer to the nearest agents per D12, record verification with interview notes, approve or reject), 18+ enforced on the server (D11), phone masking in every list view, and each verification linked to the verifying agent's account instead of today's free-text `verifiedBy` (keeps D13 possible later) | M | Tests cover the whole flow, the age rule and role checks; depends on O2 and O7 |
-| P1.6 | Delivery jobs on need to know (D10): open jobs filtered to the driver's area with no buyer details; collection point after accepting; buyer name, phone and drop-off only after collection; nothing after completion; drivers can never read another driver's job | M | Tests prove each reveal happens at the right step and never earlier; replaces audit item #5; delivery fee per O6 |
+| P1.4 | Orders: buyer is an `AppUser`; optional buyer shop; server sets B2C or B2B from the endpoint used (D7); purchase-order reference only on B2B; self-purchase blocked; delivery fee added by the server (D16) | M | Tests: a plain account cannot create a B2B order; a merchant cannot buy from their own shop; R80 below R1,200, R50 from R1,200, no fee on collection |
+| P1.5 | Merchant and driver applications and agent verification endpoints (apply, offer to the nearest agents per D12, record verification with interview notes, agent approval then Hub Coordinator final approval per D17, reject), banning and lifting bans (D18), 18+ enforced on the server (D11), phone masking in every list view, and each verification linked to the verifying agent's account instead of today's free-text `verifiedBy` (keeps D13 possible later) | M | Tests cover the whole flow, the age rule and role checks; depends on O2 and O7 |
+| P1.6 | Delivery jobs on need to know (D10): open jobs filtered to the driver's area with no buyer details; collection point after accepting; buyer name, phone and drop-off only after collection; nothing after completion; drivers can never read another driver's job | M | Tests prove each reveal happens at the right step and never earlier; replaces audit item #5 |
+| P1.7 | Inactive-shop suspension (D15): a daily job suspends shops with no completed order for 3 months; suspended shops vanish from Shop; staff can reactivate; warnings per O9 | S | Tests: a shop at 89 days stays live, at 90 days is suspended, reactivation restores it |
 
 ### Phase 2: frontend restructure
 
@@ -142,7 +150,7 @@ Login, identity and data migration are high risk, so Claude owns all of Phase 1.
 |---|---|---|---|---|
 | P2.1 | Four lazy-loaded sections with their own shell and bottom nav; move existing screens into them with redirects from old URLs; no redesign yet | X | L | P0.2 accepted, P1.2 merged |
 | P2.2 | Shared hamburger menu: "Sell on thenga.com", "Drive for thenga.com", Shopping/Selling/Driving switch, account | X | M | P2.1, P1.1 |
-| P2.3 | Replace the stale `hustle-onboarding.spec.ts` with an end-to-end test of the new apply-and-verify flow | X | M | P2.2, P1.5 |
+| P2.3 | Replace the failing `hustle-onboarding.spec.ts` with an end-to-end test of the new apply-and-verify flow | X | M | P2.2, P1.5 |
 
 ### Phase 3: Shop
 
@@ -218,6 +226,7 @@ Out of scope: ...
 - Anything that depends on an open question in section 2, or that you cannot decide from the decisions, goes in an **Open questions** list at the end of that file. Do not invent an answer.
 - Payments and WhatsApp are planned work (`CLAUDE.md`). Write a story only where the user would see them, mark it **Later**, and do not specify provider details.
 - Every screen marked Keep or Transform in section 4 must be covered by at least one story. Retired screens get no stories.
+- Every decision D9 to D18 must show up as acceptance criteria somewhere, including the edges: the delivery fee at exactly R1,200, a shop on its 89th and 90th day without a sale, an agent trying to ban a merchant outside their area, a driver trying to see buyer details before collection, an applicant under 18.
 - Plain language; the readers include Sandile and future agents.
 
 **Done when:** all nine files exist; every story has acceptance criteria; a coverage table at the end of `README.md` maps each Keep or Transform screen to its story IDs; open questions are listed; links and `git diff --check` pass; the work is committed on `feature/platform-requirements` with the Codex trailer and a validation line; a note in `CODE_REVIEWS.md` asks for senior review.
