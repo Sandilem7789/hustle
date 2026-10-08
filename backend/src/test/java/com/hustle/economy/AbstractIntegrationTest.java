@@ -5,19 +5,21 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@Testcontainers
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
-    @Container
+    // One container for the whole run: Spring caches the application context across test
+    // classes, so a per-class container would leave later classes pointing at a stopped database.
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("hustle_test")
             .withUsername("postgres")
             .withPassword("postgres");
+
+    static {
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     private static void overrideProperties(DynamicPropertyRegistry registry) {

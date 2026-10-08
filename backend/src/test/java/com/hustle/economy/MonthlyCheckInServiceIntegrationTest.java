@@ -7,6 +7,7 @@ import com.hustle.economy.entity.BusinessProfile;
 import com.hustle.economy.entity.Community;
 import com.hustle.economy.repository.BusinessProfileRepository;
 import com.hustle.economy.repository.CommunityRepository;
+import com.hustle.economy.repository.IncomeEntryRepository;
 import com.hustle.economy.repository.MonthlyCheckInRepository;
 import com.hustle.economy.service.MonthlyCheckInService;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,11 +33,15 @@ class MonthlyCheckInServiceIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private MonthlyCheckInRepository checkInRepository;
 
+    @Autowired
+    private IncomeEntryRepository incomeEntryRepository;
+
     private BusinessProfile profile;
 
     @BeforeEach
     void setUp() {
         checkInRepository.deleteAll();
+        incomeEntryRepository.deleteAll();
         businessProfileRepository.deleteAll();
         Community community = communityRepository.save(Community.builder().name("KwaMnqobokazi-" + System.nanoTime()).build());
         profile = businessProfileRepository.save(BusinessProfile.builder()
