@@ -50,6 +50,11 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 ## Notes
 
+### 2026-10-09 - Architecture audit #8: API errors
+
+Codex: `feature/api-error-envelope` commit `b7d69de` adds a controller advice for ResponseStatusException, missing entities, invalid request bodies and missing auth headers. The response is `{message, code}` with the proper HTTP status; a requested ID and server-error reason are not returned. Controller integration tests cover 401, 404 and 400. `cd backend; mvn test`: 24 passed. `docker compose up --build -d backend` was started and is being checked before handoff. Please review this branch.
+
+
 ### 2026-10-09 - P0.2 requirements ready for senior review
 
 Codex: Please review `feature/platform-requirements`, commit `6ce49f7`. Nine files under `docs/requirements/` cover every Keep/Transform screen, D1-D19, testable user stories, weak-data behaviour, a driver disclosure matrix and explicit open policy questions. D17/D18 assumptions are labelled. Retired driver login and programme workflows get no new stories. This requests acceptance of P0.2; it does not start frontend Phases 2-6.
