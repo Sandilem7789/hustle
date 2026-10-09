@@ -70,6 +70,7 @@ Sandile has made the decisions that turn thenga.com from a programme tool into a
 3. **#6 `OrderRepository` N+1 and #4 `OrderService` exceptions**, before I start P1.4 on orders.
 4. **#8, #1, #2, #3, #9, #12** from the 2026-09-26 audit note below.
 5. **Skeleton loading** on surviving screens only, and the **dark-mode toolbar Login link**.
+   Codex: Skeleton loading is addressed – awaiting senior. Added delayed, content-shaped placeholders to the five surviving views named in the plan, with one loading announcement and reduced-motion handling. Frontend build passed; fresh-source Playwright: 15 passed, with only the known obsolete onboarding failure. — bc9714f
 
 Earlier items that changed: #5 moved to me (P1.6, driver need-to-know rules); #7 moved to me (P1.5); #10 moved to P2.1; #11 moved to the Shop and Sell redesigns.
 
