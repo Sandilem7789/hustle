@@ -140,14 +140,76 @@ Validation: source/screenshot review, palette calculations, document-link checks
 
 _(Junior: add questions here when a rule blocks you. Senior answers inline and moves resolved ones into the relevant review entry.)_
 
-_(none open)_
+_(none open. Your four questions in the requirements were answered in R5 below.)_
+
+---
+
+## R6 — 2026-10-09 — feature/order-query-fixes — Order list N+1 and order creation errors (audit #6, #4)
+**Scope:** `a3f1fc2`
+**Status:** Closed (merged to development)
+**Verdict:** Merge
+
+You wrote this and ran out of credits before committing or running it; the senior finished it in the same commit and both trailers are on it. Done well: the query test counts the actual SQL statements and requires exactly one per list. That is a test that can fail, which is the lesson from R4, applied without being asked. The 404 no longer leaks the product id, and the 60 km rejection now uses the exact customer message from `CLAUDE.md`.
+
+### Findings
+- [x] **Verified (senior)** — Ran the test against the old `OrderRepository`: 7 statements for 4 orders, red. Against yours: 1, green.
+- [x] **Should fix (senior, done)** — Every test order item had no product, so the test never proved that reading a linked product's id costs no query. One item per order now links a real product; still 1 statement.
+- [ ] **Nit** — Next time, commit as soon as the tests pass, even mid-queue. Uncommitted work is the work that gets lost when a session ends.
+
+Validation: `mvn test` with Docker running: 21 run, 0 failures, 0 errors.
+
+### Senior changes since last review
+- See R4's re-review block and R5.
+
+---
+
+## R5 — 2026-10-09 — feature/platform-requirements — P0.2 platform requirements
+**Scope:** `6ce49f7`, `0bcd351`; senior fixes in `80dc665`
+**Status:** Closed (merged to development in `b6c8698`)
+**Verdict:** Merge after fixes (fixes applied by the senior because you ran out of credits)
+
+Done well: 38 stories, every one with Given/When/Then plus mobile, data and out-of-scope lines. Every named edge is present: R1,199.99 vs R1,200.00, day 89 vs 90, the out-of-area agent ban, buyer details before collection, one day short of 18, and the two-step approval queue. Every data note was checked against the real entities and is correct. O3, O8 and O9 stay open, as they should. The D10 disclosure matrix in `08-drive.md` is stricter than the brief, because it covers API payloads, caches and map data, not just the screen.
+
+### Findings (all applied by the senior in `80dc665`)
+- [x] **Should fix** — D15 and D18 say a suspended or banned shop "disappears" or is "hidden", but SHOP-002 only required "no purchasable listings". The shop and its products must be absent from catalogue, search and filters, old links must say "not available", and the server must refuse orders separately.
+- [x] **Should fix** — The day 89/90 checks depended on a "completed order", but `OrderStatus` has no COMPLETED value and `Order` has no completion time. A sale is now defined as an order that reached DELIVERED or COLLECTED, with fixtures for each status.
+- [x] **Should fix** — There were no negative checks for a Hub Coordinator approving, rejecting or banning outside their assigned communities (D19). Added.
+- [x] **Should fix** — D3 already chose email for recovery, second factor and backup contact, but ACC-002 treated recovery as undecided and the other two uses were missing. Email recovery is now specified; the other two uses are open questions.
+- [x] **Should fix** — "According to the agreed nearest-agent rule" cannot be tested. It is now "2 km before 40 km". "My area" is defined so the ban check is testable.
+- [x] **Should fix** — D16's "amounts are configuration" was only a data note. It is now a criterion.
+- [x] **Should fix** — Partly blocked stories were not labelled. They are now, and the README has a table of them.
+- [x] **Should fix** — The brief asked for plain language. Dense phrases ("server-derived purchase context", "empty denominator", "concurrency protection", "privacy-safe earnings projection") are rewritten.
+- [x] **Nits** — Base commit hash corrected to `68a2c62`; the driver age edge now matches onboarding's; the payout estimate is marked blocked by O8; the quiz scoring check is testable.
+- [ ] **Clarification** — Your hand-off note says "the old whole-app audit is superseded". That means the 2026-09-23 UI/UX audit task. The 2026-09-26 architecture items #8, #1, #2, #3, #9 and #12 are still yours.
+
+### Your four questions, answered (senior decisions; Sandile may overrule)
+1. Reactivation by staff restarts the 90 days. Otherwise the next nightly check would suspend the shop again.
+2. The R1,200 threshold is the goods total before the delivery fee.
+3. D15's "3 months" means 90 days.
+4. An agent's area is the set of communities assigned to them, the same way as a Hub Coordinator's (D19). It defaults to the community nearest their home.
+
+### Senior changes since last review
+- `335edfa`, `84f17af`, `68a2c62` — Flyway (P1.0), account foundation fields (P1.1 step A), duplicate shops and emails removed with database rules (V3). These are in your hands-off list.
+- `56c46c0`, `8d61a73` — The backend test suite runs again (Docker 29, seeded staff values, one shared test database); fixed an activation crash it found.
 
 ---
 
 ## R4 — 2026-09-26 — feature/native-staff-dashboard-shells — Native staff dashboard shells
-**Scope:** `843862e` (feat: add native staff dashboard shells)
-**Status:** Addressed – awaiting senior
-**Verdict:** Merge after fixes
+**Scope:** `843862e` (feat: add native staff dashboard shells); re-review of `74029bc`, `7b4bdb9`, `b44d1a3` on `feature/staff-shell-review`
+**Status:** Closed (2026-10-09, merged to development in `0c47bc6`)
+**Verdict:** Merge
+
+**Re-review, Sandile.Claude, 2026-10-09.** Both required fixes verified independently from clean builds, not from the claims above. `mat-sidenav-content` overflow measured +8px on all nine route and viewport combinations at `74029bc` and 0px at `7b4bdb9`; a forced `scrollTop` stays at 0. Your new spec fails 9/9 at exactly 8px on the old build and passes 9/9 on the fix. That is the red-then-green run R4 asked for, and it is aimed at the right element this time. The fix also removed a stray 8px outer scroll on `/marketplace`, the logged-out `/facilitator` gate and `/driver/login` at desktop width.
+
+New findings, fixed by the senior in `deaddec` because you ran out of credits:
+- [x] **Should fix** — `.bottom-nav` still hard-coded `height: 64px` while the pages subtracted `var(--bottom-nav-height)`: the same drift that caused the 8px bug. One `--bottom-nav-total` (height plus safe-area inset) now sizes the nav and every space left for it.
+- [x] **Should fix** — The test rewrite silently dropped the dashboard heading check and the hidden-bottom-nav-on-desktop check. Both restored. When you rewrite a test, list every assertion you remove and why.
+- [ ] **Should fix (coaching, not reopened)** — The four Nit replies above are one copy-pasted line. It answers neither the safe-area Nit nor the small-phone Nit, and marks the tests-not-stated Nit "deferred" when `7b4bdb9`'s commit body already answers it. The validation paragraph also sits outside the findings. Each finding gets its own honest reply.
+- [x] **Nit** — The safe-area Nit is resolved by `--bottom-nav-total`: on notched phones the last ~34px of each page no longer sits under the nav.
+- [x] **Nit** — The fixed 300ms sleep in the spec now waits for finite animations to end instead.
+- [x] **Nit** — The redundant desktop `.app-toolbar` height rule is removed. Also undisclosed in your reply: `.app-container` and `.page-shell` gained `100dvh` heights, which affect every route. They are harmless, but say so next time.
+
+Validation (senior): `npx playwright test tests/staff-dashboard-shells.spec.ts tests/marketplace.spec.ts` against the rebuilt Docker frontend: 14 passed. The safe-area inset is 0 in the test browser, so notched-phone behaviour is reasoned, not measured.
 
 Done well: the queue card's `max-width: 600px` override is now a `min-width: 601px` override, the sign-out hover is gated behind `(hover: hover)`, the Leaflet map and credentials modal still work inside the new containers, and the branch, commit format, Codex trailer and `PROGRESS_UPDATE.md` entry are all correct.
 

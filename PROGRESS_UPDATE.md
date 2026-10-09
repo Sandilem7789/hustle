@@ -7,9 +7,11 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
-### Staff shell review fix (2026-10-09)
-- Shared toolbar dimensions remove the outer 8px scroll on Facilitator, Coordinator and Operations. The actual Material scroller is tested at 360x640, 390x844 and 1280x900: nine failures before the fix, nine passes afterwards.
-- Docker rebuilt; backend: 14 passed. Full frontend: 14 passed, one known obsolete onboarding test failed (replacement assigned to P2.3). Details in R4.
+### Order lists in one query, platform requirements, staff shell fixes merged (2026-10-09)
+- **Order lists:** "My orders" and a merchant's incoming orders now load buyer, shop and items in one database query instead of one per order (7 statements for 4 orders before, 1 after; tested by counting statements). Order creation returns a clean 404 for a missing product without leaking its id, and the 60 km food cap returns the required customer message instead of a server error. Audit items #6 and #4; written by Codex, finished by Claude (R6).
+- **Platform requirements (P0.2):** 38 user stories with testable acceptance criteria across nine files in `docs/requirements/`, covering decisions D1 to D19. Reviewed and fixed in R5; partly blocked stories are labelled in the README.
+- **Staff shells (R4 closed):** the 8px outer scroll on Facilitator, Coordinator and Operations is gone (measured 0px on all nine route and screen-size combinations). One `--bottom-nav-total` value now sizes the bottom nav and every space left for it, including a notched phone's safe area. The staff shell test checks the real scroller, the heading and the hidden desktop nav.
+- Validation: backend `mvn test` 21 passed; frontend staff-shell and marketplace tests 14 passed. The old `hustle-onboarding.spec.ts` still fails at its first step (replacement is P2.3).
 
 ### Platform plan Phase 1.0: Flyway migrations, and a working backend test suite (2026-10-09)
 - **Backend tests run again.** They had been failing on this machine with "no Docker found", which hid three real problems: Docker Engine 29 rejects the old API version Testcontainers asks for, the startup seeder needed `STAFF_PHONE`/`STAFF_PASSWORD` that only Docker's `.env` supplied, and the test database was stopped between test classes while Spring kept using it. All fixed in the test setup. Running them surfaced one real bug, now fixed: approving an app-submitted application that had no community crashed, because a shop must have one. `mvn test`: 12 pass.
