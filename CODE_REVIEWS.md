@@ -95,6 +95,7 @@ Sandile asked for a full structural review of the app to find architecture gaps.
 7. Phone masking is documented as a hard rule (`CLAUDE.md`) but isn't implemented on `ApplicantResponse`/`ApplicantService.toResponse()` or `HustlerApplicationMapper` — raw phones ship on `/api/applicants` and `HustlerApplicationController.listApplications`. `DispatchService.maskPhone` already has a working implementation to reuse/extract.
 8. No `@ControllerAdvice`/`@RestControllerAdvice` exists anywhere — error responses don't consistently produce the documented `{message, code}` envelope. Add a global handler for `ResponseStatusException` at minimum.
 9. Smaller/lower priority: reconcile the upload size limit (10MB in `application.properties` vs. 5MB documented in `CLAUDE.md` — pick one and fix the other), and sync `WebConfig`'s CORS allow-list with what's actually documented.
+   Codex: Addressed – awaiting senior. Kept the pinned 5 MB image limit in both multipart configuration and endpoint validation; allowed 6 MB for total multipart overhead. Removed the two CORS origins absent from `CLAUDE.md`. `mvn test`: 22 passed, including an oversized-image check. — b54a1d9
 
 **Frontend**
 10. `checkout-page.component.ts` and `customer-orders-page.component.ts` use a bare "go to `/login`" redirect card instead of `LoginGateComponent` — full-page redirect, drops in-page context, exactly what `LoginGateComponent` exists to avoid. Convert both to the standard pattern used everywhere else.
