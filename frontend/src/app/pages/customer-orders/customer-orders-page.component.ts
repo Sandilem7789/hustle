@@ -4,11 +4,12 @@ import { Router, RouterLink } from '@angular/router';
 import * as QRCode from 'qrcode';
 import { ApiService, OrderResponse } from '../../services/api.service';
 import { CustomerAuthService } from '../../services/customer-auth.service';
+import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
 
 @Component({
   selector: 'app-customer-orders-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, LoadingSkeletonComponent],
   template: `
     <div class="layout">
 
@@ -23,9 +24,7 @@ import { CustomerAuthService } from '../../services/customer-auth.service';
           <p class="muted">Track your purchases from thenga.com</p>
         </div>
 
-        <div *ngIf="loading()" class="card">
-          <p class="muted">Loading orders…</p>
-        </div>
+        <app-loading-skeleton [loading]="loading()" variant="order"></app-loading-skeleton>
 
         <div *ngIf="!loading() && orders().length === 0" class="card">
           <p class="muted">You haven't placed any orders yet.</p>

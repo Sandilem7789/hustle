@@ -4,11 +4,12 @@ import { Router } from '@angular/router';
 import { ApiService, NotificationResponse } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
+import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
 
 @Component({
   selector: 'app-notifications-page',
   standalone: true,
-  imports: [CommonModule, LoginGateComponent],
+  imports: [CommonModule, LoginGateComponent, LoadingSkeletonComponent],
   template: `
     <app-login-gate *ngIf="!auth.isLoggedIn()"
       icon="🔔"
@@ -17,6 +18,7 @@ import { LoginGateComponent } from '../../components/login-gate/login-gate.compo
     ></app-login-gate>
 
     <div class="layout" *ngIf="auth.isLoggedIn()">
+      <app-loading-skeleton [loading]="loading()" variant="notification"></app-loading-skeleton>
       <div class="card" *ngIf="notifications().length === 0 && !loading()">
         <div class="empty-state">
           <div class="bell-circle">

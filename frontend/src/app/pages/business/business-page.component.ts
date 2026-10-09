@@ -4,16 +4,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { CustomerAuthService } from '../../services/customer-auth.service';
 import { CartService } from '../../services/cart.service';
+import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
 
 @Component({
   selector: 'app-business-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingSkeletonComponent],
   template: `
     <div class="page">
       <button class="back-btn" (click)="goBack()">← Back to Marketplace</button>
 
-      <div *ngIf="loading()" class="muted" style="margin-top:2rem">Loading…</div>
+      <app-loading-skeleton [loading]="loading()" variant="product"></app-loading-skeleton>
 
       <div *ngIf="!loading()">
         <header class="biz-header">
