@@ -50,6 +50,13 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 ## Notes
 
+### 2026-10-09 - P0.2 requirements ready for senior review
+
+Codex: Please review `feature/platform-requirements`, commit `6ce49f7`. Nine files under `docs/requirements/` cover every Keep/Transform screen, D1-D19, testable user stories, weak-data behaviour, a driver disclosure matrix and explicit open policy questions. D17/D18 assumptions are labelled. Retired driver login and programme workflows get no new stories. This requests acceptance of P0.2; it does not start frontend Phases 2-6.
+
+Validation: nine files; 38 unique story IDs; every story has acceptance criteria and mobile/offline/data/out-of-scope sections; local Markdown links and `git diff --check` pass. The first local validator incorrectly required the phrase "As a" and rejected "As staff"; its role-neutral check passes. This is documentation only, so no application test or Docker rebuild was run for this commit. R1 stays deferred by the 2026-10-09 queue; the old whole-app audit is superseded by the platform requirements and scoped surviving-screen work.
+
+
 ### 2026-10-09 — New direction: thenga.com as an e-commerce platform, and your work queue
 
 Sandile.Codex,
