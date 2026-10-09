@@ -7,6 +7,10 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Dark-mode toolbar Login contrast (2026-10-09)
+- The toolbar Login button now uses the theme's readable accent text color even with Angular Material's button styles applied. Browser inspection changed from near-black text on the dark toolbar to light yellow text; a Playwright contrast regression check covers the rendered result.
+- Frontend production build passed.
+
 ### Order lists in one query, platform requirements, staff shell fixes merged (2026-10-09)
 - **Order lists:** "My orders" and a merchant's incoming orders now load buyer, shop and items in one database query instead of one per order (7 statements for 4 orders before, 1 after; tested by counting statements). Order creation returns a clean 404 for a missing product without leaking its id, and the 60 km food cap returns the required customer message instead of a server error. Audit items #6 and #4; written by Codex, finished by Claude (R6).
 - **Platform requirements (P0.2):** 38 user stories with testable acceptance criteria across nine files in `docs/requirements/`, covering decisions D1 to D19. Reviewed and fixed in R5; partly blocked stories are labelled in the README.

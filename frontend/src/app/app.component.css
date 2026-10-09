@@ -105,7 +105,7 @@
   flex: 1;
 }
 
-.toolbar-login-btn {
+.app-toolbar .toolbar-login-btn.mat-mdc-button {
   font-weight: 700;
   font-size: 0.875rem;
   color: var(--accent-text-safe);
