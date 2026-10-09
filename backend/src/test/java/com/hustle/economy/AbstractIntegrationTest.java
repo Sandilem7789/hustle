@@ -26,7 +26,8 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        // Flyway builds the schema; "validate" fails the run if the migrations and entities disagree
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.jpa.show-sql", () -> "false");
         registry.add("app.uploads.dir", () -> System.getProperty("java.io.tmpdir"));
     }

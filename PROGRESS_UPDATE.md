@@ -7,6 +7,12 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Platform plan Phase 1.0: Flyway migrations, and a working backend test suite (2026-10-09)
+- **Backend tests run again.** They had been failing on this machine with "no Docker found", which hid three real problems: Docker Engine 29 rejects the old API version Testcontainers asks for, the startup seeder needed `STAFF_PHONE`/`STAFF_PASSWORD` that only Docker's `.env` supplied, and the test database was stopped between test classes while Spring kept using it. All fixed in the test setup. Running them surfaced one real bug, now fixed: approving an app-submitted application that had no community crashed, because a shop must have one. `mvn test`: 12 pass.
+- **Flyway introduced** (`flyway-core`, version managed by Spring Boot). `V1__baseline_schema.sql` is the schema the current entities generate. Fresh databases run it; databases that already existed are only marked as version 1 (`baseline-on-migrate`) and nothing in them changes. Verified on the local dev database with real data: baseline recorded, all 23 products intact.
+- Integration tests now build the schema through Flyway and run Hibernate in `validate` mode, so a migration that disagrees with the entities fails the build.
+- **Still to do for P1.0:** compare the production schema with V1 (needs Sandile's go-ahead to read the production database schema), then switch production from `ddl-auto=update` to `validate`.
+
 ### Marketplace rebuild + app-wide green contrast fix (2026-09-28)
 - Rebuilt the marketplace (`community-hub.component.ts`) per `docs/MARKETPLACE_DESIGN_PROPOSAL.md` with Sandile's decisions in its §10, using the `impeccable` skill (Operate mode, craft-floor checks, mechanical detector: 0 findings).
 - **Filtering now works end to end:** community filter wired to the existing `communityId` API parameter (it was previously never sent), categories and communities are native radio groups (keyboard and screen-reader correct), and the typed search query now survives category/community changes. Only the newest request can update the screen, so rapid filter taps never show stale results.

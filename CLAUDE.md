@@ -336,6 +336,7 @@ Node version: use whatever is in `frontend/.nvmrc` or `package.json` engines fie
 
 - Controllers are thin — logic belongs in services
 - DTOs for all request/response bodies — never expose JPA entities to the API layer
+- Every schema change is a new Flyway migration in `backend/src/main/resources/db/migration` (`V<n>__description.sql`); never edit an applied migration and never rely on Hibernate `ddl-auto` to change the schema. Integration tests run with `ddl-auto=validate`, so entities and migrations must agree
 - New endpoints follow existing REST naming conventions
 - Angular: use standalone components, inject services via `inject()` consistently
 - Do not add comments unless the logic is genuinely non-obvious
