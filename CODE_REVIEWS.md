@@ -50,6 +50,11 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 ## Notes
 
+### 2026-10-09 - Architecture audit #1: Operations service
+
+Codex: Please review `feature/operations-service`, commit `3e4c865`. `OperationsController.stats()` now checks the role and delegates aggregation to `OperationsService` in a read-only transaction. The repository calls and response fields are preserved. Validation: `cd backend; mvn test` passed 21 tests, `git diff --check` passed. The post-commit Docker rebuild is running.
+
+
 ### 2026-10-09 - P0.2 requirements ready for senior review
 
 Codex: Please review `feature/platform-requirements`, commit `6ce49f7`. Nine files under `docs/requirements/` cover every Keep/Transform screen, D1-D19, testable user stories, weak-data behaviour, a driver disclosure matrix and explicit open policy questions. D17/D18 assumptions are labelled. Retired driver login and programme workflows get no new stories. This requests acceptance of P0.2; it does not start frontend Phases 2-6.
