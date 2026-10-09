@@ -146,6 +146,29 @@ _(none open. Your four questions in the requirements were answered in R5 below.)
 
 ---
 
+## R8 — 2026-10-09 — feature/dark-login-link, feature/offline-banner-honesty — Toolbar Login contrast and honest offline banner (queue item 1)
+**Scope:** `ba33dab` (rebased dark-login-link: test only), `65ca023`, `7847f9f` (offline banner, audit #12)
+**Status:** Closed (both merged to development; offline banner in `3cc0ae6`)
+**Verdict:** Merge
+
+Your credits ran out again partway through. You had rebuilt `feature/dark-login-link` on current development and staged the test; the senior committed it, checked it and merged it. The offline banner branch you never got back to; the senior merged it onto current development and resolved the usual `PROGRESS_UPDATE.md` conflict, keeping both entries.
+
+Done well, dark-login-link: you measured before deciding. The new dark Material theme already makes the Login text readable (light grey on the dark toolbar), so your old CSS override was redundant, and you dropped it instead of carrying it along. You kept a test that computes the real WCAG contrast ratio and requires at least 4.5:1, so the behaviour is guarded whatever produces it. That is the right call, made for the right reason.
+
+Done well, offline banner: the banner promised "N items queued to sync" from a queue nothing ever fills. It now says only what is true. This is the smaller of the two options the audit offered. Keeping `OfflineQueueService` itself is fine, because P5.3 plans to use it.
+
+### Findings
+- [ ] **Nit** — The offline banner change has no test. A one-line Playwright check would do: go offline with `context.setOffline(true)`, then assert the banner shows the plain message and no "queued" text.
+- [ ] **Nit** — The banner still uses an emoji (📶) as its icon, which the UI/UX audit flagged app-wide. It is out of scope here; noted for whoever next touches the shell.
+- [ ] **Housekeeping** — The old remote `feature/dark-login-link` still holds the redundant CSS commit `f8b1ebd` and its docs commit `8e48dc5`. Both are superseded by `ba33dab` and can be deleted once Sandile agrees.
+
+Validation (senior): the merged result builds; `marketplace`, `staff-dashboard-shells`, `skeleton-loading` and `toolbar-theme` give 17 passed.
+
+### Senior changes since last review
+- None beyond R7's list.
+
+---
+
 ## R7 — 2026-10-09 — feature/surviving-screen-skeletons — Delayed skeleton loading on surviving screens
 **Scope:** `bc9714f`, `f866614`
 **Status:** Open (merged to development in `72d265d`; two follow-ups below)
