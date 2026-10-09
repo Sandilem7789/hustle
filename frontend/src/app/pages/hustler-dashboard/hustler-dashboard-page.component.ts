@@ -10,11 +10,12 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 import { AppSelectComponent } from '../../components/app-select/app-select.component';
 import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcode-scanner.component';
+import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
 
 @Component({
   selector: 'app-hustler-dashboard-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoginGateComponent, AppSelectComponent, BarcodeScannerComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoginGateComponent, AppSelectComponent, BarcodeScannerComponent, LoadingSkeletonComponent],
   template: `
     <app-login-gate *ngIf="!auth.isLoggedIn()"
       icon="👤"
@@ -310,7 +311,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
             </div>
           </div>
           <p *ngIf="addSuccess()" class="success" style="margin-top:0">Product added!</p>
-          <div *ngIf="loadingProducts()" class="muted" style="margin-top:0.75rem">Loading…</div>
+          <app-loading-skeleton [loading]="loadingProducts()" variant="stock"></app-loading-skeleton>
           <div *ngIf="!loadingProducts() && products().length === 0" class="muted" style="margin-top:0.75rem">
             No products yet. Tap "Add Product" to list your first item.
           </div>
@@ -391,7 +392,7 @@ import { BarcodeScannerComponent } from '../../components/barcode-scanner/barcod
       <ng-container *ngIf="tab() === 'orders'">
         <div class="card">
           <h2>Incoming Orders</h2>
-          <div *ngIf="ordersLoading()" class="muted" style="margin-top:1rem">Loading orders…</div>
+          <app-loading-skeleton [loading]="ordersLoading()" variant="order"></app-loading-skeleton>
           <div *ngIf="!ordersLoading() && incomingOrders().length === 0" class="muted" style="margin-top:1rem">No orders yet.</div>
           <div class="orders-list">
             <article *ngFor="let order of incomingOrders()" class="order-card">
