@@ -1,8 +1,8 @@
 package com.hustle.economy.controller;
 
 import com.hustle.economy.dto.CommunityRequest;
-import com.hustle.economy.entity.BusinessProfile;
-import com.hustle.economy.entity.Community;
+import com.hustle.economy.dto.CommunityHustlerResponse;
+import com.hustle.economy.dto.CommunityResponse;
 import com.hustle.economy.entity.UserRole;
 import com.hustle.economy.service.AuthService;
 import com.hustle.economy.service.CommunityService;
@@ -23,17 +23,17 @@ public class CommunityController {
     private final AuthService authService;
 
     @GetMapping
-    public ResponseEntity<List<Community>> listCommunities() {
+    public ResponseEntity<List<CommunityResponse>> listCommunities() {
         return ResponseEntity.ok(communityService.listCommunities());
     }
 
     @GetMapping("/{id}/hustlers")
-    public ResponseEntity<List<BusinessProfile>> listHustlers(@PathVariable UUID id) {
+    public ResponseEntity<List<CommunityHustlerResponse>> listHustlers(@PathVariable UUID id) {
         return ResponseEntity.ok(communityService.listHustlers(id));
     }
 
     @PostMapping
-    public ResponseEntity<Community> createCommunity(
+    public ResponseEntity<CommunityResponse> createCommunity(
             @RequestBody @Valid CommunityRequest request,
             @RequestHeader("X-Auth-Token") String token) {
         authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
