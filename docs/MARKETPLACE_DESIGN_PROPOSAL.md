@@ -271,6 +271,7 @@ Overall: this is careful, well-evidenced work, and §9 in particular caught two 
 - **Categories:** native radios showing All, Fast Food and Grocery, plus an inline "More categories" disclosure, as §4 specifies.
 - **Query persistence (§7.4):** agreed in the senior response; the query survives category and community changes.
 - **Logo:** unchanged, still held for a separate review with rendered candidates.
+- **Community filter (2026-10-09):** moved off the marketplace into the menu as an app-wide setting, remembered between visits; the marketplace shows which community it is filtered to.
 
 ## 11. Validation and references
 

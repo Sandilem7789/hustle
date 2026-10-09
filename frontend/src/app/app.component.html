@@ -65,6 +65,20 @@
           <span class="switch-knob">{{ i18n.lang() === 'zu' ? 'ZU' : 'EN' }}</span>
         </button>
       </div>
+      <div class="prefs-item prefs-item-stacked">
+        <div class="prefs-item-label">
+          <mat-icon>location_on</mat-icon>
+          <span id="community-pref-label">{{ 'marketplace.community' | translate }}</span>
+        </div>
+        <select
+          class="community-select"
+          aria-labelledby="community-pref-label"
+          (change)="community.select($any($event.target).value)"
+        >
+          <option value="ALL" [selected]="community.selectedId() === 'ALL'">{{ 'marketplace.allCommunities' | translate }}</option>
+          <option *ngFor="let c of community.communities()" [value]="c.id" [selected]="community.selectedId() === c.id">{{ c.name }}</option>
+        </select>
+      </div>
     </div>
     <mat-divider></mat-divider>
 

@@ -7,6 +7,12 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Community chosen in the menu, app-wide (2026-10-09)
+- The marketplace no longer has its own row of community buttons. The community is now an app-wide setting in the menu, next to Dark mode and Language, using the phone's native picker. It is remembered between visits and defaults to "All communities". A remembered community that no longer exists falls back to "All communities" instead of silently emptying the marketplace.
+- The marketplace follows the setting and names it in the result count ("9 items in KwaNgwenya"), so a filtered list is never a surprise. The "Show all communities" action on an empty community still works.
+- New `CommunityService` (signal-based, like `ThemeService`); other screens should read it rather than add their own community picker.
+- Tests: the community test now goes through the menu, plus a new test that the choice survives a reload. Marketplace and staff-shell tests 15 passed.
+
 ### Dark mode fixes (2026-10-09)
 - **Menu and Material controls now follow dark mode.** The Angular Material theme was defined light-only, so the side menu's labels ("Browse Market", "My Orders", portals, "Logout") stayed near-black on the dark menu and the cart and menu icons were nearly invisible. `custom-theme.scss` now emits a dark Material theme under `[data-theme="dark"]`, which fixes every Material component at once (lists, icon buttons, form fields, dialogs, menus).
 - **Language switch** shows its "EN"/"ZU" label in dark mode (it was near-white text on the white knob).

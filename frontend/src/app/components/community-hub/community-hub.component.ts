@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { A11yModule } from '@angular/cdk/a11y';
 import { MatIconModule } from '@angular/material/icon';
-import { ApiService, Community, ProductResponse } from '../../services/api.service';
+import { ApiService, ProductResponse } from '../../services/api.service';
+import { CommunityService } from '../../services/community.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
 import { TranslationService } from '../../services/translation.service';
@@ -76,22 +77,6 @@ type LoadState = 'loading' | 'ready' | 'error';
         </div>
       </div>
 
-      <fieldset class="filter" *ngIf="communities().length">
-        <legend class="field-label">{{ 'marketplace.community' | translate }}</legend>
-        <div class="pill-scroll">
-          <label class="pill">
-            <input type="radio" name="community" class="pill-input" value="ALL"
-              [checked]="selectedCommunity() === 'ALL'" (change)="selectCommunity('ALL')" />
-            <span class="pill-face">{{ 'marketplace.allCommunities' | translate }}</span>
-          </label>
-          <label class="pill" *ngFor="let c of communities(); trackBy: trackById">
-            <input type="radio" name="community" class="pill-input" [value]="c.id"
-              [checked]="selectedCommunity() === c.id" (change)="selectCommunity(c.id)" />
-            <span class="pill-face">{{ c.name }}</span>
-          </label>
-        </div>
-      </fieldset>
-
       <fieldset class="filter">
         <legend class="field-label">{{ 'marketplace.category' | translate }}</legend>
         <div class="radio-row" id="category-options">
@@ -138,7 +123,7 @@ type LoadState = 'loading' | 'ready' | 'error';
           <mat-icon class="state-icon" aria-hidden="true">storefront</mat-icon>
           <p class="state-text">{{ 'marketplace.noListings' | translate }}</p>
           <div class="state-actions">
-            <button *ngIf="selectedCommunity() !== 'ALL'" type="button" class="action-btn" (click)="selectCommunity('ALL')">
+            <button *ngIf="community.selectedId() !== 'ALL'" type="button" class="action-btn" (click)="community.select('ALL')">
               {{ 'marketplace.showAllCommunities' | translate }}
             </button>
             <a routerLink="/apply" class="action-link">{{ 'marketplace.sellHere' | translate }}</a>
@@ -334,17 +319,6 @@ type LoadState = 'loading' | 'ready' | 'error';
     /* ── Filters: native radios, styled ─────────────────────────── */
     .filter { border: 0; margin: 0 0 1rem; padding: 0; min-width: 0; }
 
-    .pill-scroll {
-      display: flex;
-      gap: 0.5rem;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding-right: 1.5rem;
-      /* The fade tells the thumb there is more to the right */
-      mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
-      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
-    }
-    .pill-scroll::-webkit-scrollbar { display: none; }
 
     .pill {
       display: inline-flex;
@@ -704,19 +678,18 @@ type LoadState = 'loading' | 'ready' | 'error';
     .login-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
   `
 })
-export class CommunityHubComponent implements OnInit, OnDestroy {
+export class CommunityHubComponent implements OnDestroy {
   private readonly api = inject(ApiService);
   readonly unifiedAuth = inject(UnifiedAuthService);
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslationService);
+  readonly community = inject(CommunityService);
 
   readonly skeletons = [0, 1, 2, 3];
 
   products          = signal<ProductResponse[]>([]);
-  communities       = signal<Community[]>([]);
   selectedCategory  = signal<string>('ALL');
-  selectedCommunity = signal<string>('ALL');
   searchQuery       = signal('');
   loadState         = signal<LoadState>('loading');
   showAllCategories = signal(false);
@@ -748,10 +721,13 @@ export class CommunityHubComponent implements OnInit, OnDestroy {
 
   isDistanceCapped = computed(() => DISTANCE_CAPPED.has(this.selectedCategory()));
 
+  // "23 items in KwaNgwenya" when a community is chosen, so a filtered list is never a surprise
   countLabel = computed(() => {
     this.i18n.lang();
     const n = this.filteredProducts().length;
-    return n === 1 ? this.i18n.t('marketplace.itemsOne') : this.i18n.t('marketplace.itemsMany').replace('{n}', String(n));
+    const count = n === 1 ? this.i18n.t('marketplace.itemsOne') : this.i18n.t('marketplace.itemsMany').replace('{n}', String(n));
+    const place = this.community.selected();
+    return place ? `${count} ${this.i18n.t('marketplace.inCommunity').replace('{c}', place.name)}` : count;
   });
 
   noMatchesText = computed(() => {
@@ -767,15 +743,14 @@ export class CommunityHubComponent implements OnInit, OnDestroy {
       clearTimeout(this.announceTimer);
       this.announceTimer = setTimeout(() => this.announcement.set(text), 700);
     });
+
+    // Reload whenever the community is changed in the menu (and once on first load)
+    effect(() => {
+      this.community.selectedId();
+      untracked(() => this.loadProducts());
+    }, { allowSignalWrites: true });
   }
 
-  ngOnInit(): void {
-    this.api.listCommunities().subscribe({
-      next: list => this.communities.set(list),
-      error: () => this.communities.set([])
-    });
-    this.loadProducts();
-  }
 
   ngOnDestroy(): void {
     clearTimeout(this.announceTimer);
@@ -787,17 +762,12 @@ export class CommunityHubComponent implements OnInit, OnDestroy {
     this.loadProducts();
   }
 
-  selectCommunity(id: string): void {
-    this.selectedCommunity.set(id);
-    this.loadProducts();
-  }
-
   loadProducts(): void {
     // Only the newest request may update the screen, so rapid filter taps can't show stale results
     const seq = ++this.requestSeq;
     this.loadState.set('loading');
     const cat = this.selectedCategory();
-    const community = this.selectedCommunity();
+    const community = this.community.selectedId();
     this.api.listProducts(
       community === 'ALL' ? undefined : community,
       cat === 'ALL' ? undefined : cat

@@ -11,6 +11,7 @@ import { UnifiedAuthService } from './services/unified-auth.service';
 import { DriverAuthService } from './services/driver-auth.service';
 import { CartService } from './services/cart.service';
 import { ThemeService } from './services/theme.service';
+import { CommunityService } from './services/community.service';
 import { TranslationService } from './services/translation.service';
 import { OfflineBannerComponent } from './components/offline-banner/offline-banner.component';
 import { TranslatePipe } from './pipes/translate.pipe';
@@ -35,6 +36,7 @@ export class AppComponent implements OnInit {
   readonly driverAuth  = inject(DriverAuthService);
   readonly cart = inject(CartService);
   readonly theme = inject(ThemeService);
+  readonly community = inject(CommunityService);
   readonly i18n = inject(TranslationService);
   private readonly router = inject(Router);
 

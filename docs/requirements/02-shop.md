@@ -6,7 +6,8 @@ Current evidence: marketplace search, native category/community radios, two-colu
 As a shopper, I want search and filters together, so that I can find relevant goods.
 
 Acceptance criteria
-- Given the initial catalogue, when I open Shop, then All communities is selected and All/Fast Food/Grocery radios plus More categories are available.
+- Given the initial catalogue, when I open Shop, then All/Fast Food/Grocery radios plus More categories are available, and there is no community picker on the page.
+- Given I choose a community in the menu, when Shop loads, then only that community's products appear and the result count names it ("9 items in KwaNgwenya"); my choice is remembered on my next visit (Sandile's decision, 2026-10-09).
 - Given a typed query, when community or category changes, then the query remains and only the newest request can update results.
 - Given no matches, no listings or a failed fetch, when the result area updates, then it offers the appropriate clear-filter, sell or retry action without inventing inventory.
 

@@ -86,7 +86,7 @@ KwaNgwenya, KwaNibela, KwaMakhasa, KwaJobe, KwaMnqobokazi
 
 ## Marketplace — Categories & Filtering
 
-The marketplace uses **radio buttons** to switch between top-level categories. Only one category is active at a time. Community filter pills remain visible across all categories.
+The marketplace uses **radio buttons** to switch between top-level categories. Only one category is active at a time. The community is not chosen on the marketplace: it is an app-wide setting in the menu (next to Dark mode and Language), remembered between visits, defaulting to "All communities". The marketplace follows it and shows which community it is filtered to (e.g. "9 items in KwaNgwenya"). Sandile's decision, 2026-10-09.
 
 ### Category definitions
 | Category | Value | Notes |
@@ -243,7 +243,7 @@ Implementation:
 - Angular 18 standalone components (no NgModules)
 - Signals-based `AuthService` with `localStorage` persistence
 - Route guards per role — redirect to appropriate login if not authenticated
-- Community pills on marketplace default to "All communities"
+- Community is chosen in the menu (`CommunityService`), applies app-wide and defaults to "All communities"; screens read it instead of showing their own community picker
 - Facilitator filters: status (Pending/Approved/Rejected) + community
 - Maps: use **Leaflet + OpenStreetMap** (no paid API key required) for all map views
 - Category selector: radio button group (not tabs, not pills) at top of marketplace page

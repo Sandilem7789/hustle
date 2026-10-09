@@ -70,17 +70,34 @@ test.describe('Marketplace', () => {
     await expect(page.getByRole('radio', { name: 'Crafts & Art' })).toBeChecked();
   });
 
-  test('choosing a community sends it to the products API', async ({ page }) => {
+  test('the community is chosen in the menu and sent to the products API', async ({ page }) => {
     const productCalls: URL[] = [];
     await mockApi(page, { productCalls });
     await page.goto('/marketplace');
     await expect(cards(page)).toHaveCount(3);
+    await expect(page.getByRole('radio', { name: 'KwaNibela' })).toHaveCount(0);
 
-    await page.getByRole('radio', { name: 'KwaNibela' }).check();
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await page.getByLabel('Community').selectOption({ label: 'KwaNibela' });
     await expect.poll(() => productCalls.at(-1)?.searchParams.get('communityId')).toBe('c-nibela');
+    await expect(page.locator('.result-count')).toHaveText('3 items in KwaNibela');
 
-    await page.getByRole('radio', { name: 'All communities' }).check();
+    await page.getByLabel('Community').selectOption({ label: 'All communities' });
     await expect.poll(() => productCalls.at(-1)?.searchParams.has('communityId')).toBe(false);
+    await expect(page.locator('.result-count')).toHaveText('3 items');
+  });
+
+  test('the chosen community is remembered on the next visit', async ({ page }) => {
+    const productCalls: URL[] = [];
+    await mockApi(page, { productCalls });
+    await page.goto('/marketplace');
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await page.getByLabel('Community').selectOption({ label: 'KwaNgwenya' });
+    await expect.poll(() => productCalls.at(-1)?.searchParams.get('communityId')).toBe('c-ngwenya');
+
+    await page.reload();
+    await expect.poll(() => productCalls.at(-1)?.searchParams.get('communityId')).toBe('c-ngwenya');
+    await expect(page.locator('.result-count')).toHaveText('3 items in KwaNgwenya');
   });
 
   test('a failed load shows an error with retry, not an empty marketplace', async ({ page }) => {
