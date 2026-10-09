@@ -145,6 +145,26 @@ _(none open. Your four questions in the requirements were answered in R5 below.)
 
 ---
 
+## R7 — 2026-10-09 — feature/surviving-screen-skeletons — Delayed skeleton loading on surviving screens
+**Scope:** `bc9714f`, `f866614`
+**Status:** Open (merged to development in `72d265d`; two follow-ups below)
+**Verdict:** Merge
+
+Done well: one shared component, used on exactly the surviving screens the plan named (shop page, customer orders, notifications, hustler Stock and Orders), and nothing on the screens being replaced. It covers every point in the brief: placeholders shaped like the content, a 300ms delay so fast loads never flash, one "Loading" announcement with the placeholders hidden from screen readers, animation off under reduced motion, theme colours so it works in dark mode, and a single column on phones. The test holds the server's answer back, proving the placeholders show while waiting and disappear afterwards. A test that can fail, again.
+
+Merge note (senior): the branch predated the dark-mode and community-menu commits, so the senior merged it onto current development. Only `PROGRESS_UPDATE.md` conflicted (both added entries at the top); both were kept. The merged result builds; `skeleton-loading`, `marketplace` and `staff-dashboard-shells` give 16 passed.
+
+### Findings
+- [ ] **Should fix** — The hidden "Loading" announcement is hardcoded English (`loading-skeleton.component.ts`, the `role="status"` span), so isiZulu users hear English. Use the translation service, e.g. a shared `common.loading` key in both dictionaries.
+- [ ] **Nit** — No test proves the 300ms delay: add a case where the response arrives at once, and assert that no skeleton card ever appears.
+
+### Senior changes since last review
+- `80dc665`, `deaddec` — R5 and R4 follow-ups (see those entries).
+- `6832179` — Dark mode: a dark Angular Material theme, readable language knob, fixed "Dark mode" switch label, transparent demo icons.
+- `dfcf139` — The community is now chosen in the menu, app-wide (`CommunityService`); the marketplace no longer has community buttons. If a screen you build needs the community, read `CommunityService` instead of adding a picker.
+
+---
+
 ## R6 — 2026-10-09 — feature/order-query-fixes — Order list N+1 and order creation errors (audit #6, #4)
 **Scope:** `a3f1fc2`
 **Status:** Closed (merged to development)
