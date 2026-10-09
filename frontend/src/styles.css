@@ -63,6 +63,8 @@
   /* Touch / layout */
   --touch-target:      48px;
   --bottom-nav-height: 64px;
+  --toolbar-height: 64px;
+  --toolbar-strip-height: 3px;
   --header-height:     60px;
   --radius-sm:  8px;
   --radius-md:  14px;
@@ -409,9 +411,9 @@ main.page-shell {
    dashboards fill only the space between them so the page itself never
    scrolls; each dashboard's middle region owns the scroll instead. */
 .staff-shell {
-  height: calc(100vh - 64px - 3px - var(--bottom-nav-height));
-  height: calc(100svh - 64px - 3px - var(--bottom-nav-height));
-  height: calc(100dvh - 64px - 3px - var(--bottom-nav-height));
+  height: calc(100vh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-height));
+  height: calc(100svh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-height));
+  height: calc(100dvh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-height));
   max-width: 1100px;
   min-height: 0;
   margin: 0 auto;
@@ -468,14 +470,16 @@ main.page-shell {
 }
 
 @media (min-width: 768px) {
+  :root { --toolbar-height: 72px; }
+
   main.page-shell {
     padding-bottom: 0;
   }
 
   .staff-shell {
-    height: calc(100vh - 72px - 3px);
-    height: calc(100svh - 72px - 3px);
-    height: calc(100dvh - 72px - 3px);
+    height: calc(100vh - var(--toolbar-height) - var(--toolbar-strip-height));
+    height: calc(100svh - var(--toolbar-height) - var(--toolbar-strip-height));
+    height: calc(100dvh - var(--toolbar-height) - var(--toolbar-strip-height));
   }
 
   .staff-shell__header {
