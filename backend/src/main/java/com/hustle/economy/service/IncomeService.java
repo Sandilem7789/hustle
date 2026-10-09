@@ -9,8 +9,10 @@ import com.hustle.economy.entity.IncomeEntry;
 import com.hustle.economy.repository.IncomeEntryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -106,9 +108,12 @@ public class IncomeService {
     }
 
     @Transactional
-    public IncomeEntryResponse updateIncome(UUID entryId, IncomeEntryRequest request) {
+    public IncomeEntryResponse updateIncome(UUID businessProfileId, UUID entryId, IncomeEntryRequest request) {
         IncomeEntry entry = incomeEntryRepository.findById(entryId)
                 .orElseThrow(() -> new EntityNotFoundException("Income entry not found"));
+        if (!entry.getBusinessProfile().getId().equals(businessProfileId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this income entry");
+        }
         EntryType type = "EXPENSE".equalsIgnoreCase(request.getEntryType()) ? EntryType.EXPENSE : EntryType.INCOME;
         entry.setDate(request.getDate());
         entry.setAmount(request.getAmount());

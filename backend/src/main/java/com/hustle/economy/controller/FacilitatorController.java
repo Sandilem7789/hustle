@@ -83,6 +83,6 @@ public class FacilitatorController {
             @RequestBody @Valid IncomeEntryRequest request,
             @RequestHeader("X-Auth-Token") String token) {
         authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
-        return ResponseEntity.ok(incomeService.updateIncome(entryId, request));
+        return ResponseEntity.ok(incomeService.updateIncome(id, entryId, request));
     }
 }
