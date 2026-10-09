@@ -36,6 +36,7 @@ thenga.com is now an **e-commerce platform for people who want to sell online**,
 | **D16** | **Delivery fee, paid by the buyer at checkout:** **R80** when the order total is under R1,200, **R50** when it is R1,200 or more. Only delivery orders pay it; collection orders do not. The server calculates it; the amounts are configuration, not code. |
 | **D17** | **Two-step approval.** The Community Agent verifies and approves first. The applicant then appears on the Hub Coordinator dashboard under **"Merchants awaiting final approval"**, and the Hub Coordinator gives final approval. Only then does the shop go live. *(Assumption recorded by Sandile.Claude: driver applicants follow the same two steps.)* |
 | **D18** | **Banning merchants.** A merchant who has already joined can be banned from the Hub Coordinator dashboard and from the Community Agent tools. A ban hides the shop and stops selling, and records who banned, when and why. *(Assumptions recorded by Sandile.Claude: an agent can ban only merchants in their own area; only a Hub Coordinator or Platform Admin can lift a ban.)* |
+| **D19** | **Hub Coordinators are assigned the communities they work in.** An area is not a fixed set: staff assign and change a coordinator's communities. For now the platform serves the 5 seeded communities. |
 
 ### Open questions for Sandile
 
@@ -45,8 +46,8 @@ These do not block Phase 0 or Phase 1. Each blocks the phase noted.
 |---|---|---|
 | ~~O1~~ | ~~Drivers~~ | Answered by D9 and D10 |
 | ~~O2~~ | ~~Who can sell~~ | Answered by D11 and D14 |
-| **O3** | Programme data: 102 seeded cohort-8 applicants, interview records, monthly check-ins. Keep read-only for funder reports, export and archive, or delete? | Phase 1.3 |
-| **O4** | Agent area is answered (D12). Still open: is a Hub Coordinator's area a fixed set of communities? | Phase 6 |
+| **O3** | Programme data (applicants, interviews, calls, check-ins, programme survey answers). **Sandile.Claude recommends deleting it**, after (a) asking Wild Impact whether they want a copy, since it was collected for their programme, and (b) keeping everyone who became a real seller. Deletion runs as a migration in P1.3. **Awaiting Sandile's explicit yes**, because it cannot be undone. | Phase 1.3 |
+| ~~O4~~ | ~~Hub Coordinator area~~ | Answered by D19 |
 | ~~O5~~ | ~~Agent pay~~ | Answered by D13 |
 | ~~O6~~ | ~~Delivery fee~~ | Answered by D16; driver share is O8 |
 | ~~O7~~ | ~~Who approves~~ | Answered by D17 |
@@ -136,7 +137,7 @@ Login, identity and data migration are high risk, so Claude owns all of Phase 1.
 | ID | Task | Size | Done when |
 |---|---|---|---|
 | P1.0 | Introduce Flyway with a baseline of the current production schema. Prerequisite already recorded in DL-1, because production runs `ddl-auto=update`, which cannot safely migrate identities. | M | App boots on a copy of the production schema with zero unexpected changes |
-| P1.1 | Account model: `AppUser` is the only identity; phone unique and required; email optional and unique when present; `BusinessProfile` gets an owning `AppUser` link; one role enum with `MERCHANT`, `DRIVER`, `COMMUNITY_AGENT`, `HUB_COORDINATOR`, `PLATFORM_ADMIN`; date of birth captured for the 18+ rule (D11); agents and drivers record a home location (D12) | L | Integration tests: sign-up by phone, duplicate phone rejected, optional email, one account owns at most one shop |
+| P1.1 | Account model: `AppUser` is the only identity; phone unique and required; email optional and unique when present; `BusinessProfile` gets an owning `AppUser` link; one role enum with `MERCHANT`, `DRIVER`, `COMMUNITY_AGENT`, `HUB_COORDINATOR`, `PLATFORM_ADMIN`; date of birth captured for the 18+ rule (D11); agents and drivers record a home location (D12); Hub Coordinators get an assignable set of communities (D19) | L | Integration tests: sign-up by phone, duplicate phone rejected, optional email, one account owns at most one shop |
 | P1.2 | One session and one token. Retire the customer, hustler and driver session paths behind a short compatibility window so the live frontend keeps working during the switch. | L | Every protected endpoint authenticates through one path; old tokens rejected after the window |
 | P1.3 | Data migration: existing customers, hustler applications and drivers into `AppUser`; HUSTLER to MERCHANT, FACILITATOR to COMMUNITY_AGENT, COORDINATOR to HUB_COORDINATOR; shops linked to owners. Programme data per O3. | L | Migration rehearsed on a copy of production; counts reconcile; rollback written |
 | P1.4 | Orders: buyer is an `AppUser`; optional buyer shop; server sets B2C or B2B from the endpoint used (D7); purchase-order reference only on B2B; self-purchase blocked; delivery fee added by the server (D16) | M | Tests: a plain account cannot create a B2B order; a merchant cannot buy from their own shop; R80 below R1,200, R50 from R1,200, no fee on collection |
