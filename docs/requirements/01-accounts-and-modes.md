@@ -15,13 +15,14 @@ Mobile and offline: labelled phone input with telephone keyboard, accessible sho
 Data: `AppUser.phone`, `email`, names, `passwordHash`, roles; `AppUserSession`. NEW: completed single-session migration (P1.2–3).
 Out of scope: separate buyer/driver credentials, social login, JWT replacement.
 
-### ACC-002 Recover access (Later: recovery mechanism needs a decision)
+### ACC-002 Recover access (partly blocked: recovery without email)
 As an account holder, I want to recover access, so that losing a password does not cost me my account.
 
 Acceptance criteria
-- Given an account with a verified recovery channel, when the agreed recovery process proves control, then access is restored to the existing account rather than creating a second identity.
-- Given no optional email, when recovery is requested, then email is not falsely presented as available; the approved alternative must be explained before this story ships.
-- Given an unauthenticated recovery request, when a response is shown, then it does not reveal whether another person's phone/email is registered.
+- Given my account has a verified email, when I ask to recover access, then a recovery link is sent to that email, and using it lets me set a new password on the same account (D3).
+- Given a recovery link, when it has been used once or has expired, then it no longer works.
+- Given my account has no verified email, when I ask to recover access, then the app does not offer email recovery; the way to recover is decided before this part ships.
+- Given anyone asks to recover access, when the app answers, then the answer is the same whether or not the phone or email belongs to an account.
 
 Mobile and offline: single-column steps, preserve progress on transient failure; require server confirmation for every security change.
 Data: `AppUser.email`; NEW: verified-channel state, expiring recovery proof and audit records, designed by the senior.
@@ -55,5 +56,7 @@ Out of scope: WhatsApp/push delivery (Later), unsolicited marketing.
 
 ## Open questions
 
-- Recovery channel verification, expiry, phone-loss and no-email support procedure need senior/product decisions (ACC-002).
+- How does someone with no email recover access, and how does anyone recover after losing their phone (ACC-002)?
+- How long is a recovery link valid, and how is an email verified in the first place?
+- D3 also names email as a second security factor and as a backup way to contact people. When is the second factor used (every sign-in, new device, sensitive changes only)? What do we send to the backup email, and when?
 - Confirm cart handling across sign-out and account changes; private data must never bleed into another account.

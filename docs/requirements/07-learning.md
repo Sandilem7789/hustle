@@ -21,7 +21,7 @@ Acceptance criteria
 - Given my own quiz attempt, when I save partial answers, then reopening restores the saved answers; another merchant cannot read or modify them.
 - Given required questions are unanswered, when I submit, then the missing questions are identified without losing other answers.
 - Given a valid submission, when confirmed, then the attempt has a stable submitted state; repeated clicks cannot create duplicate completions.
-- Given scoring/feedback has been configured under the agreed learning model, when submitted, then the result is derived from that version's rules rather than an AI-generated guess.
+- Given a quiz version has an answer key, when I submit, then my result is worked out from that version's answer key.
 
 Mobile and offline: visible labels, native choice controls and 48px targets; offline drafts are clearly unsent until a later sync phase implements persistence and conflict handling.
 Data: `SurveyQuestion` type/options/required/fieldKey and `SurveyAnswer.answerText`; NEW: versioned attempts, answer key/feedback and ownership model. Existing assignment statuses can inform design but are not assumed sufficient.

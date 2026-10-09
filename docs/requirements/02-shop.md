@@ -20,7 +20,9 @@ As a shopper, I want item details and the merchant's shop, so that I understand 
 Acceptance criteria
 - Given a product, when I open details, then name, description, price and seller are shown; the seller link opens that shop's products.
 - Given the detail dialog, when I use Escape or Close, then focus returns to the opening card.
-- Given a banned or suspended shop, when I browse or follow its old link, then it has no purchasable listings (D15, D18).
+- Given a banned or suspended shop, when I browse the catalogue, search, or filter by its community, then neither the shop nor any of its products appears (D15, D18).
+- Given an old link to a banned or suspended shop's page, when I open it, then I see "This shop is not available" and no product information.
+- Given someone sends an order for a banned or suspended shop's product directly to the server, when it arrives, then the server refuses it. This is checked separately from hiding the shop.
 
 Mobile and offline: long names wrap; missing images have a useful placeholder; shop load failure is not “no products”.
 Data: `Product` and public `BusinessProfile` fields; NEW: published-shop eligibility from Phase 1.
@@ -49,7 +51,7 @@ Acceptance criteria
 - Given a submission is in progress, when I tap again, then the UI prevents duplicate sends; an uncertain timeout must not claim success or erase the cart.
 
 Mobile and offline: one clear submit action with the confirmed total; retain fields on failure and require connectivity to place an order.
-Data: existing `Order`/items; NEW: `AppUser` buyer and server-derived purchase context (P1.4).
+Data: existing `Order`/items; NEW: the buyer's account on the order, and the server deciding B2C or B2B from where the purchase was made (P1.4).
 Out of scope: client-selected B2B, treating offline requests as confirmed orders.
 
 ### SHOP-005 Choose delivery or collection
@@ -58,7 +60,9 @@ As a shopper, I want the fee and collection option before ordering, so that I kn
 Acceptance criteria
 - Given Delivery and goods subtotal R1,199.99, when quoted by the server, then the fee is R80 and total R1,279.99; given R1,200.00, the fee is R50 and total R1,250.00 (D16).
 - Given Collection at either subtotal, when quoted, then the delivery fee is R0; the seller's operating area/collection instructions are shown.
-- Given altered client totals/fees, when submitted, then server-configured amounts prevail and the buyer sees the final breakdown before confirmation.
+- Given the threshold is the goods total before the delivery fee, when a quote is made, then the fee itself never pushes an order over R1,200.
+- Given someone changes the totals or fee in the request, when it reaches the server, then the server's own amounts are used, and the buyer sees the final breakdown before confirming.
+- Given staff change the configured fee amounts or the threshold, when the next quote is made, then the new values apply without any code change (D16).
 - Given food/grocery and a known distance over 60km, when Delivery is chosen, then checkout and server block it with “This seller cannot deliver to your location. You can collect in person.” At exactly 60km this cap does not block; other driver-availability checks may.
 - Given another category, when distance exceeds 60km, then this food cap is not applied.
 
@@ -107,4 +111,5 @@ Out of scope: refunds/cancellation policy not yet decided, live driver location 
 - Guest checkout timing and secure guest tracking need agreement; today's UI requires an account despite the spec allowing a fallback.
 - How should a cart spanning shops be resolved, and how should existing option selections be persisted/priced? Current options are not sent to the cart.
 - Missing seller/customer coordinates cannot prove the 60km rule; define the acceptable verification/fallback before shipping that edge.
-- Confirm fee threshold uses goods subtotal before fees (used above), treatment of future discounts, order retry idempotency and cancellation/refund policy.
+- How do future discounts affect the R1,200 threshold? (The threshold itself is the goods total before the delivery fee, decided by the senior in R5.)
+- If a buyer's phone retries an order after a timeout, how does the server know it is the same order? What is the cancellation and refund policy?

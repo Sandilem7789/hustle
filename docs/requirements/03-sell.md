@@ -65,22 +65,27 @@ Mobile and offline: clearly identify the purchasing shop and keep the cart revie
 Data: existing `Order.transactionType`, `businessPurchaseOrderRef`; NEW: buyer AppUser and buyer shop, B2B entry point (P1.4).
 Out of scope: wholesale pricing, credit terms, buyer-selected transaction type.
 
-### SELL-006 Understand shop status and community spend
+### SELL-006 Understand shop status and community spend (partly blocked: community spend)
 As a merchant, I want to know whether my shop is live and what my buying contributes locally, so that I can take useful action.
 
+A sale here means an order that reached DELIVERED or COLLECTED. The clock counts from final approval, or from the moment the latest order reached one of those statuses, whichever is later (D15, senior interpretation in R5).
+
 Acceptance criteria
-- Given 89 days since final approval or the latest completed platform order, when inactivity is evaluated, then the shop stays live; at 90 days with no intervening completed order it is suspended and hidden from Shop (D15, P1.7's boundary).
-- Given only POS/offline diary sales during that period, when inactivity is evaluated, then they do not reset the platform-sale clock.
-- Given a suspended shop, when I open Sell, then the status and instruction to contact thenga.com are visible; my own action cannot silently reactivate it.
-- Given a community-spend figure is shown, when I inspect it, then its period, local amount, total basis and community definition are visible; an empty denominator is not presented as a misleading percentage.
+- Given my shop's last sale reached DELIVERED 89 days ago, when the nightly check runs, then my shop stays live.
+- Given my shop's last sale reached DELIVERED 90 days ago, when the nightly check runs, then my shop is suspended and disappears from Shop.
+- Given my shop has had no sale since final approval 90 days ago, when the nightly check runs, then my shop is suspended.
+- Given my only orders in the last 90 days were cancelled or never finished (PENDING, CONFIRMED, DRIVER_ASSIGNED, EN_ROUTE, CANCELLED), when the nightly check runs, then they do not count as sales.
+- Given my only sales in the last 90 days were recorded by me at the point of sale or in my money diary, when the nightly check runs, then they do not count, because thenga.com cannot check them.
+- Given my shop is suspended, when I open Sell, then I see that it is suspended and that I must contact thenga.com; nothing I can do in the app reactivates it.
+- Given a community-spend figure is shown, when I look at it, then I can see the period it covers and what was counted. If there were no purchases in the period, it says so instead of showing a percentage.
 
 Mobile and offline: status messages are text, not colour alone; show the last confirmed eligibility offline.
-Data: `Order.status`, shop community and approval/activity dates; NEW: suspension state/reason, last completed order date, community-spend calculation designed in P4.5.
+Data: `Order.status`, shop community and approval date; NEW: the time an order reached DELIVERED or COLLECTED (today only `updatedAt` exists), suspension state and reason, community-spend calculation designed in P4.5.
 Out of scope: choosing the community-spend formula or pre-suspension warning schedule (O9).
 
 ## Open questions
 
 - Specify community spend: which purchases, completion/refund treatment, time period and buyer/seller community definition (P4.5).
-- O9: warning timing/channels before inactivity suspension. Confirm how staff reactivation resets the inactivity clock.
-- Confirm cancellation permissions and which actions remain available to a banned/suspended merchant for existing orders, records and learning.
-- Confirm the 90-day interpretation in P1.7 versus D15's “3 months”; the test boundaries above follow the explicit plan acceptance examples.
+- O9: should a merchant be warned before suspension, and when and how?
+- Who may cancel an order, and what can a banned or suspended merchant still do with their existing orders, records and learning?
+- Settled by the senior in R5, Sandile may overrule: "3 months" is 90 days, and reactivation by staff restarts the 90 days (OPS-003).

@@ -28,13 +28,13 @@ Mobile and offline: short text states with next-step guidance; cached status exp
 Data: NEW: submitted/agent-approved/final-approved transitions, linked verifier and final approver accounts, timestamps and publish eligibility; existing Notification can carry outcomes after adaptation.
 Out of scope: free-text verifier identity, skipping coordinator approval, programme interviews or calls as separate stages.
 
-### ONB-003 Understand rejection
+### ONB-003 Understand rejection (partly blocked: reapplying)
 As an applicant, I want a reason when rejected, so that I know whether and how I can correct the issue.
 
 Acceptance criteria
 - Given rejection at either approval step, when I open my status, then a suitable applicant-facing reason and the responsible stage appear and no shop goes live.
 - Given a failed submission or retry, when I reopen status, then the last server-confirmed application is shown rather than an invented duplicate.
-- Given a resubmission policy is agreed, when I use it, then the original decision history is retained and no previous approval is silently reused.
+- Given reapplying is allowed (not yet decided), when I reapply, then my earlier decisions stay on record and an earlier approval is never reused for the new application.
 
 Mobile and offline: readable rejection text, preserved unsent corrections, no false “submitted” toast offline.
 Data: NEW: applicant-facing rejection reason and decision history; current application has status/notes but not the full two-stage model.

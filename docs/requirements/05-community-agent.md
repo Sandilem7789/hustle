@@ -2,16 +2,16 @@
 
 Current evidence: facilitator queue contains call, scheduled interview, visit, activation and check-in screens. `BusinessVerification` stores coordinates/photos/outcome but references Applicant and a free-text `verifiedBy`. The target combines conversation and visit into one verification linked to the actual agent account.
 
-### AGENT-001 Receive nearby applications
+### AGENT-001 Receive nearby applications (partly blocked: radius, ties, offer expiry)
 As a Community Agent, I want applications nearest my home area, so that I can verify people locally.
 
 Acceptance criteria
-- Given my recorded home location and pending applications, when work is offered, then the server ranks/offers it according to the agreed nearest-agent rule (D12).
+- Given agent A lives 2 km from an application and agent B lives 40 km from it, when the application is offered, then it is offered to A before B (D12).
 - Given an application outside my authorized offered work, when I forge its identifier, then the server refuses its private detail and mutation.
 - Given an applicant list, when it is shown, then phones reveal only the last four digits; precise locations/contact details appear only in an authorized detail view when needed.
 
 Mobile and offline: compact queue, clearly distinguish no work from fetch failure; do not accept/assign new work while offline.
-Data: `AppUser.homeLatitude/homeLongitude`, Community; NEW: application location, server offering/assignment and agent-area rules.
+Data: `AppUser.homeLatitude/homeLongitude`, Community; NEW: application location, and the server's rules for offering and assigning work.
 Out of scope: client-side-only distance filtering, deciding radius/ties/assignment expiry here.
 
 ### AGENT-002 Verify in one step
@@ -31,17 +31,20 @@ Out of scope: scheduled interviews, programme check-ins, granting final approval
 ### AGENT-003 Ban an existing merchant in my area
 As a Community Agent, I want to stop an unsafe merchant from selling, so that the local marketplace can be protected.
 
+My area is the set of communities assigned to me, the same way Hub Coordinators get theirs (D19). It defaults to the community nearest my home (senior interpretation in R5).
+
 Acceptance criteria
-- Given a merchant in my authorized area, when I submit a ban with a reason, then the shop is hidden, selling is blocked and actor/time/reason are stored (D18).
-- Given a merchant outside my area, when I attempt the same request directly, then the server refuses it without changing that merchant.
+- Given a merchant whose shop is in one of my assigned communities, when I ban them with a reason, then their shop is hidden, they cannot sell, and who banned them, when and why are stored (D18).
+- Given a merchant whose shop is in a community not assigned to me, when I send the same ban request directly to the server, then it is refused and the merchant is unchanged.
 - Given a ban, when I try to lift it as an agent, then the server refuses; only Hub Coordinator or Platform Admin may lift it, under the senior's D18 assumptions.
 
 Mobile and offline: confirmation names the shop and consequence; failures retain the reason; no offline ban success.
-Data: NEW: ban history, current ban status and server area authorization; existing shop/account/community links.
+Data: existing `AppUser.assignedCommunities` (table `app_user_communities`), shop community; NEW: ban history and current ban status.
 Out of scope: deleting the merchant's account, policy for existing paid orders or appeals.
 
 ## Open questions
 
-- Define nearest-agent radius, tie-breaking, capacity, claiming and expiry, and how “my area” for bans maps to proximity/offered work. Out-of-area access remains forbidden.
+- How far away can an application be offered? What happens on a tie, how many applications can one agent hold, and how long before an unclaimed offer moves to the next agent? Out-of-area access stays forbidden either way.
+- Who assigns an agent's communities, and can an agent have more than one? (The default, nearest community to home, was set by the senior in R5.)
 - Define acceptable evidence when GPS is unavailable and which verification notes the applicant may see.
 - Confirm agent self-verification/conflicts-of-interest handling and who may revise a submitted verification.

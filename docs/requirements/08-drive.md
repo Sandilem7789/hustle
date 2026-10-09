@@ -6,7 +6,7 @@ Current evidence: separate driver registration/login and job APIs exist. `/drive
 
 | Step | Driver may receive | Must not receive |
 |---|---|---|
-| Open nearby offer | Non-identifying job summary, relevant area/distance and agreed payout estimate | Buyer identity, phone, address, exact drop-off, hidden data in nested order objects |
+| Open nearby offer | A job summary that identifies no one, the area and distance, and a payout estimate once O8 is decided (blocked until then) | Buyer identity, phone, address, exact drop-off, hidden data in nested order objects |
 | Accepted by this driver | Collection point and instructions needed to collect | Buyer name/phone/drop-off; other drivers' jobs |
 | Collected / en route | Own current job's buyer name, phone, drop-off and relevant stops | Other orders, merchant sales, unrelated people/locations |
 | Completed | A separate non-identifying earnings summary only | Access to the completed job, buyer/collection details, route/proof photos |
@@ -18,7 +18,7 @@ As an adult driver, I want to apply from the shared menu, so that I can offer de
 
 Acceptance criteria
 - Given my phone account, when I select “Drive for thenga.com”, then identity is reused and vehicle, licence/identity evidence and home area are collected (D3, D9).
-- Given I am under 18, when I apply, then the server refuses eligibility; at 18 the age rule permits application (D11).
+- Given I am one day short of 18, when I apply, then the server refuses; on my 18th birthday the age rule lets me apply (D11).
 - Given agent approval but no final approval, when I open Drive, then I can see my application status but cannot take jobs; final coordinator approval enables eligibility (D17 driver's two-step flow is the senior's stated assumption).
 - Given rejected/pending status, when I reopen the application, then it explains that status instead of issuing separate driver credentials.
 
@@ -26,7 +26,7 @@ Mobile and offline: native camera/file input and labelled vehicle/community cont
 Data: existing Driver vehicle/licence/community fields; `AppUser.dateOfBirth`/home location; NEW: driver-to-account link and two-stage verification.
 Out of scope: `/driver/login`, new sessions, deciding licence exceptions for bicycles.
 
-### DRIVE-002 Find and accept nearby work
+### DRIVE-002 Find and accept nearby work (partly blocked: what "nearby" means)
 As an approved driver, I want nearby open jobs, so that I can choose my next delivery.
 
 Acceptance criteria
@@ -86,15 +86,15 @@ Acceptance criteria
 - Given a failed earnings request, when rendered, then it is an error rather than R0 earned.
 
 Mobile and offline: clear ZAR amount and period, stale totals labelled; distinguish earned from paid once settlement exists.
-Data: `DeliveryJob.payoutAmount` is current evidence; NEW: privacy-safe earnings projection and settlement state when specified.
+Data: `DeliveryJob.payoutAmount` exists today; NEW: an earnings view that shows amounts without any buyer or route details, and whether each amount has been paid, once specified.
 Out of scope: choosing driver/platform share, wallet, automatic cash-out or payment provider.
 
-### DRIVE-007 Handle an interrupted delivery
+### DRIVE-007 Handle an interrupted delivery (partly blocked: what happens next)
 As a driver, I want help when a job cannot proceed, so that I do not falsely mark it delivered.
 
 Acceptance criteria
 - Given location permission, routing or proof upload fails, when I remain on Current, then a clear retry/help state appears and the job retains the last confirmed status.
-- Given the buyer cannot be reached or delivery cannot be completed, when I request help, then the agreed escalation path must preserve the job state; no automatic Delivered outcome is allowed.
+- Given the buyer cannot be reached or the delivery cannot be completed, when I ask for help, then the job keeps its last confirmed status and is never marked Delivered automatically. Who I am put in touch with is not yet decided.
 
 Mobile and offline: actionable text, retained pending proof until upload outcome is known, no forced repeated photo capture for a transient failure.
 Data: existing job status; NEW: exception/escalation state only after policy is decided.

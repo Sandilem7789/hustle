@@ -1,6 +1,6 @@
 # thenga.com requirements
 
-Status: proposed acceptance requirements, awaiting Sandile.Claude review. Baseline: `84f17af` on 9 October 2026. This is P0.2, not permission to start Phases 2–6. The [platform plan](../THENGA_PLATFORM_PLAN.md), especially decisions D1–D19, governs these stories. Current behaviour is evidence, not a reason to retain a retired programme process.
+Status: accepted by Sandile.Claude in review R5 (9 October 2026), with the R5 fixes applied. Written against `68a2c62`. This is P0.2, not permission to start Phases 2–6. The [platform plan](../THENGA_PLATFORM_PLAN.md), especially decisions D1–D19, governs these stories. Current behaviour is evidence, not a reason to retain a retired programme process.
 
 ## Index and roles
 
@@ -19,7 +19,18 @@ Status: proposed acceptance requirements, awaiting Sandile.Claude review. Baseli
 
 ## Reading and testing stories
 
-Each stable ID identifies a user outcome, Given/When/Then checks, small-screen and weak-data behaviour, existing data versus NEW data, and exclusions. NEW describes a requirement, not a chosen schema or endpoint. The senior owns Phase 1 architecture. “Later” explicitly defers implementation. Open questions block only the associated behaviour; they do not reopen fixed decisions. The D17 driver approval and D18 agent-area/unban rules retain the senior's stated assumptions and are labelled in the relevant files.
+Each story has an ID that never changes. It says what the person wants, gives Given/When/Then checks a test can follow, and covers small screens and weak signal. It also says which data exists today and which is NEW, and what is left out. NEW means the data is needed; it does not choose the table or endpoint, which is the senior's job in Phase 1. "Later" means the story is written but not scheduled.
+
+An open question blocks only the part of a story that depends on it. It never reopens a decision in the plan. Stories that cannot be fully built yet say **(partly blocked: …)** in their title. Do not start a build task on the blocked part until the question is answered.
+
+Some rules come from the senior's interpretations of Sandile's decisions, not from Sandile directly. Each is marked where it is used, and Sandile can overrule any of them:
+- Driver applicants go through the same two approval steps as merchants (D17).
+- An agent can ban only merchants in their area, and only a Hub Coordinator or Platform Admin can lift a ban (D18).
+- An agent's area is the set of communities assigned to them, the same way as a Hub Coordinator's (D19). It defaults to the community nearest their home.
+- "3 months without a sale" (D15) means 90 days.
+- A sale means an order that reached DELIVERED or COLLECTED. The 90 days count from final approval or from the moment the latest order reached one of those statuses. Cancelled and unfinished orders do not count.
+- When staff reactivate a suspended shop, its 90 days start again from the reactivation.
+- The R1,200 threshold (D16) is the goods total before the delivery fee.
 
 Shared acceptance checks apply to every story:
 
@@ -41,14 +52,14 @@ Sources inspected: current `app.routes.ts`, app shell, all Keep/Transform page t
 | D8 | Phase gates in this index; implementation follows the platform plan |
 | D9, D10 | DRIVE-001–005, privacy matrix |
 | D11 | ONB-001, DRIVE-001 |
-| D12 | AGENT-001 |
+| D12 | AGENT-001, AGENT-003 |
 | D13 | AGENT-002 (no earnings/fee), OPS-004 |
 | D14 | ONB-001, AGENT-002 |
 | D15 | SELL-006, OPS-003 (89/90 day boundary) |
 | D16 | SHOP-005 (R1,199.99 / R1,200), SELL-005 |
 | D17 | ONB-002, OPS-002, DRIVE-001 |
-| D18 | AGENT-003, OPS-003 |
-| D19 | OPS-001, OPS-004 |
+| D18 | AGENT-003, OPS-002, OPS-003 |
+| D19 | OPS-001, OPS-002, OPS-003, OPS-004 |
 
 ## Screen coverage
 
@@ -70,3 +81,16 @@ Sources inspected: current `app.routes.ts`, app shell, all Keep/Transform page t
 | `/driver/register` | DRIVE-001 |
 
 The retired `/driver/login` receives no story; its replacement is the shared sign-in in ACC-001. Old URL redirects belong to P2.1, preserving a destination only where access is still allowed.
+
+## Stories that are partly blocked
+
+| Story | Blocked part | Waiting on |
+|---|---|---|
+| ACC-002 | Recovery without an email, and email as a second sign-in factor | Open questions in 01 |
+| AGENT-001 | Search radius, ties, how long an offer lasts | Open questions in 05 |
+| DRIVE-002 | What "nearby" means for drivers | Open questions in 08 |
+| DRIVE-006 | Any money amount shown to drivers | O8 |
+| DRIVE-007 | What happens when a delivery cannot be completed | Open questions in 08 |
+| ONB-003 | Reapplying after rejection | Open questions in 04 |
+| OPS-004 | Disputes | Open questions in 06 |
+| SELL-006 | The community spend figure | Open questions in 03 (P4.5) |
