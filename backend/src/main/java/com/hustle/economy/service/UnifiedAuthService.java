@@ -38,7 +38,10 @@ public class UnifiedAuthService {
 
         // Discard email if it looks like a phone number (common user mistake)
         String email = (request.getEmail() != null && request.getEmail().contains("@"))
-                ? request.getEmail() : null;
+                ? request.getEmail().trim() : null;
+        if (email != null && appUserRepository.existsByEmailIgnoreCase(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already used by another account");
+        }
 
         AppUser user = appUserRepository.save(AppUser.builder()
                 .phone(phone)
@@ -157,6 +160,7 @@ public class UnifiedAuthService {
             if (ha.isPresent()) {
                 Optional<BusinessProfile> bp = businessProfileRepository.findByApplication_Id(ha.get().getId());
                 if (bp.isPresent()) {
+                    claimShop(bp.get(), user);
                     businessProfileId = bp.get().getId().toString();
                     businessName = bp.get().getBusinessName();
                     businessType = bp.get().getBusinessType();
@@ -193,7 +197,7 @@ public class UnifiedAuthService {
         // Migrate to AppUser
         AppUser user = appUserRepository.save(AppUser.builder()
                 .phone(customer.getPhone())
-                .email(customer.getEmail())
+                .email(usableEmail(customer.getEmail()))
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
                 .passwordHash(customer.getPasswordHash())
@@ -233,7 +237,7 @@ public class UnifiedAuthService {
             AppUser user = appUserRepository.findByPhone(application.getPhone()).orElseGet(() -> {
                 AppUser newUser = appUserRepository.save(AppUser.builder()
                         .phone(application.getPhone())
-                        .email(application.getEmail())
+                        .email(usableEmail(application.getEmail()))
                         .firstName(application.getFirstName())
                         .lastName(application.getLastName())
                         .passwordHash(application.getPasswordHash())
@@ -285,13 +289,14 @@ public class UnifiedAuthService {
         // Migrate to AppUser
         AppUser user = appUserRepository.save(AppUser.builder()
                 .phone(application.getPhone())
-                .email(application.getEmail())
+                .email(usableEmail(application.getEmail()))
                 .firstName(application.getFirstName())
                 .lastName(application.getLastName())
                 .passwordHash(application.getPasswordHash())
                 .createdAt(OffsetDateTime.now())
                 .roles(appRoles)
                 .build());
+        claimShop(profile, user);
 
         String appToken = generateToken();
         appUserSessionRepository.save(AppUserSession.builder()
@@ -334,6 +339,23 @@ public class UnifiedAuthService {
             case COORDINATOR -> AppUserRole.COORDINATOR;
             default -> AppUserRole.HUSTLER;
         };
+    }
+
+    // Emails copied from legacy records are optional: drop anything that is not an
+    // email address or is already taken, rather than failing the login.
+    private String usableEmail(String candidate) {
+        if (candidate == null || !candidate.contains("@")) return null;
+        String email = candidate.trim();
+        return appUserRepository.existsByEmailIgnoreCase(email) ? null : email;
+    }
+
+    // Shops created before accounts were unified have no owner yet; link them on login.
+    // An account owns at most one shop, so a second unlinked shop stays unlinked.
+    private void claimShop(BusinessProfile shop, AppUser owner) {
+        if (shop.getOwner() == null && !businessProfileRepository.existsByOwner_Id(owner.getId())) {
+            shop.setOwner(owner);
+            businessProfileRepository.save(shop);
+        }
     }
 
     private String generateToken() {

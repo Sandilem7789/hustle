@@ -13,6 +13,7 @@ public interface BusinessProfileRepository extends JpaRepository<BusinessProfile
     Optional<BusinessProfile> findByApplication_Id(UUID applicationId);
     List<BusinessProfile> findByCommunity_IdAndStatus(UUID communityId, ApplicationStatus status);
     Optional<BusinessProfile> findFirstByBusinessName(String businessName);
+    boolean existsByOwner_Id(UUID ownerId);
 
     @Query("SELECT bp FROM BusinessProfile bp JOIN FETCH bp.application a JOIN FETCH bp.community c WHERE bp.status = 'APPROVED'")
     List<BusinessProfile> findAllApprovedFetched();

@@ -7,8 +7,10 @@ import com.hustle.economy.entity.*;
 import com.hustle.economy.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -128,23 +130,28 @@ public class HustlerApplicationService {
     }
 
     private void upsertBusinessProfile(HustlerApplication application) {
-        businessProfileRepository.findByApplication_Id(application.getId())
-                .orElseGet(() -> businessProfileRepository.save(BusinessProfile.builder()
-                        .application(application)
-                        .community(application.getCommunity())
-                        .businessName(application.getBusinessName())
-                        .businessType(application.getBusinessType())
-                        .description(application.getDescription())
-                        .vision(application.getVision())
-                        .mission(application.getMission())
-                        .targetCustomers(application.getTargetCustomers())
-                        .operatingArea(application.getOperatingArea())
-                        .latitude(application.getLatitude())
-                        .longitude(application.getLongitude())
-                        .status(ApplicationStatus.APPROVED)
-                        .createdAt(OffsetDateTime.now())
-                        .updatedAt(OffsetDateTime.now())
-                        .build()));
+        if (businessProfileRepository.findByApplication_Id(application.getId()).isPresent()) return;
+        AppUser owner = application.getAppUser();
+        if (owner != null && businessProfileRepository.existsByOwner_Id(owner.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This account already has a shop");
+        }
+        businessProfileRepository.save(BusinessProfile.builder()
+                .application(application)
+                .owner(owner)
+                .community(application.getCommunity())
+                .businessName(application.getBusinessName())
+                .businessType(application.getBusinessType())
+                .description(application.getDescription())
+                .vision(application.getVision())
+                .mission(application.getMission())
+                .targetCustomers(application.getTargetCustomers())
+                .operatingArea(application.getOperatingArea())
+                .latitude(application.getLatitude())
+                .longitude(application.getLongitude())
+                .status(ApplicationStatus.APPROVED)
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now())
+                .build());
     }
 
     private ApplicationStatus parseStatus(String statusValue) {

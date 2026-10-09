@@ -300,6 +300,7 @@ public class ApplicantService {
                 })
                 .orElseGet(() -> businessProfileRepository.save(BusinessProfile.builder()
                         .application(application)
+                        .owner(application.getAppUser())
                         .community(applicant.getCommunity())
                         .businessName(application.getBusinessName())
                         .businessType(application.getBusinessType())
