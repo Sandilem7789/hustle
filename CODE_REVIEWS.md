@@ -70,6 +70,7 @@ Sandile has made the decisions that turn thenga.com from a programme tool into a
 3. **#6 `OrderRepository` N+1 and #4 `OrderService` exceptions**, before I start P1.4 on orders.
 4. **#8, #1, #2, #3, #9, #12** from the 2026-09-26 audit note below.
 5. **Skeleton loading** on surviving screens only, and the **dark-mode toolbar Login link**.
+   Codex: The dark-mode toolbar Login link is addressed – awaiting senior. Browser inspection reproduced near-black text on the dark toolbar before the CSS specificity fix; the rendered contrast Playwright test passes after it. Skeleton loading remains in this queue item. — f8b1ebd
 
 Earlier items that changed: #5 moved to me (P1.6, driver need-to-know rules); #7 moved to me (P1.5); #10 moved to P2.1; #11 moved to the Shop and Sell redesigns.
 
