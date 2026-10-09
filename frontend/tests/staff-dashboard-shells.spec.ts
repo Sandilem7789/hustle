@@ -41,8 +41,14 @@ test.describe('authenticated staff dashboard shells', () => {
         const footer = page.locator('.staff-shell__footer');
         const scroller = page.locator(dashboard.scroller).first();
         await expect(shell).toBeVisible();
+        await expect(page.getByRole('heading', { name: dashboard.heading, exact: true })).toBeVisible();
         await expect(footer.getByRole('button', { name: 'Sign Out' })).toBeVisible();
-        await page.waitForTimeout(300);
+        if (viewport.width >= 768) {
+          await expect(page.locator('.bottom-nav')).toBeHidden();
+        }
+        // Measure only once the page entrance animation has finished moving the shell
+        await expect.poll(() => page.evaluate(() =>
+          document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity).length)).toBe(0);
         const headerBefore = await header.boundingBox();
         const footerBefore = await footer.boundingBox();
         await scroller.evaluate(element => {

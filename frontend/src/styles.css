@@ -63,6 +63,9 @@
   /* Touch / layout */
   --touch-target:      48px;
   --bottom-nav-height: 64px;
+  /* Height the nav actually takes up, including a notched phone's safe area.
+     Everything that leaves room for the nav uses this, so they cannot drift. */
+  --bottom-nav-total: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   --toolbar-height: 64px;
   --toolbar-strip-height: 3px;
   --header-height:     60px;
@@ -169,7 +172,7 @@ h1, h2, h3, h4, h5, h6 {
 .layout {
   max-width: 1100px;
   margin: 0 auto;
-  padding: var(--space-md) var(--space-md) calc(var(--bottom-nav-height) + var(--space-lg));
+  padding: var(--space-md) var(--space-md) calc(var(--bottom-nav-total) + var(--space-lg));
   display: flex;
   flex-direction: column;
   gap: 1.125rem;
@@ -183,7 +186,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ─── Bottom Nav Spacer ──────────────────────────────────────────────────── */
-.bottom-nav-spacer { height: var(--bottom-nav-height); }
+.bottom-nav-spacer { height: var(--bottom-nav-total); }
 
 /* ─── Cards ──────────────────────────────────────────────────────────────── */
 .card {
@@ -403,7 +406,7 @@ label {
 /* ─── Page Shell ─────────────────────────────────────────────────────────── */
 main.page-shell {
   padding-top: 0;
-  padding-bottom: var(--bottom-nav-height);
+  padding-bottom: var(--bottom-nav-total);
 }
 
 /* ─── Staff dashboard shell ───────────────────────────────────────────────
@@ -411,9 +414,9 @@ main.page-shell {
    dashboards fill only the space between them so the page itself never
    scrolls; each dashboard's middle region owns the scroll instead. */
 .staff-shell {
-  height: calc(100vh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-height));
-  height: calc(100svh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-height));
-  height: calc(100dvh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-height));
+  height: calc(100vh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-total));
+  height: calc(100svh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-total));
+  height: calc(100dvh - var(--toolbar-height) - var(--toolbar-strip-height) - var(--bottom-nav-total));
   max-width: 1100px;
   min-height: 0;
   margin: 0 auto;

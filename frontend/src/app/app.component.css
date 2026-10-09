@@ -328,7 +328,7 @@
 
 /* ─── Main Content Area ───────────────────────────────────────────────────── */
 .page-shell {
-  padding-bottom: var(--bottom-nav-height);
+  padding-bottom: var(--bottom-nav-total);
   min-height: calc(100vh - var(--toolbar-height) - var(--toolbar-strip-height));
   min-height: calc(100dvh - var(--toolbar-height) - var(--toolbar-strip-height));
 }
@@ -350,7 +350,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: var(--bottom-nav-total);
   background: var(--bg-surface);
   border-top: 1px solid var(--border-base);
   box-shadow: var(--shadow-nav);
@@ -442,7 +442,6 @@
 /* ─── Desktop Overrides ───────────────────────────────────────────────────── */
 @media (min-width: 768px) {
   .app-toolbar {
-    height: var(--toolbar-height);
     padding: 0 1rem;
   }
 
