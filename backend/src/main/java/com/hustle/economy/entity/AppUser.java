@@ -3,6 +3,7 @@ package com.hustle.economy.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,6 +38,19 @@ public class AppUser {
 
     @Column(nullable = false)
     private OffsetDateTime createdAt;
+
+    private LocalDate dateOfBirth;
+
+    private Double homeLatitude;
+
+    private Double homeLongitude;
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "app_user_communities",
+            joinColumns = @JoinColumn(name = "app_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "community_id"))
+    private Set<Community> assignedCommunities = new HashSet<>();
 
     @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
