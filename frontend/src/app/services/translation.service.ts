@@ -38,7 +38,6 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'toolbar.login': 'Login',
     'toolbar.cart': 'Cart',
 
-    'theme.light': 'Light mode',
     'theme.dark': 'Dark mode',
     'lang.label': 'Language',
 
@@ -126,7 +125,6 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'toolbar.login': 'Ngena',
     'toolbar.cart': 'Ikalishi',
 
-    'theme.light': 'Imodi Ekhanyayo',
     'theme.dark': 'Imodi Emnyama',
     'lang.label': 'Ulimi',
 

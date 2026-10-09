@@ -33,8 +33,8 @@
     <div class="prefs-row">
       <div class="prefs-item">
         <div class="prefs-item-label">
-          <mat-icon>{{ theme.theme() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
-          <span>{{ (theme.theme() === 'dark' ? 'theme.dark' : 'theme.light') | translate }}</span>
+          <mat-icon>dark_mode</mat-icon>
+          <span>{{ 'theme.dark' | translate }}</span>
         </div>
         <button
           type="button"
@@ -42,7 +42,7 @@
           role="switch"
           [class.on]="theme.theme() === 'dark'"
           [attr.aria-checked]="theme.theme() === 'dark'"
-          [attr.aria-label]="(theme.theme() === 'dark' ? 'theme.dark' : 'theme.light') | translate"
+          [attr.aria-label]="'theme.dark' | translate"
           (click)="theme.toggle()"
         >
           <span class="switch-knob"></span>

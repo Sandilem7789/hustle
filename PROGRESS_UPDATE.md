@@ -7,6 +7,13 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Dark mode fixes (2026-10-09)
+- **Menu and Material controls now follow dark mode.** The Angular Material theme was defined light-only, so the side menu's labels ("Browse Market", "My Orders", portals, "Logout") stayed near-black on the dark menu and the cart and menu icons were nearly invisible. `custom-theme.scss` now emits a dark Material theme under `[data-theme="dark"]`, which fixes every Material component at once (lists, icon buttons, form fields, dialogs, menus).
+- **Language switch** shows its "EN"/"ZU" label in dark mode (it was near-white text on the white knob).
+- **Dark mode switch** has one fixed label, "Dark mode", with on and off showing the state. It used to change to "Light mode" with the switch off, which read as "light mode is off".
+- **Product demo icons** are regenerated with transparent backgrounds, so each card's own background shows through instead of a bright beige block in dark mode. The icons live in the uploads volume, not git: rerun `scripts/generate-marketplace-seed-icons.js` and `docker cp` them in (the script header has the commands), including on production when it gets the demo products.
+- Verified on the branch build against the dev backend: dark-mode menu text measures rgb(227, 226, 230), light mode unchanged; marketplace and staff-shell tests 14 passed.
+
 ### Order lists in one query, platform requirements, staff shell fixes merged (2026-10-09)
 - **Order lists:** "My orders" and a merchant's incoming orders now load buyer, shop and items in one database query instead of one per order (7 statements for 4 orders before, 1 after; tested by counting statements). Order creation returns a clean 404 for a missing product without leaking its id, and the 60 km food cap returns the required customer message instead of a server error. Audit items #6 and #4; written by Codex, finished by Claude (R6).
 - **Platform requirements (P0.2):** 38 user stories with testable acceptance criteria across nine files in `docs/requirements/`, covering decisions D1 to D19. Reviewed and fixed in R5; partly blocked stories are labelled in the README.

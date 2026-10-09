@@ -19,17 +19,15 @@ const path = require('path');
 const OUT = path.join(__dirname, '.generated-seed-icons');
 fs.mkdirSync(OUT, { recursive: true });
 
-const BG = '#F5F0E8'; // --bg-muted, same tone the app already uses for "no photo" states
 const W = 480, H = 360;
 
-// Wraps an inner icon (drawn in a 0-0-240-240 box, centered) with the shared
-// tan card background so every icon reads as one consistent illustration
-// system, not 17 unrelated styles.
+// Centres an inner icon (drawn in a 0-0-240-240 box) on a transparent canvas.
+// No background is baked in: the product card's own --bg-muted shows through,
+// so the icons sit naturally in both light and dark mode.
 function frame(inner) {
   const cx = W / 2, cy = H / 2, s = 220; // icon bounding box size
   const x0 = cx - s / 2, y0 = cy - s / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
-    <rect width="${W}" height="${H}" fill="${BG}"/>
     <g transform="translate(${x0},${y0})">${inner}</g>
   </svg>`;
 }
