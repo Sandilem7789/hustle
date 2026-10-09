@@ -7,6 +7,10 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Staff shell review fix (2026-10-09)
+- Shared toolbar dimensions remove the outer 8px scroll on Facilitator, Coordinator and Operations. The actual Material scroller is tested at 360x640, 390x844 and 1280x900: nine failures before the fix, nine passes afterwards.
+- Docker rebuilt; backend: 14 passed. Full frontend: 14 passed, one known obsolete onboarding test failed (replacement assigned to P2.3). Details in R4.
+
 ### Platform plan Phase 1.0: Flyway migrations, and a working backend test suite (2026-10-09)
 - **Backend tests run again.** They had been failing on this machine with "no Docker found", which hid three real problems: Docker Engine 29 rejects the old API version Testcontainers asks for, the startup seeder needed `STAFF_PHONE`/`STAFF_PASSWORD` that only Docker's `.env` supplied, and the test database was stopped between test classes while Spring kept using it. All fixed in the test setup. Running them surfaced one real bug, now fixed: approving an app-submitted application that had no community crashed, because a shop must have one. `mvn test`: 12 pass.
 - **Flyway introduced** (`flyway-core`, version managed by Spring Boot). `V1__baseline_schema.sql` is the schema the current entities generate. Fresh databases run it; databases that already existed are only marked as version 1 (`baseline-on-migrate`) and nothing in them changes. Verified on the local dev database with real data: baseline recorded, all 23 products intact.
