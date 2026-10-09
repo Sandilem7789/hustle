@@ -5,6 +5,7 @@
 /* ─── Full-height container ──────────────────────────────────────────────── */
 .app-container {
   height: 100vh;
+  height: 100dvh;
   /* Material paints its own light-grey default here, which hid dark mode on any page without its own card */
   background-color: var(--bg-page);
   color: var(--text-primary);
@@ -19,7 +20,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  height: 64px;
+  height: var(--toolbar-height);
   padding: 0 0.5rem;
 }
 
@@ -112,7 +113,7 @@
 
 /* Rainbow accent strip below toolbar */
 .toolbar-rainbow {
-  height: 3px;
+  height: var(--toolbar-strip-height);
   background: linear-gradient(
     to right,
     #F5B800, #00A896, #E91E8C,
@@ -327,8 +328,9 @@
 
 /* ─── Main Content Area ───────────────────────────────────────────────────── */
 .page-shell {
-  padding-bottom: 72px;
-  min-height: calc(100vh - 64px - 3px);
+  padding-bottom: var(--bottom-nav-total);
+  min-height: calc(100vh - var(--toolbar-height) - var(--toolbar-strip-height));
+  min-height: calc(100dvh - var(--toolbar-height) - var(--toolbar-strip-height));
 }
 
 /* Page entrance animation */
@@ -348,7 +350,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: var(--bottom-nav-total);
   background: var(--bg-surface);
   border-top: 1px solid var(--border-base);
   box-shadow: var(--shadow-nav);
@@ -440,7 +442,6 @@
 /* ─── Desktop Overrides ───────────────────────────────────────────────────── */
 @media (min-width: 768px) {
   .app-toolbar {
-    height: 72px;
     padding: 0 1rem;
   }
 

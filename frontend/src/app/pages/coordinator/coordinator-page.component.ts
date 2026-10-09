@@ -17,26 +17,30 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       [requiredRoles]="['COORDINATOR']"
     ></app-login-gate>
 
-    <section class="layout" *ngIf="authorized()">
-      <div class="coord-banner">
-        <span class="coord-role">Coordinator View</span>
-        <span class="coord-note">You can see all 5 communities.</span>
+    <section class="staff-shell" *ngIf="authorized()">
+      <header class="staff-shell__header coord-header">
+        <div>
+          <h1 class="staff-shell__title">Coordinator</h1>
+          <p class="staff-shell__subtitle">Applicant pipeline, active hustlers, surveys and reports</p>
+        </div>
+        <span class="coord-note">All 5 communities</span>
+      </header>
+      <div class="staff-shell__content staff-shell__content--contained">
+        <app-facilitator-queue [coordinatorMode]="true"></app-facilitator-queue>
       </div>
-      <app-facilitator-queue [coordinatorMode]="true"></app-facilitator-queue>
-      <div class="signout-row">
+      <footer class="staff-shell__footer signout-row">
         <button class="signout-btn" (click)="logout()">Sign Out</button>
-      </div>
+      </footer>
     </section>
   `,
   styles: `
-    .layout { padding: 1rem; max-width: 900px; margin: 0 auto; }
-    .coord-banner { display: flex; align-items: center; gap: 0.75rem; background: rgba(0,168,150,0.08); border: 1px solid rgba(0,168,150,0.25); border-radius: 0.75rem; padding: 0.6rem 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    .coord-role { font-weight: 800; font-size: 0.85rem; color: #00746A; }
-    .coord-note { font-size: 0.82rem; color: #78716C; }
+    :host { display: block; }
+    app-facilitator-queue { display: block; height: 100%; min-height: 0; }
+    .coord-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .coord-note { flex-shrink: 0; border-radius: 999px; background: rgba(0,168,150,0.1); color: #00746A; padding: 0.35rem 0.7rem; font-size: 0.75rem; font-weight: 800; }
     .signout-row {
       display: flex;
       justify-content: center;
-      padding: 2rem 0 1rem;
     }
     .signout-btn {
       border: 1.5px solid #E7E5E4;
@@ -51,7 +55,9 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       min-height: 48px;
       transition: border-color 0.15s, color 0.15s;
     }
-    .signout-btn:hover { border-color: #E53935; color: #E53935; }
+    @media (hover: hover) and (pointer: fine) {
+      .signout-btn:hover { border-color: #E53935; color: #E53935; }
+    }
   `
 })
 export class CoordinatorPageComponent {

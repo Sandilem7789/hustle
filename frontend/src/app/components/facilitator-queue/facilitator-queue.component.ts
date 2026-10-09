@@ -23,6 +23,8 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
         <button [class.active]="fTab() === 'exports'" (click)="fTab.set('exports')">Exports</button>
       </div>
 
+      <div class="queue-scroll">
+
       <!-- ===== SURVEYS TAB ===== -->
       <ng-container *ngIf="fTab() === 'surveys'">
         <app-facilitator-surveys></app-facilitator-surveys>
@@ -976,6 +978,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
           </div>
         </div>
       </ng-container>
+      </div>
       <!-- ── Credentials modal (shown once after activation) ── -->
       <div class="pwd-overlay" *ngIf="credentialsMode()">
         <div class="pwd-modal" *ngIf="credentialsMode() === 'EXISTING_ACCOUNT'; else generatedCreds">
@@ -1009,13 +1012,19 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     </section>
   `,
   styles: `
-    .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    @media (max-width: 600px) { .card { padding: 0.75rem; border-radius: 1rem; } }
+    :host { display: block; height: 100%; min-height: 0; }
+    .card { height: 100%; min-height: 0; background: white; border-radius: 1rem; padding: 0.75rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; display: flex; flex-direction: column; overflow: hidden; }
+    .queue-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding: 0 0.125rem 0.5rem; scrollbar-gutter: stable; }
+    @media (min-width: 601px) { .card { padding: 2rem; border-radius: 1.5rem; } }
 
     /* Top-level tabs */
-    .top-tabs { display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 1.5rem; }
+    .top-tabs { flex: 0 0 auto; display: flex; border-bottom: 2px solid #E7E5E4; margin-bottom: 0.75rem; background: white; position: relative; z-index: 1; }
     .top-tabs button { flex: 1; padding: 0.75rem 0.5rem; border: none; background: none; font-size: 0.85rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: color 0.2s, border-color 0.2s; font-family: inherit; min-height: 48px; text-align: center; line-height: 1.25; }
     .top-tabs button.active { color: #1C1917; border-bottom: 2px solid #F5B800; margin-bottom: -2px; }
+
+    @media (min-width: 601px) {
+      .top-tabs { margin-bottom: 1.5rem; }
+    }
 
     .sub-heading { margin: 0 0 1.25rem; font-size: 0.9rem; color: #78716C; }
     .eyebrow { margin: 0 0 0.25rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #A8A29E; }

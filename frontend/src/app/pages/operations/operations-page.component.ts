@@ -18,13 +18,15 @@ import * as L from 'leaflet';
       [requiredRoles]="['FACILITATOR','COORDINATOR']"
     ></app-login-gate>
 
-    <div class="ops-shell" *ngIf="authorized()">
+    <div class="staff-shell ops-shell" *ngIf="authorized()">
 
       <!-- Header -->
-      <div class="ops-header">
-        <h1 class="ops-title">Operations</h1>
-        <p class="ops-subtitle">Community performance and GIS mapping</p>
-      </div>
+      <header class="staff-shell__header ops-header">
+        <h1 class="staff-shell__title">Operations</h1>
+        <p class="staff-shell__subtitle">Community performance and GIS mapping</p>
+      </header>
+
+      <div class="staff-shell__content ops-content">
 
       <!-- Community Analytics — grouped by province -->
       <section class="ops-section">
@@ -142,18 +144,20 @@ import * as L from 'leaflet';
         <p class="map-note">Coordinates are approximate — update via community settings once field-verified.</p>
       </section>
 
-      <!-- Sign Out -->
-      <div class="signout-row">
-        <button class="signout-btn" (click)="logout()">Sign Out</button>
       </div>
+
+      <!-- Sign Out -->
+      <footer class="staff-shell__footer signout-row">
+        <button class="signout-btn" (click)="logout()">Sign Out</button>
+      </footer>
 
     </div>
   `,
   styles: `
+    :host { display: block; }
     .signout-row {
       display: flex;
       justify-content: center;
-      padding: 2rem 0 1rem;
     }
     .signout-btn {
       border: 1.5px solid #E7E5E4;
@@ -168,29 +172,19 @@ import * as L from 'leaflet';
       min-height: 48px;
       transition: border-color 0.15s, color 0.15s;
     }
-    .signout-btn:hover { border-color: #E53935; color: #E53935; }
+    @media (hover: hover) and (pointer: fine) {
+      .signout-btn:hover { border-color: #E53935; color: #E53935; }
+    }
 
     .ops-shell {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1rem;
+      max-width: 1100px;
     }
 
     .ops-header {
-      padding: 1.25rem 0 0.5rem;
-      border-bottom: 2px solid #E7E5E4;
-      margin-bottom: 1.5rem;
+      border-bottom-width: 2px;
     }
-    .ops-title {
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: #1C1917;
-      margin: 0 0 0.25rem;
-    }
-    .ops-subtitle {
-      font-size: 0.875rem;
-      color: #78716C;
-      margin: 0;
+    .ops-content {
+      background: var(--bg-page);
     }
 
     .ops-section {

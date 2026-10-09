@@ -7,6 +7,10 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Staff shell review fix (2026-10-09)
+- Shared toolbar dimensions remove the outer 8px scroll on Facilitator, Coordinator and Operations. The actual Material scroller is tested at 360x640, 390x844 and 1280x900: nine failures before the fix, nine passes afterwards.
+- Docker rebuilt; backend: 14 passed. Full frontend: 14 passed, one known obsolete onboarding test failed (replacement assigned to P2.3). Details in R4.
+
 ### Platform plan Phase 1.0: Flyway migrations, and a working backend test suite (2026-10-09)
 - **Backend tests run again.** They had been failing on this machine with "no Docker found", which hid three real problems: Docker Engine 29 rejects the old API version Testcontainers asks for, the startup seeder needed `STAFF_PHONE`/`STAFF_PASSWORD` that only Docker's `.env` supplied, and the test database was stopped between test classes while Spring kept using it. All fixed in the test setup. Running them surfaced one real bug, now fixed: approving an app-submitted application that had no community crashed, because a shop must have one. `mvn test`: 12 pass.
 - **Flyway introduced** (`flyway-core`, version managed by Spring Boot). `V1__baseline_schema.sql` is the schema the current entities generate. Fresh databases run it; databases that already existed are only marked as version 1 (`baseline-on-migrate`) and nothing in them changes. Verified on the local dev database with real data: baseline recorded, all 23 products intact.
@@ -34,6 +38,12 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
   - Deleted 3 fully-dead route guard files (`hustler.guard.ts`, `facilitator.guard.ts`, `coordinator.guard.ts`) — confirmed zero references anywhere, `app.routes.ts` uses `LoginGateComponent` for gating instead and never wired these in.
 - Everything else (Order list N+1 query, missing phone masking on two facilitator/coordinator endpoints, `DispatchService` ignoring its own community filter, missing global exception handler, checkout/customer-orders using a full-page redirect instead of `LoginGateComponent`, mobile-first CSS inversions in two product grids, dead offline-queue code) is handed to Sandile.Codex via `CODE_REVIEWS.md` since each involves either a design call or enough surface area to warrant a normal reviewed diff.
 - One structural finding — the backend running five parallel auth/session mechanisms (`AppUserSession`, legacy `HustlerSession`, `CustomerAuthService`, fully-separate `DriverAuthService`) and the frontend mirroring it with four parallel signal stores — is flagged for Sandile's direction, not assigned to anyone yet, since `CLAUDE.md` reserves auth-mechanism changes for explicit discussion first.
+
+### Native staff dashboard shells (2026-09-26)
+- Rebuilt the authenticated Facilitator, Coordinator and Operations pages as viewport-bound application shells. Their role headers and sign-out footers stay visible while only the queue or operations workspace scrolls.
+- The shared shell accounts for the global toolbar, rainbow strip and mobile bottom navigation, uses dynamic viewport units with a `100vh` fallback, and expands at the existing 768px desktop breakpoint when the bottom navigation is hidden.
+- The Facilitator/Coordinator queue now keeps its primary tabs pinned above a contained work area; unauthenticated `LoginGateComponent` rendering is unchanged.
+- Added Playwright coverage at a 390×844 mobile viewport for all three routes plus an Operations desktop breakpoint check. All four shell tests pass against the rebuilt Docker stack.
 
 ### Marketplace search fix (2026-09-26)
 - Fixed the top-priority bug from `docs/MARKETPLACE_DESIGN_PROPOSAL.md`: typing in the marketplace search box never filtered the product grid. Root cause: `searchQuery` on `CommunityHubComponent` was a plain class field, but `filteredProducts` was an Angular `computed()` — `computed()` only re-runs when a signal it reads via a getter changes, so writes to a plain field never invalidated it.
