@@ -41,7 +41,7 @@ public class OrderService {
 
         for (OrderItemRequest itemReq : itemRequests) {
             Product product = productRepository.findById(itemReq.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found: " + itemReq.getProductId()));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
             loadedProducts.add(product);
             businessProfileIds.add(product.getBusiness().getId());
         }
@@ -70,7 +70,8 @@ public class OrderService {
                         req.getDeliveryLat(), req.getDeliveryLng());
 
                 if (distance > MAX_FOOD_DELIVERY_KM) {
-                    throw new RuntimeException("Delivery distance exceeds 60km limit for food orders");
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "This seller cannot deliver to your location. You can collect in person.");
                 }
             }
         }
