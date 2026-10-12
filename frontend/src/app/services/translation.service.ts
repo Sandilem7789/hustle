@@ -75,6 +75,10 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.close': 'Close',
     'marketplace.addToCart': 'Add to Cart',
     'marketplace.loginToBuy': 'Login to buy',
+    'marketplace.sortLabel': 'Sort',
+    'marketplace.sortNewest': 'Newest',
+    'marketplace.sortPriceAsc': 'Price: low to high',
+    'marketplace.sortPriceDesc': 'Price: high to low',
 
     'auth.login': 'Login',
     'auth.register': 'Register',
@@ -163,6 +167,10 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.close': 'Vala',
     'marketplace.addToCart': 'Faka Ekalishini',
     'marketplace.loginToBuy': 'Ngena Ukuze Uthenge',
+    'marketplace.sortLabel': 'Hlela',
+    'marketplace.sortNewest': 'Okusha kakhulu',
+    'marketplace.sortPriceAsc': 'Intengo: ephansi kuya kwephezulu',
+    'marketplace.sortPriceDesc': 'Intengo: ephezulu kuya kwephansi',
 
     'auth.login': 'Ngena',
     'auth.register': 'Bhalisa',

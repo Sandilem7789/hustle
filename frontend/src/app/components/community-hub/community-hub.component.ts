@@ -137,7 +137,17 @@ type LoadState = 'loading' | 'ready' | 'error';
         </div>
 
         <ng-container *ngIf="filteredProducts().length > 0">
-          <p class="result-count" aria-hidden="true">{{ countLabel() }}</p>
+          <div class="result-bar">
+            <p class="result-count" aria-hidden="true">{{ countLabel() }}</p>
+            <div class="sort">
+              <label class="sort-label" for="market-sort">{{ 'marketplace.sortLabel' | translate }}</label>
+              <select id="market-sort" class="sort-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+                <option value="newest">{{ 'marketplace.sortNewest' | translate }}</option>
+                <option value="priceAsc">{{ 'marketplace.sortPriceAsc' | translate }}</option>
+                <option value="priceDesc">{{ 'marketplace.sortPriceDesc' | translate }}</option>
+              </select>
+            </div>
+          </div>
           <ul class="grid" role="list">
             <li class="p-card" *ngFor="let p of filteredProducts(); trackBy: trackById">
               <div class="p-media">
@@ -430,6 +440,30 @@ type LoadState = 'loading' | 'ready' | 'error';
       margin: 0.25rem 0 0.75rem;
     }
 
+    .result-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem 0.75rem;
+      margin: 0.25rem 0 0.75rem;
+    }
+    .result-bar .result-count { margin: 0; }
+    .sort { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; }
+    .sort-label {
+      display: inline;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .sort-select {
+      width: auto;
+      min-height: 48px;
+      padding: 0 0.75rem;
+      font-size: 0.9375rem;
+      font-weight: 700;
+    }
+
     .grid {
       list-style: none;
       margin: 0;
@@ -691,6 +725,7 @@ export class CommunityHubComponent implements OnDestroy {
   products          = signal<ProductResponse[]>([]);
   selectedCategory  = signal<string>('ALL');
   searchQuery       = signal('');
+  sortBy            = signal<'newest' | 'priceAsc' | 'priceDesc'>('newest');
   loadState         = signal<LoadState>('loading');
   showAllCategories = signal(false);
   selectedProduct   = signal<ProductResponse | null>(null);
@@ -703,12 +738,17 @@ export class CommunityHubComponent implements OnDestroy {
 
   filteredProducts = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
-    if (!q) return this.products();
-    return this.products().filter(p =>
+    const matches = !q ? this.products() : this.products().filter(p =>
       p.name?.toLowerCase().includes(q) ||
       p.description?.toLowerCase().includes(q) ||
       p.businessName?.toLowerCase().includes(q) ||
       p.category?.toLowerCase().includes(q)
+    );
+    const sort = this.sortBy();
+    return [...matches].sort((a, b) =>
+      sort === 'priceAsc'  ? a.price - b.price :
+      sort === 'priceDesc' ? b.price - a.price :
+      (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
     );
   });
 
