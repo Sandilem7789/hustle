@@ -108,7 +108,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     .no-img { width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: #F5F0E8; }
     .product-body { padding: 0.9rem; }
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; color: #1C1917; font-weight: 800; }
-    .product-link { display: inline-flex; align-items: center; min-height: 48px; color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+    .product-link { display: inline-flex; align-items: center; min-height: 48px; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
     .product-link:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
     .cat-tag { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; margin-bottom: 0.4rem; text-transform: uppercase; }
     .desc { font-size: 0.85rem; margin: 0.3rem 0 0.5rem; line-height: 1.4; color: #78716C; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
