@@ -26,21 +26,21 @@ interface TimelineStep {
     <div class="layout">
 
       <div class="card" *ngIf="!customerAuth.isLoggedIn()">
-        <h2>Please log in to view your orders</h2>
-        <a routerLink="/customer/login" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Go to Login</a>
+        <h2>{{ 'orders.loginPrompt' | translate }}</h2>
+        <a routerLink="/customer/login" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">{{ 'orders.goToLogin' | translate }}</a>
       </div>
 
       <ng-container *ngIf="customerAuth.isLoggedIn()">
         <div class="page-header">
-          <h1>My Orders</h1>
-          <p class="muted">Track your purchases from thenga.com</p>
+          <h1>{{ 'sidenav.myOrders' | translate }}</h1>
+          <p class="muted">{{ 'orders.subtitle' | translate }}</p>
         </div>
 
         <app-loading-skeleton [loading]="loading()" variant="order"></app-loading-skeleton>
 
         <div *ngIf="!loading() && orders().length === 0" class="card">
-          <p class="muted">You haven't placed any orders yet.</p>
-          <a routerLink="/marketplace" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Start Shopping</a>
+          <p class="muted">{{ 'orders.empty' | translate }}</p>
+          <a routerLink="/marketplace" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">{{ 'orders.startShopping' | translate }}</a>
         </div>
 
         <div *ngFor="let order of orders()" class="order-card">
@@ -49,12 +49,15 @@ interface TimelineStep {
               <span class="order-id">#{{ order.id.slice(0, 8).toUpperCase() }}</span>
               <span class="order-date muted">{{ order.createdAt | date:'d MMM yyyy, h:mm a' }}</span>
             </div>
-            <span class="status-badge" [ngClass]="statusClass(order.status)">{{ statusLabel(order.status) }}</span>
+            <span class="status-badge" [ngClass]="statusClass(order.status)">{{ 'orders.step.' + order.status | translate }}</span>
           </div>
 
           <div class="order-meta">
-            <span class="meta-chip">{{ order.fulfillmentType === 'DELIVERY' ? '🚚 Delivery' : '🏪 Collection' }}</span>
-            <span class="meta-chip">{{ order.transactionType }}</span>
+            <span class="meta-chip">
+              <mat-icon aria-hidden="true">{{ order.fulfillmentType === 'DELIVERY' ? 'local_shipping' : 'storefront' }}</mat-icon>
+              {{ (order.fulfillmentType === 'DELIVERY' ? 'orders.delivery' : 'orders.collection') | translate }}
+            </span>
+            <span class="meta-chip" *ngIf="order.transactionType">{{ 'orders.type.' + order.transactionType | translate }}</span>
           </div>
 
           <p class="tl-cancelled" *ngIf="order.status === 'CANCELLED'">
@@ -68,7 +71,7 @@ interface TimelineStep {
           </ol>
 
           <div class="seller-info">
-            <span class="field-label">Seller</span>
+            <span class="field-label">{{ 'orders.seller' | translate }}</span>
             <span>{{ order.hustlerName }}</span>
           </div>
 
@@ -80,21 +83,21 @@ interface TimelineStep {
           </div>
 
           <div *ngIf="order.deliveryAddress" class="delivery-addr">
-            📍 {{ order.deliveryAddress }}
+            <mat-icon aria-hidden="true">place</mat-icon>{{ order.deliveryAddress }}
           </div>
 
           <div class="pickup-qr-box" *ngIf="needsPickupQr(order)">
             <ng-container *ngIf="qrDataUrls()[order.id]; else qrLoading">
-              <img [src]="qrDataUrls()[order.id]" alt="Pickup QR code" class="pickup-qr-img" />
+              <img [src]="qrDataUrls()[order.id]" [alt]="'orders.qrAlt' | translate" class="pickup-qr-img" />
             </ng-container>
             <ng-template #qrLoading>
-              <p class="muted">Generating pickup code…</p>
+              <p class="muted">{{ 'orders.qrLoading' | translate }}</p>
             </ng-template>
-            <p class="pickup-qr-label">Show this to the seller when you collect your order</p>
+            <p class="pickup-qr-label">{{ 'orders.qrHint' | translate }}</p>
           </div>
 
           <div class="order-total">
-            <span class="total-label">Total</span>
+            <span class="total-label">{{ 'orders.total' | translate }}</span>
             <span class="total-amount">R {{ order.totalAmount | number:'1.2-2' }}</span>
           </div>
         </div>
@@ -113,7 +116,7 @@ interface TimelineStep {
     .order-date { font-size: 0.78rem; display: block; color: var(--text-muted); }
 
     .order-meta { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
-    .meta-chip { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: var(--bg-muted); color: var(--text-secondary); }
+    .meta-chip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: var(--bg-muted); color: var(--text-secondary); }
 
     .sr-only {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -194,7 +197,8 @@ interface TimelineStep {
     .order-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--text-primary); padding: 0.4rem 0; border-bottom: 1px solid var(--border-base); }
     .item-detail { color: var(--text-muted); font-size: 0.82rem; }
 
-    .delivery-addr { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(245,184,0,0.06); border: 1px solid rgba(245,184,0,0.2); border-radius: 0.75rem; }
+    .delivery-addr { display: flex; align-items: flex-start; gap: 0.375rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(245,184,0,0.06); border: 1px solid rgba(245,184,0,0.2); border-radius: 0.75rem; }
+    .delivery-addr mat-icon { flex-shrink: 0; width: 18px; height: 18px; font-size: 18px; }
 
     .pickup-qr-box { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding: 1rem; background: var(--bg-muted); border: 2px dashed var(--border-base); border-radius: 1rem; text-align: center; }
     .pickup-qr-img { width: 160px; height: 160px; }
@@ -212,9 +216,17 @@ interface TimelineStep {
     .status-en-route { background: rgba(245,184,0,0.15); color: #92620A; }
     .status-delivered { background: rgba(45,179,68,0.12); color: #166534; }
     .status-collected { background: rgba(45,179,68,0.12); color: #166534; }
-    .status-cancelled { background: rgba(229,57,53,0.1); color: #E53935; }
+    .status-cancelled { background: rgba(229,57,53,0.1); color: #C62828; }
+    .meta-chip mat-icon { width: 16px; height: 16px; font-size: 16px; }
+    :host-context([data-theme="dark"]) .status-pending { background: var(--bg-muted); color: var(--text-secondary); }
+    :host-context([data-theme="dark"]) .status-confirmed { background: rgba(27,111,212,0.22); color: #9CC3F5; }
+    :host-context([data-theme="dark"]) .status-driver-assigned { background: rgba(139,47,201,0.24); color: #D3AEF5; }
+    :host-context([data-theme="dark"]) .status-en-route { background: rgba(245,184,0,0.18); color: #F5CB4D; }
+    :host-context([data-theme="dark"]) .status-delivered,
+    :host-context([data-theme="dark"]) .status-collected { background: rgba(45,179,68,0.2); color: #86E09B; }
+    :host-context([data-theme="dark"]) .status-cancelled { background: rgba(229,57,53,0.2); color: #FF9E99; }
 
-    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
+    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: var(--hustle-yellow); color: #1C1917; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
     .btn-primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
   `
 })
@@ -271,19 +283,6 @@ export class CustomerOrdersPageComponent implements OnInit {
         // QR generation failed — customer can still reference the order id with the seller
       }
     }
-  }
-
-  statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      PENDING: 'Pending',
-      CONFIRMED: 'Confirmed',
-      DRIVER_ASSIGNED: 'Driver Assigned',
-      EN_ROUTE: 'En Route',
-      DELIVERED: 'Delivered',
-      COLLECTED: 'Collected',
-      CANCELLED: 'Cancelled'
-    };
-    return map[status] ?? status;
   }
 
   statusClass(status: string): string {

@@ -7,6 +7,7 @@ import { CartService } from '../../services/cart.service';
 import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { categoryIcon, categoryLabelKey } from '../../utils/product-categories';
 
 @Component({
   selector: 'app-business-page',
@@ -14,7 +15,9 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
   imports: [CommonModule, RouterLink, MatIconModule, TranslatePipe, LoadingSkeletonComponent],
   template: `
     <div class="page">
-      <button class="back-btn" (click)="goBack()">← Back to Marketplace</button>
+      <button type="button" class="back-btn" (click)="goBack()">
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>{{ 'business.backToMarket' | translate }}
+      </button>
 
       <app-loading-skeleton [loading]="loading()" variant="product"></app-loading-skeleton>
 
@@ -31,35 +34,27 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
           </div>
         </header>
 
-        <div *ngIf="products().length === 0" class="muted empty">
-          No products listed by this business yet.
-        </div>
+        <p *ngIf="products().length === 0" class="empty">{{ 'business.noProducts' | translate }}</p>
 
         <div class="product-grid" *ngIf="products().length > 0">
           <article *ngFor="let p of products()" class="product-card">
-            <a [routerLink]="['/product', p.id]" tabindex="-1" aria-hidden="true">
-              <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="" class="product-img" loading="lazy" />
-              <div class="no-img" *ngIf="!p.mediaUrl">🛒</div>
+            <a class="media" [routerLink]="['/product', p.id]" tabindex="-1" aria-hidden="true">
+              <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="" class="product-img" loading="lazy" decoding="async" width="400" height="300" />
+              <span class="no-img" *ngIf="!p.mediaUrl">
+                <mat-icon aria-hidden="true">{{ categoryIcon(p.category) }}</mat-icon>
+              </span>
             </a>
             <div class="product-body">
-              <h3><a class="product-link" [routerLink]="['/product', p.id]">{{ p.name }}</a></h3>
-              <span *ngIf="p.category" class="cat-tag">{{ p.category }}</span>
-              <p class="muted desc">{{ p.description }}</p>
+              <h2 class="product-name"><a class="product-link" [routerLink]="['/product', p.id]">{{ p.name }}</a></h2>
+              <span *ngIf="categoryLabelKey(p.category) as key" class="cat-tag">{{ key | translate }}</span>
+              <p class="desc" *ngIf="p.description">{{ p.description }}</p>
               <p class="price">R {{ p.price | number:'1.2-2' }}</p>
 
-              <button
-                *ngIf="customerAuth.isLoggedIn()"
-                class="buy-btn"
-                (click)="addToCart(p)"
-              >
-                🛒 Add to Cart
+              <button *ngIf="customerAuth.isLoggedIn()" type="button" class="buy-btn" (click)="addToCart(p)">
+                <mat-icon aria-hidden="true">add_shopping_cart</mat-icon>{{ 'marketplace.addToCart' | translate }}
               </button>
-              <button
-                *ngIf="!customerAuth.isLoggedIn()"
-                class="login-buy-btn"
-                (click)="goToLogin()"
-              >
-                🔑 Login to buy
+              <button *ngIf="!customerAuth.isLoggedIn()" type="button" class="login-buy-btn" (click)="goToLogin()">
+                <mat-icon aria-hidden="true">login</mat-icon>{{ 'marketplace.loginToBuy' | translate }}
               </button>
             </div>
           </article>
@@ -68,58 +63,72 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     </div>
   `,
   styles: `
-    .page { max-width: 960px; margin: 0 auto; padding: 1.25rem; }
+    .page { max-width: 960px; margin: 0 auto; padding: 1rem; }
+    @media (min-width: 768px) { .page { padding: 1.5rem; } }
 
-    .back-btn { background: none; border: none; color: #78716C; font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 0; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.4rem; font-family: inherit; min-height: 44px; }
-    .back-btn:hover { color: #1C1917; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      min-height: 48px; padding: 0 0.25rem; margin-bottom: 1rem;
+      background: none; border: none; border-radius: var(--radius-sm);
+      color: var(--text-secondary); font: inherit; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+    }
+    .back-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
     .biz-header { margin-bottom: 1.5rem; }
-    .biz-name { font-size: 1.6rem; font-weight: 900; color: #1C1917; margin: 0; }
+    .biz-name { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin: 0; }
+    @media (min-width: 768px) { .biz-name { font-size: 1.75rem; } }
 
     .share { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
     @media (min-width: 768px) { .share { max-width: 360px; } }
     .share-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      flex: 1 1 10rem;
-      min-height: 48px;
-      padding: 0 1rem;
-      border: 2px solid var(--border-base);
-      border-radius: var(--radius-sm);
-      background: var(--bg-surface);
-      color: var(--text-primary);
-      font-size: 0.9375rem;
-      font-weight: 800;
-      text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      flex: 1 1 10rem; min-height: 48px; padding: 0 1rem;
+      border: 2px solid var(--border-base); border-radius: var(--radius-sm);
+      background: var(--bg-surface); color: var(--text-primary);
+      font-size: 0.9375rem; font-weight: 800; text-decoration: none;
     }
     .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; color: var(--brand-text); }
     .share-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
-    .empty { margin-top: 2rem; font-size: 1rem; }
+    .empty { margin: 2rem 0 0; font-size: 1rem; font-weight: 700; color: var(--text-secondary); }
 
-    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
-    @media (max-width: 600px) { .product-grid { grid-template-columns: 1fr; } }
+    .product-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 600px) { .product-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); } }
 
-    .product-card { border: 1px solid #E7E5E4; border-radius: 1rem; overflow: hidden; background: white; transition: box-shadow 0.15s; }
-    .product-card:hover { box-shadow: 0 6px 24px rgba(28,25,23,0.12); }
-    .product-img { width: 100%; height: 160px; object-fit: cover; display: block; }
-    .no-img { width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: #F5F0E8; }
-    .product-body { padding: 0.9rem; }
-    .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; color: #1C1917; font-weight: 800; }
+    .product-card {
+      display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid var(--border-base); border-radius: var(--radius-md);
+      background: var(--bg-surface);
+    }
+    .media { display: block; aspect-ratio: 4 / 3; background: var(--bg-muted); }
+    .product-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .no-img { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: var(--text-secondary); }
+    .no-img mat-icon { width: 40px; height: 40px; font-size: 40px; }
+
+    .product-body { display: flex; flex-direction: column; align-items: flex-start; flex: 1; padding: 0.75rem 0.875rem 0.875rem; }
+    .product-name { margin: 0; font-size: 1rem; font-weight: 800; color: var(--text-primary); }
     .product-link { display: inline-flex; align-items: center; min-height: 48px; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
     .product-link:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
-    .cat-tag { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; margin-bottom: 0.4rem; text-transform: uppercase; }
-    .desc { font-size: 0.85rem; margin: 0.3rem 0 0.5rem; line-height: 1.4; color: #78716C; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .price { font-weight: 800; color: var(--success-text); font-size: 1rem; margin: 0 0 0.75rem; }
+    .cat-tag {
+      display: inline-block; margin-bottom: 0.375rem; padding: 0.15rem 0.5rem;
+      border: 1px solid var(--border-base); border-radius: var(--radius-pill);
+      color: var(--brand-text); font-size: 0.75rem; font-weight: 800;
+    }
+    .desc {
+      margin: 0.25rem 0 0.5rem; font-size: 0.875rem; line-height: 1.4; color: var(--text-secondary);
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .price { margin: auto 0 0.75rem; font-size: 1.0625rem; font-weight: 900; color: var(--success-text); font-variant-numeric: tabular-nums; }
 
-    .buy-btn { width: 100%; border: none; border-radius: 0.75rem; padding: 0.65rem 1rem; font-size: 0.9rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; min-height: 44px; font-family: inherit; transition: box-shadow 0.15s; }
-    .buy-btn:hover { box-shadow: 0 4px 14px rgba(245,184,0,0.4); }
-    .login-buy-btn { width: 100%; border: 1.5px solid #E7E5E4; border-radius: 0.75rem; padding: 0.65rem 1rem; font-size: 0.9rem; font-weight: 700; background: white; color: #78716C; cursor: pointer; min-height: 44px; font-family: inherit; transition: border-color 0.15s, color 0.15s; }
-    .login-buy-btn:hover { border-color: #F5B800; color: #1C1917; }
-
-    .muted { color: #A8A29E; }
+    .buy-btn, .login-buy-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+      width: 100%; min-height: 48px; padding: 0 1rem; border-radius: var(--radius-sm);
+      font: inherit; font-size: 0.9375rem; font-weight: 800; cursor: pointer;
+    }
+    .buy-btn { border: none; background: var(--hustle-yellow); color: #1C1917; }
+    .login-buy-btn { border: 2px solid var(--border-base); background: var(--bg-surface); color: var(--text-primary); }
+    .buy-btn mat-icon, .login-buy-btn mat-icon { width: 20px; height: 20px; font-size: 20px; }
+    .buy-btn:focus-visible, .login-buy-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
   `
 })
 export class BusinessPageComponent implements OnInit {
@@ -134,6 +143,9 @@ export class BusinessPageComponent implements OnInit {
   loading = signal(true);
   readonly canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
   private businessId = '';
+
+  readonly categoryIcon = categoryIcon;
+  readonly categoryLabelKey = categoryLabelKey;
 
   ngOnInit(): void {
     const businessId = this.route.snapshot.paramMap.get('businessId');
