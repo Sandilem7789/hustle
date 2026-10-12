@@ -78,10 +78,7 @@ public class DispatchService {
         job.setStatus(JobStatus.ASSIGNED);
         job.setAcceptedAt(OffsetDateTime.now());
 
-        Order order = job.getOrder();
-        order.setStatus(OrderStatus.DRIVER_ASSIGNED);
-        order.setUpdatedAt(OffsetDateTime.now());
-        orderRepository.save(order);
+        setOrderStatus(job.getOrder(), OrderStatus.DRIVER_ASSIGNED);
 
         return toResponse(deliveryJobRepository.save(job));
     }
@@ -99,15 +96,16 @@ public class DispatchService {
 
         job.setStatus(newStatus);
 
+        if (newStatus == JobStatus.EN_ROUTE) {
+            setOrderStatus(job.getOrder(), OrderStatus.EN_ROUTE);
+        }
+
         if (newStatus == JobStatus.DELIVERED) {
             job.setDeliveredAt(OffsetDateTime.now());
             if (proofPhotoUrl != null) {
                 job.setProofPhotoUrl(proofPhotoUrl);
             }
-            Order order = job.getOrder();
-            order.setStatus(OrderStatus.DELIVERED);
-            order.setUpdatedAt(OffsetDateTime.now());
-            orderRepository.save(order);
+            setOrderStatus(job.getOrder(), OrderStatus.DELIVERED);
         }
 
         return toResponse(deliveryJobRepository.save(job));
@@ -127,6 +125,12 @@ public class DispatchService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    private void setOrderStatus(Order order, OrderStatus status) {
+        order.setStatus(status);
+        order.setUpdatedAt(OffsetDateTime.now());
+        orderRepository.save(order);
     }
 
     private void validateTransition(JobStatus current, JobStatus next) {
