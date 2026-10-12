@@ -7,6 +7,14 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Product page, sharing and "More from this seller" (2026-10-12)
+- **Product page at `/product/:id`.** Marketplace cards and business page cards now open a page of their own instead of the bottom sheet (CLAUDE.md prefers routes over modals on mobile), so items can be linked to, shared and opened with the phone's back button. Single column on mobile, photo beside details from 768px. It shows the photo (whole, never cropped, with the category icon when there is none), name, price, category, description, any options, and the seller as a link to their business page. "Add to Cart" works as the sheet did (adds the item, opens checkout); logged out it shows "Login to buy", which returns to the product after login. It has loading, error-with-retry and not-found states. Back returns to the previous screen, or to the marketplace on a deep link. The sheet code is removed from the marketplace.
+- **Share.** The product page and business page have a "Share on WhatsApp" link (`wa.me/?text=` with the name, price for products, and the page link) and, where the phone supports it, a "Share" button that opens the native share sheet. A plain link, not the WhatsApp Business API.
+- **More from this seller.** Up to 6 of the seller's other items in a horizontally scrolling row, each opening its own product page. Hidden when the seller has nothing else.
+- New public endpoint `GET /api/products/{id}`; its 404 message does not contain the id.
+- Tests: backend `ProductDetailIntegrationTest` (found and 404), `mvn test` 23 passed. New `frontend/tests/product-page.spec.ts` (11 tests). Full Playwright suite 28 passed, with only the obsolete onboarding test failing as before. isiZulu strings for the new labels are AI best-effort, same caveat as the rest.
+- Not done: the business page still has older hardcoded light colours (its shop name is unreadable in dark mode, untranslated labels); this pass only added sharing and product links to it.
+
 ### Community chosen in the menu, app-wide (2026-10-09)
 - The marketplace no longer has its own row of community buttons. The community is now an app-wide setting in the menu, next to Dark mode and Language, using the phone's native picker. It is remembered between visits and defaults to "All communities". A remembered community that no longer exists falls back to "All communities" instead of silently emptying the marketplace.
 - The marketplace follows the setting and names it in the result count ("9 items in KwaNgwenya"), so a filtered list is never a surprise. The "Show all communities" action on an empty community still works.
@@ -250,7 +258,7 @@ Full pre-onboarding pipeline for facilitators to capture and track applicants fr
 
 ### Product Card & Detail UX
 - Product cards redesigned: image takes ~68% of card, name/price in bottom strip, no action buttons on card
-- Tapping opens a bottom sheet (mobile) / modal (desktop) with full details and Add to Cart button
+- Tapping opens a bottom sheet (mobile) / modal (desktop) with full details and Add to Cart button (replaced by the `/product/:id` page on 2026-10-12)
 
 ### Navigation & Side Panel UX
 - Toolbar logo centered; sidenav font matches main body (Nunito 400)
@@ -308,6 +316,7 @@ Configurable survey templates so facilitators can edit question sets without a c
 | PATCH | `/api/products/{id}` | Update product (auth required) |
 | DELETE | `/api/products/{id}` | Delete product (auth required) |
 | GET | `/api/products?communityId=` | Public product listing |
+| GET | `/api/products/{id}` | Public product detail (404 without the id in the message) |
 | POST | `/api/uploads` | Upload image (auth required) |
 | GET | `/api/uploads/{filename}` | Serve uploaded image |
 | POST | `/api/income` | Log income entry (auth required) |
