@@ -21,6 +21,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Query("SELECT p FROM Product p JOIN FETCH p.business b LEFT JOIN FETCH b.community WHERE b.community.id = :communityId ORDER BY p.createdAt DESC")
     List<Product> findByCommunityIdFetched(@Param("communityId") UUID communityId);
 
+    @Query("SELECT p FROM Product p JOIN FETCH p.business b LEFT JOIN FETCH b.community WHERE p.id = :id")
+    Optional<Product> findByIdFetched(@Param("id") UUID id);
+
     @Query("SELECT p FROM Product p JOIN FETCH p.business b LEFT JOIN FETCH b.community ORDER BY p.createdAt DESC")
     List<Product> findAllFetched();
 

@@ -76,6 +76,13 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public ProductResponse getProduct(UUID productId) {
+        Product product = productRepository.findByIdFetched(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+        return toResponse(product);
+    }
+
+    @Transactional(readOnly = true)
     public List<ProductResponse> listMyProducts(UUID businessProfileId) {
         return productRepository.findByBusinessIdFetched(businessProfileId)
                 .stream().map(this::toResponse).toList();
