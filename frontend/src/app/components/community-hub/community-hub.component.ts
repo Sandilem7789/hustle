@@ -178,6 +178,30 @@ type LoadState = 'loading' | 'ready' | 'error';
                   <p class="p-seller">{{ p.businessName }}</p>
                   <p class="p-price">R {{ p.price | number:'1.2-2' }}</p>
                 </div>
+                <div class="p-cart">
+                  <button
+                    *ngIf="!cartQty().get(p.id); else stepper"
+                    type="button"
+                    class="qa-add"
+                    [id]="'qa-add-' + p.id"
+                    [attr.aria-label]="withName('marketplace.quickAdd', p.name)"
+                    (click)="quickAdd(p)"
+                  >
+                    <mat-icon aria-hidden="true">add_shopping_cart</mat-icon>
+                    <span>{{ 'marketplace.add' | translate }}</span>
+                  </button>
+                  <ng-template #stepper>
+                    <div class="qa-stepper" role="group" [attr.aria-label]="withName('marketplace.qtyGroup', p.name)">
+                      <button type="button" class="qa-step" [attr.aria-label]="withName('marketplace.removeOne', p.name)" (click)="decrease(p)">
+                        <mat-icon aria-hidden="true">remove</mat-icon>
+                      </button>
+                      <span class="qa-qty" aria-live="polite">{{ cartQty().get(p.id) }}<span class="sr-only"> {{ 'marketplace.inCart' | translate }}</span></span>
+                      <button type="button" class="qa-step" [id]="'qa-plus-' + p.id" [attr.aria-label]="withName('marketplace.addOne', p.name)" (click)="quickAdd(p)">
+                        <mat-icon aria-hidden="true">add</mat-icon>
+                      </button>
+                    </div>
+                  </ng-template>
+                </div>
               </div>
             </li>
           </ul>
@@ -564,6 +588,53 @@ type LoadState = 'loading' | 'ready' | 'error';
       font-variant-numeric: tabular-nums;
     }
 
+    /* Sits above the stretched card button so it is its own control, never nested in it */
+    .p-cart { position: relative; z-index: 1; margin-top: 0.5rem; }
+    .qa-add,
+    .qa-step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9375rem;
+      font-weight: 800;
+    }
+    .qa-add {
+      width: 100%;
+      gap: 0.375rem;
+      padding: 0 0.75rem;
+      background: var(--hustle-yellow);
+      color: #1C1917;
+    }
+    .qa-add mat-icon,
+    .qa-step mat-icon { width: 22px; height: 22px; font-size: 22px; }
+    .qa-stepper {
+      display: flex;
+      align-items: center;
+      border: 2px solid var(--border-base);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+    }
+    .qa-step {
+      flex-shrink: 0;
+      width: 48px;
+      padding: 0;
+      background: transparent;
+      color: var(--text-primary);
+    }
+    .qa-qty {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .qa-add:focus-visible,
+    .qa-step:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+
     .p-skeleton .p-media { background: var(--bg-muted); }
     .sk-line { display: block; height: 0.875rem; border-radius: 4px; background: var(--bg-muted); }
     .sk-line.sk-short { width: 55%; margin-top: 0.375rem; }
@@ -732,6 +803,8 @@ export class CommunityHubComponent implements OnDestroy {
   brokenImages      = signal<ReadonlySet<string>>(new Set());
   announcement      = signal('');
 
+  readonly cartQty = computed(() => new Map(this.cart.items().map(i => [i.product.id, i.quantity])));
+
   private selectedOptions: Record<string, string> = {};
   private requestSeq = 0;
   private announceTimer?: ReturnType<typeof setTimeout>;
@@ -865,6 +938,31 @@ export class CommunityHubComponent implements OnDestroy {
     this.cart.addItem(product);
     this.closeDetail();
     this.router.navigate(['/checkout']);
+  }
+
+  quickAdd(product: ProductResponse): void {
+    if (!this.unifiedAuth.isLoggedIn()) {
+      this.goToLogin();
+      return;
+    }
+    const isNew = !this.cartQty().get(product.id);
+    this.cart.addItem(product);
+    if (isNew) this.focusAfterRender('qa-plus-' + product.id);
+  }
+
+  decrease(product: ProductResponse): void {
+    const qty = (this.cartQty().get(product.id) ?? 0) - 1;
+    this.cart.updateQuantity(product.id, qty);
+    if (qty <= 0) this.focusAfterRender('qa-add-' + product.id);
+  }
+
+  withName(key: string, name: string): string {
+    return this.i18n.t(key).replace('{name}', name);
+  }
+
+  // Add and the stepper swap places, so keep keyboard focus on whichever replaced the tapped control
+  private focusAfterRender(id: string): void {
+    setTimeout(() => document.getElementById(id)?.focus());
   }
 
   goToLogin(): void {

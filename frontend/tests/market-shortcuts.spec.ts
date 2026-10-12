@@ -64,3 +64,70 @@ test.describe('Marketplace sort', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
   });
 });
+
+const customer = {
+  token: 'customer-test-token',
+  customerToken: 'customer-test-token',
+  userId: 'customer-1',
+  firstName: 'Test',
+  lastName: 'Buyer',
+  phone: '0820000001',
+  roles: ['CUSTOMER'],
+};
+
+async function logIn(page: Page) {
+  await page.addInitScript(user => localStorage.setItem('hustle_unified_auth', JSON.stringify(user)), customer);
+}
+
+test.describe('Marketplace quick add', () => {
+  test('Add turns into a stepper, updates the cart badge, and returns at zero', async ({ page }) => {
+    await logIn(page);
+    await mockApi(page);
+    await page.goto('/marketplace');
+
+    const badge = page.locator('.toolbar-cart-badge');
+    await expect(badge).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Add Vetkoek to cart' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const stepper = page.getByRole('group', { name: 'Vetkoek quantity in cart' });
+    await expect(stepper).toContainText('1');
+    await expect(badge).toHaveText('1');
+    await expect(page.getByRole('button', { name: 'Add one more Vetkoek' })).toBeFocused();
+
+    await page.getByRole('button', { name: 'Add one more Vetkoek' }).click();
+    await expect(stepper).toContainText('2');
+    await expect(badge).toHaveText('2');
+
+    await page.getByRole('button', { name: 'Remove one Vetkoek' }).click();
+    await expect(badge).toHaveText('1');
+    await page.getByRole('button', { name: 'Remove one Vetkoek' }).click();
+    await expect(stepper).toHaveCount(0);
+    await expect(badge).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Add Vetkoek to cart' })).toBeFocused();
+    await expect(page).toHaveURL(/\/marketplace$/);
+  });
+
+  test('touch targets are at least 48px at 360px', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await logIn(page);
+    await mockApi(page);
+    await page.goto('/marketplace');
+    const add = await page.getByRole('button', { name: 'Add Vetkoek to cart' }).boundingBox();
+    expect(add!.height).toBeGreaterThanOrEqual(48);
+    await page.getByRole('button', { name: 'Add Vetkoek to cart' }).click();
+    for (const name of ['Remove one Vetkoek', 'Add one more Vetkoek']) {
+      const box = await page.getByRole('button', { name }).boundingBox();
+      expect(box!.width).toBeGreaterThanOrEqual(48);
+      expect(box!.height).toBeGreaterThanOrEqual(48);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  });
+
+  test('logged out, Add sends the buyer to login like the detail sheet does', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/marketplace');
+    await page.getByRole('button', { name: 'Add Vetkoek to cart' }).click();
+    await expect(page).toHaveURL(/\/login\?return=%2Fmarketplace$/);
+  });
+});
