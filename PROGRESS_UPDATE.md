@@ -7,13 +7,19 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Business page and My Orders in dark mode and isiZulu; orders reach "On the way" (2026-10-12)
+- **Business page:** theme colours instead of hardcoded light ones, so the shop name and cards are readable in dark mode. Back button, empty state, category tag, Add to Cart and Login to buy are translated. Emoji replaced with icons. Mobile-first grid (one column, more from 600px) and 48px touch targets.
+- **My Orders:** status badges have dark-mode colours (all at least 4.5:1) and share the timeline's translated labels. Heading, subtitle, empty state, Delivery/Collection, Personal/Business (instead of B2C/B2B), Seller, Total and the pickup QR text are translated. Emoji replaced with icons.
+- **"On the way" now happens:** when a driver marks a delivery En Route, the order moves to `EN_ROUTE` too (`DispatchService`). Before, the status stayed on the delivery job and customers saw orders jump from Driver assigned to Delivered.
+- Tests: backend `DispatchOrderStatusIntegrationTest` (assigned → picked up → on the way → delivered), `mvn test` 24 passed. New `frontend/tests/dark-pages.spec.ts` (4 tests, measured contrast plus isiZulu labels); all four fail on the old pages and pass now. Full Playwright suite 47 passed; the only failure is the old `hustle-onboarding.spec.ts`.
+
 ### Product page, sharing and "More from this seller" (2026-10-12)
 - **Product page at `/product/:id`.** Marketplace cards and business page cards now open a page of their own instead of the bottom sheet (CLAUDE.md prefers routes over modals on mobile), so items can be linked to, shared and opened with the phone's back button. Single column on mobile, photo beside details from 768px. It shows the photo (whole, never cropped, with the category icon when there is none), name, price, category, description, any options, and the seller as a link to their business page. "Add to Cart" works as the sheet did (adds the item, opens checkout); logged out it shows "Login to buy", which returns to the product after login. It has loading, error-with-retry and not-found states. Back returns to the previous screen, or to the marketplace on a deep link. The sheet code is removed from the marketplace.
 - **Share.** The product page and business page have a "Share on WhatsApp" link (`wa.me/?text=` with the name, price for products, and the page link) and, where the phone supports it, a "Share" button that opens the native share sheet. A plain link, not the WhatsApp Business API.
 - **More from this seller.** Up to 6 of the seller's other items in a horizontally scrolling row, each opening its own product page. Hidden when the seller has nothing else.
 - New public endpoint `GET /api/products/{id}`; its 404 message does not contain the id.
 - Tests: backend `ProductDetailIntegrationTest` (found and 404), `mvn test` 23 passed. New `frontend/tests/product-page.spec.ts` (11 tests). Full Playwright suite 28 passed, with only the obsolete onboarding test failing as before. isiZulu strings for the new labels are AI best-effort, same caveat as the rest.
-- Not done: the business page still has older hardcoded light colours (its shop name is unreadable in dark mode, untranslated labels); this pass only added sharing and product links to it.
+- The business page's old hardcoded light colours were fixed the same day (see below).
 
 ### Marketplace shortcuts and order timeline (2026-10-12)
 - **Sort:** a labelled native picker next to the result count: Newest (default), Price: low to high, Price: high to low. Sorting happens in the browser and the choice survives search and category changes.
