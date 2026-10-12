@@ -83,6 +83,15 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
             <button *ngIf="!unifiedAuth.isLoggedIn()" type="button" class="login-btn" (click)="goToLogin()">
               {{ 'marketplace.loginToBuy' | translate }}
             </button>
+
+            <div class="share">
+              <button *ngIf="canNativeShare" type="button" class="share-btn" (click)="nativeShare(p)">
+                <mat-icon aria-hidden="true">share</mat-icon>{{ 'share.native' | translate }}
+              </button>
+              <a class="share-btn" [href]="whatsappHref(p)" target="_blank" rel="noopener">
+                <mat-icon aria-hidden="true">chat</mat-icon>{{ 'share.whatsapp' | translate }}
+              </a>
+            </div>
           </div>
         </article>
       </ng-container>
@@ -239,6 +248,27 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
     .buy-btn:focus-visible,
     .login-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
 
+    .share { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex: 1 1 10rem;
+      min-height: 48px;
+      padding: 0 1rem;
+      border: 2px solid var(--border-base);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    @media (min-width: 768px) { .share { max-width: 360px; } }
+    .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; color: var(--brand-text); }
+    .share-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+
     .state {
       display: flex;
       flex-direction: column;
@@ -280,6 +310,7 @@ export class ProductPageComponent {
   private productId = '';
   private requestSeq = 0;
 
+  readonly canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
   readonly categoryIcon = categoryIcon;
   readonly categoryKey = categoryLabelKey;
 
@@ -325,6 +356,22 @@ export class ProductPageComponent {
     } else {
       this.router.navigate(['/marketplace']);
     }
+  }
+
+  whatsappHref(p: ProductResponse): string {
+    return 'https://wa.me/?text=' + encodeURIComponent(`${this.shareText(p)} ${this.pageUrl(p)}`);
+  }
+
+  nativeShare(p: ProductResponse): void {
+    navigator.share({ title: p.name, text: this.shareText(p), url: this.pageUrl(p) }).catch(() => { /* dismissed */ });
+  }
+
+  private shareText(p: ProductResponse): string {
+    return `${p.name} – R${p.price.toFixed(2)} on thenga.com`;
+  }
+
+  private pageUrl(p: ProductResponse): string {
+    return `${window.location.origin}/product/${p.id}`;
   }
 
   resolveUrl(u: string): string { return u.startsWith('http') ? u : this.api.baseUrl + u; }

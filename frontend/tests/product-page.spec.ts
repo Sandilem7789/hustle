@@ -89,6 +89,43 @@ test.describe('Product page', () => {
     await expect(page).toHaveURL(/\/login\?return=%2Fproduct%2Fp1$/);
   });
 
+  test('the WhatsApp share link carries the encoded product name, price and page URL', async ({ page, baseURL }) => {
+    await page.goto('/product/p1');
+    const link = page.getByRole('link', { name: 'Share on WhatsApp' });
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener');
+
+    const href = await link.getAttribute('href');
+    const text = encodeURIComponent(`Vetkoek & Mince – R5.00 on thenga.com ${baseURL}/product/p1`);
+    expect(href).toBe(`https://wa.me/?text=${text}`);
+    expect(href).toContain(encodeURIComponent('Vetkoek & Mince'));
+    expect(href).toContain(encodeURIComponent(`${baseURL}/product/p1`));
+  });
+
+  test('the native share sheet is offered when the browser supports it', async ({ page, baseURL }) => {
+    await page.addInitScript(() => {
+      (navigator as any).share = (data: ShareData) => { (window as any).__shared = data; return Promise.resolve(); };
+    });
+    await page.goto('/product/p1');
+    await page.getByRole('button', { name: 'Share', exact: true }).click();
+
+    await expect.poll(() => page.evaluate(() => (window as any).__shared)).toEqual({
+      title: 'Vetkoek & Mince',
+      text: 'Vetkoek & Mince – R5.00 on thenga.com',
+      url: `${baseURL}/product/p1`,
+    });
+    await expect(page.getByRole('link', { name: 'Share on WhatsApp' })).toBeVisible();
+  });
+
+  test('the business page offers a WhatsApp share link for the shop', async ({ page, baseURL }) => {
+    await page.goto('/business/b1');
+    const href = await page.getByRole('link', { name: 'Share on WhatsApp' }).getAttribute('href');
+    expect(href).toBe(`https://wa.me/?text=${encodeURIComponent(`Liskomz Tuck Shop on thenga.com ${baseURL}/business/b1`)}`);
+
+    await page.getByRole('link', { name: 'Amagwinya Box' }).click();
+    await expect(page).toHaveURL(/\/product\/p3$/);
+  });
+
   test('Add to Cart updates the cart badge', async ({ page }) => {
     await page.addInitScript(user => localStorage.setItem('hustle_unified_auth', JSON.stringify(user)), customer);
     await page.goto('/product/p1');

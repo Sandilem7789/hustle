@@ -5,11 +5,13 @@ import { ApiService, ProductResponse } from '../../services/api.service';
 import { CustomerAuthService } from '../../services/customer-auth.service';
 import { CartService } from '../../services/cart.service';
 import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-business-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, LoadingSkeletonComponent],
+  imports: [CommonModule, RouterLink, MatIconModule, TranslatePipe, LoadingSkeletonComponent],
   template: `
     <div class="page">
       <button class="back-btn" (click)="goBack()">← Back to Marketplace</button>
@@ -19,6 +21,14 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
       <div *ngIf="!loading()">
         <header class="biz-header">
           <h1 class="biz-name">{{ businessName() }}</h1>
+          <div class="share" *ngIf="businessName()">
+            <button *ngIf="canNativeShare" type="button" class="share-btn" (click)="nativeShare()">
+              <mat-icon aria-hidden="true">share</mat-icon>{{ 'share.native' | translate }}
+            </button>
+            <a class="share-btn" [href]="whatsappHref()" target="_blank" rel="noopener">
+              <mat-icon aria-hidden="true">chat</mat-icon>{{ 'share.whatsapp' | translate }}
+            </a>
+          </div>
         </header>
 
         <div *ngIf="products().length === 0" class="muted empty">
@@ -66,6 +76,27 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
     .biz-header { margin-bottom: 1.5rem; }
     .biz-name { font-size: 1.6rem; font-weight: 900; color: #1C1917; margin: 0; }
 
+    .share { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    @media (min-width: 768px) { .share { max-width: 360px; } }
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex: 1 1 10rem;
+      min-height: 48px;
+      padding: 0 1rem;
+      border: 2px solid var(--border-base);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; color: var(--brand-text); }
+    .share-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+
     .empty { margin-top: 2rem; font-size: 1rem; }
 
     .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
@@ -101,10 +132,13 @@ export class BusinessPageComponent implements OnInit {
   products = signal<ProductResponse[]>([]);
   businessName = signal<string>('');
   loading = signal(true);
+  readonly canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
+  private businessId = '';
 
   ngOnInit(): void {
     const businessId = this.route.snapshot.paramMap.get('businessId');
     if (!businessId) { this.router.navigate(['/marketplace']); return; }
+    this.businessId = businessId;
 
     this.api.listProducts(undefined, undefined, businessId).subscribe({
       next: list => {
@@ -127,6 +161,19 @@ export class BusinessPageComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/marketplace']);
+  }
+
+  whatsappHref(): string {
+    return 'https://wa.me/?text=' + encodeURIComponent(`${this.businessName()} on thenga.com ${this.pageUrl()}`);
+  }
+
+  nativeShare(): void {
+    navigator.share({ title: this.businessName(), text: `${this.businessName()} on thenga.com`, url: this.pageUrl() })
+      .catch(() => { /* dismissed */ });
+  }
+
+  private pageUrl(): string {
+    return `${window.location.origin}/business/${this.businessId}`;
   }
 
   resolveUrl(u: string): string { return u.startsWith('http') ? u : this.api.baseUrl + u; }

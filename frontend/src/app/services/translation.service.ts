@@ -81,6 +81,9 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'product.notFound': 'We couldn\'t find this item. It may have been removed.',
     'product.browseMarketplace': 'Browse the marketplace',
 
+    'share.native': 'Share',
+    'share.whatsapp': 'Share on WhatsApp',
+
     'auth.login': 'Login',
     'auth.register': 'Register',
     'auth.phone': 'Phone number',
@@ -173,6 +176,9 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'product.loadError': 'Asikwazanga ukulayisha le nto. Hlola uxhumano bese uzama futhi.',
     'product.notFound': 'Asiyitholanga le nto. Kungenzeka isisusiwe.',
     'product.browseMarketplace': 'Buka imakethe',
+
+    'share.native': 'Yabelana',
+    'share.whatsapp': 'Yabelana ku-WhatsApp',
 
     'auth.login': 'Ngena',
     'auth.register': 'Bhalisa',
