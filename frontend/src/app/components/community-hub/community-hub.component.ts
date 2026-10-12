@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { CommunityService } from '../../services/community.service';
+import { UnifiedAuthService } from '../../services/unified-auth.service';
+import { CartService } from '../../services/cart.service';
+import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { CATEGORIES, categoryIcon } from '../../utils/product-categories';
@@ -71,6 +74,33 @@ type LoadState = 'loading' | 'ready' | 'error';
         <p class="delivery-note" *ngIf="isDistanceCapped()">{{ 'marketplace.deliveryNote' | translate }}</p>
       </fieldset>
 
+      <section class="recent" *ngIf="recentItems().length > 0 && !searchQuery().trim()" aria-labelledby="recent-title">
+        <h2 id="recent-title" class="recent-title">{{ 'marketplace.recentlyViewed' | translate }}</h2>
+        <ul class="recent-row" role="list">
+          <li class="recent-item" *ngFor="let r of recentItems(); trackBy: trackById">
+            <a class="recent-card" [routerLink]="['/product', r.id]">
+              <span class="recent-media">
+                <img
+                  *ngIf="r.mediaUrl && !brokenImages().has(r.id); else recentNoPhoto"
+                  [src]="resolveUrl(r.mediaUrl)"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="120"
+                  height="90"
+                  (error)="markBroken(r.id)"
+                />
+                <ng-template #recentNoPhoto>
+                  <mat-icon aria-hidden="true">{{ categoryIcon(r.category) }}</mat-icon>
+                </ng-template>
+              </span>
+              <span class="recent-name">{{ r.name }}</span>
+              <span class="recent-price">R {{ r.price | number:'1.2-2' }}</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
       <p class="sr-only" aria-live="polite">{{ announcement() }}</p>
 
       <!-- Loading: static placeholders the same shape as real cards -->
@@ -109,7 +139,17 @@ type LoadState = 'loading' | 'ready' | 'error';
         </div>
 
         <ng-container *ngIf="filteredProducts().length > 0">
-          <p class="result-count" aria-hidden="true">{{ countLabel() }}</p>
+          <div class="result-bar">
+            <p class="result-count" aria-hidden="true">{{ countLabel() }}</p>
+            <div class="sort">
+              <label class="sort-label" for="market-sort">{{ 'marketplace.sortLabel' | translate }}</label>
+              <select id="market-sort" class="sort-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+                <option value="newest">{{ 'marketplace.sortNewest' | translate }}</option>
+                <option value="priceAsc">{{ 'marketplace.sortPriceAsc' | translate }}</option>
+                <option value="priceDesc">{{ 'marketplace.sortPriceDesc' | translate }}</option>
+              </select>
+            </div>
+          </div>
           <ul class="grid" role="list">
             <li class="p-card" *ngFor="let p of filteredProducts(); trackBy: trackById">
               <div class="p-media">
@@ -139,6 +179,30 @@ type LoadState = 'loading' | 'ready' | 'error';
                 <div class="p-meta" [id]="'meta-' + p.id">
                   <p class="p-seller">{{ p.businessName }}</p>
                   <p class="p-price">R {{ p.price | number:'1.2-2' }}</p>
+                </div>
+                <div class="p-cart">
+                  <button
+                    *ngIf="!cartQty().get(p.id); else stepper"
+                    type="button"
+                    class="qa-add"
+                    [id]="'qa-add-' + p.id"
+                    [attr.aria-label]="withName('marketplace.quickAdd', p.name)"
+                    (click)="quickAdd(p)"
+                  >
+                    <mat-icon aria-hidden="true">add_shopping_cart</mat-icon>
+                    <span>{{ 'marketplace.add' | translate }}</span>
+                  </button>
+                  <ng-template #stepper>
+                    <div class="qa-stepper" role="group" [attr.aria-label]="withName('marketplace.qtyGroup', p.name)">
+                      <button type="button" class="qa-step" [attr.aria-label]="withName('marketplace.removeOne', p.name)" (click)="decrease(p)">
+                        <mat-icon aria-hidden="true">remove</mat-icon>
+                      </button>
+                      <span class="qa-qty" aria-live="polite">{{ cartQty().get(p.id) }}<span class="sr-only"> {{ 'marketplace.inCart' | translate }}</span></span>
+                      <button type="button" class="qa-step" [id]="'qa-plus-' + p.id" [attr.aria-label]="withName('marketplace.addOne', p.name)" (click)="quickAdd(p)">
+                        <mat-icon aria-hidden="true">add</mat-icon>
+                      </button>
+                    </div>
+                  </ng-template>
                 </div>
               </div>
             </li>
@@ -293,12 +357,94 @@ type LoadState = 'loading' | 'ready' | 'error';
       max-width: 60ch;
     }
 
+    /* ── Recently viewed ────────────────────────────────────────── */
+    .recent { margin: 0 0 1.25rem; min-width: 0; }
+    .recent-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 800; color: var(--text-primary); }
+    .recent-row {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0.25rem;
+      display: flex;
+      gap: 0.625rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+    }
+    .recent-item { flex: 0 0 120px; scroll-snap-align: start; }
+    .recent-card {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      overflow: hidden;
+      text-align: left;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-base);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+    .recent-card:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+    .recent-media {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 4 / 3;
+      background: var(--bg-muted);
+      color: var(--text-secondary);
+    }
+    .recent-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .recent-name {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0.375rem 0.5rem 0;
+      font-size: 0.8125rem;
+      line-height: 1.3;
+    }
+    .recent-price {
+      margin: auto 0.5rem 0.5rem;
+      padding-top: 0.125rem;
+      font-size: 0.875rem;
+      font-weight: 900;
+      color: var(--success-text);
+      font-variant-numeric: tabular-nums;
+    }
+
     /* ── Results ────────────────────────────────────────────────── */
     .result-count {
       font-size: 0.875rem;
       font-weight: 700;
       color: var(--text-secondary);
       margin: 0.25rem 0 0.75rem;
+    }
+
+    .result-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem 0.75rem;
+      margin: 0.25rem 0 0.75rem;
+    }
+    .result-bar .result-count { margin: 0; }
+    .sort { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; }
+    .sort-label {
+      display: inline;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .sort-select {
+      width: auto;
+      min-height: 48px;
+      padding: 0 0.75rem;
+      font-size: 0.9375rem;
+      font-weight: 700;
     }
 
     .grid {
@@ -399,6 +545,53 @@ type LoadState = 'loading' | 'ready' | 'error';
       font-variant-numeric: tabular-nums;
     }
 
+    /* Sits above the stretched card button so it is its own control, never nested in it */
+    .p-cart { position: relative; z-index: 1; margin-top: 0.5rem; }
+    .qa-add,
+    .qa-step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9375rem;
+      font-weight: 800;
+    }
+    .qa-add {
+      width: 100%;
+      gap: 0.375rem;
+      padding: 0 0.75rem;
+      background: var(--hustle-yellow);
+      color: #1C1917;
+    }
+    .qa-add mat-icon,
+    .qa-step mat-icon { width: 22px; height: 22px; font-size: 22px; }
+    .qa-stepper {
+      display: flex;
+      align-items: center;
+      border: 2px solid var(--border-base);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+    }
+    .qa-step {
+      flex-shrink: 0;
+      width: 48px;
+      padding: 0;
+      background: transparent;
+      color: var(--text-primary);
+    }
+    .qa-qty {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .qa-add:focus-visible,
+    .qa-step:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+
     .p-skeleton .p-media { background: var(--bg-muted); }
     .sk-line { display: block; height: 0.875rem; border-radius: 4px; background: var(--bg-muted); }
     .sk-line.sk-short { width: 55%; margin-top: 0.375rem; }
@@ -446,22 +639,40 @@ export class CommunityHubComponent implements OnDestroy {
   products          = signal<ProductResponse[]>([]);
   selectedCategory  = signal<string>('ALL');
   searchQuery       = signal('');
+  sortBy            = signal<'newest' | 'priceAsc' | 'priceDesc'>('newest');
   loadState         = signal<LoadState>('loading');
   showAllCategories = signal(false);
   brokenImages      = signal<ReadonlySet<string>>(new Set());
   announcement      = signal('');
 
+  private readonly recent = inject(RecentlyViewedService);
+  private readonly cart = inject(CartService);
+  private readonly unifiedAuth = inject(UnifiedAuthService);
+  private readonly router = inject(Router);
+
+  // Prefer the freshly loaded copy (current price); fall back to the saved snapshot when it isn't loaded
+  readonly recentItems = computed(() => {
+    const loaded = new Map(this.products().map(p => [p.id, p]));
+    return this.recent.items().map(r => loaded.get(r.id) ?? r);
+  });
+
+  readonly cartQty = computed(() => new Map(this.cart.items().map(i => [i.product.id, i.quantity])));
   private requestSeq = 0;
   private announceTimer?: ReturnType<typeof setTimeout>;
 
   filteredProducts = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
-    if (!q) return this.products();
-    return this.products().filter(p =>
+    const matches = !q ? this.products() : this.products().filter(p =>
       p.name?.toLowerCase().includes(q) ||
       p.description?.toLowerCase().includes(q) ||
       p.businessName?.toLowerCase().includes(q) ||
       p.category?.toLowerCase().includes(q)
+    );
+    const sort = this.sortBy();
+    return [...matches].sort((a, b) =>
+      sort === 'priceAsc'  ? a.price - b.price :
+      sort === 'priceDesc' ? b.price - a.price :
+      (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
     );
   });
 
@@ -545,6 +756,35 @@ export class CommunityHubComponent implements OnDestroy {
   }
 
   categoryIcon = categoryIcon;
+
+  quickAdd(product: ProductResponse): void {
+    if (!this.unifiedAuth.isLoggedIn()) {
+      this.goToLogin();
+      return;
+    }
+    const isNew = !this.cartQty().get(product.id);
+    this.cart.addItem(product);
+    if (isNew) this.focusAfterRender('qa-plus-' + product.id);
+  }
+
+  decrease(product: ProductResponse): void {
+    const qty = (this.cartQty().get(product.id) ?? 0) - 1;
+    this.cart.updateQuantity(product.id, qty);
+    if (qty <= 0) this.focusAfterRender('qa-add-' + product.id);
+  }
+
+  withName(key: string, name: string): string {
+    return this.i18n.t(key).replace('{name}', name);
+  }
+
+  // Add and the stepper swap places, so keep keyboard focus on whichever replaced the tapped control
+  private focusAfterRender(id: string): void {
+    setTimeout(() => document.getElementById(id)?.focus());
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/login'], { queryParams: { return: '/marketplace' } });
+  }
 
   trackById = (_: number, item: { id: string }) => item.id;
   trackByValue = (_: number, item: { value: string }) => item.value;

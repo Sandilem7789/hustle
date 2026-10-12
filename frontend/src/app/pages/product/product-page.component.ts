@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
+import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
 import { categoryIcon, categoryLabelKey } from '../../utils/product-categories';
@@ -44,7 +45,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
               *ngIf="p.mediaUrl && !photoBroken(); else noPhoto"
               [src]="resolveUrl(p.mediaUrl)"
               [alt]="p.name"
-              loading="lazy"
+              fetchpriority="high"
               decoding="async"
               width="800"
               height="600"
@@ -364,6 +365,7 @@ export class ProductPageComponent {
   private readonly api = inject(ApiService);
   readonly unifiedAuth = inject(UnifiedAuthService);
   private readonly cart = inject(CartService);
+  private readonly recent = inject(RecentlyViewedService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
@@ -401,6 +403,7 @@ export class ProductPageComponent {
       next: p => {
         if (seq !== this.requestSeq) return;
         this.product.set(p);
+        this.recent.record(p);
         this.state.set('ready');
         this.loadRelated(p, seq);
       },
