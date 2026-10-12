@@ -87,6 +87,16 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.inCart': 'in cart',
     'marketplace.recentlyViewed': 'Recently viewed',
 
+    'orders.progress': 'Order progress',
+    'orders.step.PENDING': 'Order placed',
+    'orders.step.CONFIRMED': 'Seller confirmed',
+    'orders.step.DRIVER_ASSIGNED': 'Driver assigned',
+    'orders.step.EN_ROUTE': 'On the way',
+    'orders.step.DELIVERED': 'Delivered',
+    'orders.step.COLLECTED': 'Collected',
+    'orders.stepDone': 'done',
+    'orders.cancelledNote': 'This order was cancelled.',
+
     'auth.login': 'Login',
     'auth.register': 'Register',
     'auth.phone': 'Phone number',
@@ -185,6 +195,16 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.removeOne': 'Susa oyedwa u-{name}',
     'marketplace.inCart': 'ekalishini',
     'marketplace.recentlyViewed': 'Okubukwe muva nje',
+
+    'orders.progress': 'Inqubekela phambili ye-oda',
+    'orders.step.PENDING': 'I-oda lifakiwe',
+    'orders.step.CONFIRMED': 'Umthengisi uqinisekisile',
+    'orders.step.DRIVER_ASSIGNED': 'Umshayeli unikeziwe',
+    'orders.step.EN_ROUTE': 'Isendleleni',
+    'orders.step.DELIVERED': 'Kulethiwe',
+    'orders.step.COLLECTED': 'Kulandiwe',
+    'orders.stepDone': 'kuqediwe',
+    'orders.cancelledNote': 'Le oda ikhanseliwe.',
 
     'auth.login': 'Ngena',
     'auth.register': 'Bhalisa',
