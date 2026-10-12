@@ -126,6 +126,26 @@ test.describe('Product page', () => {
     await expect(page).toHaveURL(/\/product\/p3$/);
   });
 
+  test('More from this seller lists the seller\'s other items, not the current one', async ({ page }) => {
+    await page.goto('/product/p1');
+    const more = page.getByRole('region', { name: 'More from this seller' });
+    await expect(more.getByRole('link')).toHaveCount(1);
+    await expect(more.getByRole('link')).toContainText('Amagwinya Box');
+    await expect(more).not.toContainText('Vetkoek & Mince');
+
+    await more.getByRole('link', { name: /Amagwinya Box/ }).click();
+    await expect(page).toHaveURL(/\/product\/p3$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Amagwinya Box' })).toBeVisible();
+    await expect(more.getByRole('link')).toHaveCount(1);
+    await expect(more.getByRole('link')).toContainText('Vetkoek & Mince');
+  });
+
+  test('More from this seller is hidden when the seller has nothing else', async ({ page }) => {
+    await page.goto('/product/p2');
+    await expect(page.getByRole('heading', { level: 1, name: 'Maize Meal 5kg' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'More from this seller' })).toHaveCount(0);
+  });
+
   test('Add to Cart updates the cart badge', async ({ page }) => {
     await page.addInitScript(user => localStorage.setItem('hustle_unified_auth', JSON.stringify(user)), customer);
     await page.goto('/product/p1');

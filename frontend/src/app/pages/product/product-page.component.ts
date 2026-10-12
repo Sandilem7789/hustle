@@ -1,6 +1,6 @@
 import { CommonModule, Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -94,6 +94,25 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
             </div>
           </div>
         </article>
+
+        <section class="more" *ngIf="related().length > 0" aria-labelledby="more-title">
+          <h2 id="more-title" class="more-title">{{ 'product.moreFromSeller' | translate }}</h2>
+          <ul class="more-row" role="list">
+            <li class="m-card" *ngFor="let r of related(); trackBy: trackById">
+              <a class="m-link" [routerLink]="['/product', r.id]">
+                <div class="m-media">
+                  <img *ngIf="r.mediaUrl; else noThumb" [src]="resolveUrl(r.mediaUrl)" alt=""
+                    loading="lazy" decoding="async" width="320" height="240" />
+                  <ng-template #noThumb>
+                    <mat-icon aria-hidden="true">{{ categoryIcon(r.category) }}</mat-icon>
+                  </ng-template>
+                </div>
+                <span class="m-name">{{ r.name }}</span>
+                <span class="m-price">R {{ r.price | number:'1.2-2' }}</span>
+              </a>
+            </li>
+          </ul>
+        </section>
       </ng-container>
     </div>
   `,
@@ -269,6 +288,53 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
     .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; color: var(--brand-text); }
     .share-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
+    .more { margin-top: 2rem; }
+    .more-title { margin: 0 0 0.75rem; font-size: 1.125rem; font-weight: 900; color: var(--text-primary); }
+    .more-row {
+      list-style: none;
+      margin: 0 -1rem;
+      padding: 0 1rem 0.5rem;
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-padding: 0 1rem;
+      overscroll-behavior-x: contain;
+    }
+    @media (min-width: 768px) { .more-row { margin: 0; padding: 0 0 0.5rem; scroll-padding: 0; } }
+    .m-card {
+      flex: 0 0 42%;
+      scroll-snap-align: start;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-base);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    @media (min-width: 768px) { .m-card { flex-basis: 180px; } }
+    .m-link { display: flex; flex-direction: column; gap: 0.25rem; height: 100%; padding-bottom: 0.75rem; color: inherit; text-decoration: none; }
+    .m-link:focus-visible { outline: 3px solid var(--border-focus); outline-offset: -3px; border-radius: var(--radius-md); }
+    .m-media {
+      aspect-ratio: 4 / 3;
+      background: var(--bg-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+    }
+    .m-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .m-name {
+      padding: 0 0.75rem;
+      font-size: 0.9375rem;
+      font-weight: 800;
+      line-height: 1.3;
+      color: var(--text-primary);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .m-price { padding: 0 0.75rem; margin-top: auto; font-weight: 900; color: var(--success-text); font-variant-numeric: tabular-nums; }
+
     .state {
       display: flex;
       flex-direction: column;
@@ -302,10 +368,12 @@ export class ProductPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   product     = signal<ProductResponse | null>(null);
   state       = signal<LoadState>('loading');
   photoBroken = signal(false);
+  related     = signal<ProductResponse[]>([]);
 
   private productId = '';
   private requestSeq = 0;
@@ -317,7 +385,9 @@ export class ProductPageComponent {
   constructor() {
     // The same component instance is reused when moving between products
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const previous = this.productId;
       this.productId = params.get('id') ?? '';
+      if (previous) this.host.nativeElement.scrollIntoView({ block: 'start' });
       this.load();
     });
   }
@@ -326,16 +396,28 @@ export class ProductPageComponent {
     const seq = ++this.requestSeq;
     this.state.set('loading');
     this.photoBroken.set(false);
+    this.related.set([]);
     this.api.getProduct(this.productId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: p => {
         if (seq !== this.requestSeq) return;
         this.product.set(p);
         this.state.set('ready');
+        this.loadRelated(p, seq);
       },
       error: (err: HttpErrorResponse) => {
         if (seq !== this.requestSeq) return;
         this.state.set(err.status === 404 || err.status === 400 ? 'notfound' : 'error');
       }
+    });
+  }
+
+  private loadRelated(product: ProductResponse, seq: number): void {
+    this.api.listProducts(undefined, undefined, product.businessId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: list => {
+        if (seq !== this.requestSeq) return;
+        this.related.set(list.filter(r => r.id !== product.id).slice(0, 6));
+      },
+      error: () => { /* the section stays hidden */ }
     });
   }
 
@@ -373,6 +455,8 @@ export class ProductPageComponent {
   private pageUrl(p: ProductResponse): string {
     return `${window.location.origin}/product/${p.id}`;
   }
+
+  trackById = (_: number, item: { id: string }) => item.id;
 
   resolveUrl(u: string): string { return u.startsWith('http') ? u : this.api.baseUrl + u; }
 }
