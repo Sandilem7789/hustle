@@ -6,6 +6,7 @@ import { FacilitatorPageComponent } from './pages/facilitator/facilitator-page.c
 import { CoordinatorPageComponent } from './pages/coordinator/coordinator-page.component';
 import { OperationsPageComponent } from './pages/operations/operations-page.component';
 import { BusinessPageComponent } from './pages/business/business-page.component';
+import { ProductPageComponent } from './pages/product/product-page.component';
 import { CheckoutPageComponent } from './pages/checkout/checkout-page.component';
 import { CustomerOrdersPageComponent } from './pages/customer-orders/customer-orders-page.component';
 import { DriverDashboardPageComponent } from './pages/driver-dashboard/driver-dashboard-page.component';
@@ -20,6 +21,7 @@ export const routes: Routes = [
   { path: '',            redirectTo: 'marketplace', pathMatch: 'full' },
   { path: 'marketplace', component: MarketplacePageComponent },
   { path: 'business/:businessId', component: BusinessPageComponent },
+  { path: 'product/:id', component: ProductPageComponent },
 
   // Unified auth entry point
   { path: 'login',  component: LoginPageComponent },

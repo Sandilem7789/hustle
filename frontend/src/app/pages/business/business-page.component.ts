@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { CustomerAuthService } from '../../services/customer-auth.service';
 import { CartService } from '../../services/cart.service';
@@ -9,7 +9,7 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
 @Component({
   selector: 'app-business-page',
   standalone: true,
-  imports: [CommonModule, LoadingSkeletonComponent],
+  imports: [CommonModule, RouterLink, LoadingSkeletonComponent],
   template: `
     <div class="page">
       <button class="back-btn" (click)="goBack()">← Back to Marketplace</button>
@@ -27,10 +27,12 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
 
         <div class="product-grid" *ngIf="products().length > 0">
           <article *ngFor="let p of products()" class="product-card">
-            <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="{{ p.name }}" class="product-img" />
-            <div class="no-img" *ngIf="!p.mediaUrl">🛒</div>
+            <a [routerLink]="['/product', p.id]" tabindex="-1" aria-hidden="true">
+              <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="" class="product-img" loading="lazy" />
+              <div class="no-img" *ngIf="!p.mediaUrl">🛒</div>
+            </a>
             <div class="product-body">
-              <h3>{{ p.name }}</h3>
+              <h3><a class="product-link" [routerLink]="['/product', p.id]">{{ p.name }}</a></h3>
               <span *ngIf="p.category" class="cat-tag">{{ p.category }}</span>
               <p class="muted desc">{{ p.description }}</p>
               <p class="price">R {{ p.price | number:'1.2-2' }}</p>
@@ -75,6 +77,8 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
     .no-img { width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: #F5F0E8; }
     .product-body { padding: 0.9rem; }
     .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; color: #1C1917; font-weight: 800; }
+    .product-link { display: inline-flex; align-items: center; min-height: 48px; color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+    .product-link:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
     .cat-tag { display: inline-block; background: rgba(245,184,0,0.12); color: #92620A; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; margin-bottom: 0.4rem; text-transform: uppercase; }
     .desc { font-size: 0.85rem; margin: 0.3rem 0 0.5rem; line-height: 1.4; color: #78716C; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .price { font-weight: 800; color: var(--success-text); font-size: 1rem; margin: 0 0 0.75rem; }

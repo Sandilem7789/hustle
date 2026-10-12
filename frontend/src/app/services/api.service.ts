@@ -178,6 +178,10 @@ export class ApiService {
     });
   }
 
+  getProduct(id: string): Observable<ProductResponse> {
+    return this.http.get<ProductResponse>(`${this.baseUrl}/api/products/${encodeURIComponent(id)}`);
+  }
+
   getProductByBarcode(code: string, token: string): Observable<ProductResponse> {
     return this.http.get<ProductResponse>(`${this.baseUrl}/api/products/by-barcode/${encodeURIComponent(code)}`, {
       headers: new HttpHeaders({ 'X-Auth-Token': token })

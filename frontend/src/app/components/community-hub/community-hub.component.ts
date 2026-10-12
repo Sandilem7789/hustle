@@ -1,53 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { A11yModule } from '@angular/cdk/a11y';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { CommunityService } from '../../services/community.service';
-import { UnifiedAuthService } from '../../services/unified-auth.service';
-import { CartService } from '../../services/cart.service';
 import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-
-const CATEGORIES = [
-  { value: 'ALL',         labelKey: 'category.all' },
-  { value: 'FAST_FOOD',   labelKey: 'category.fastFood' },
-  { value: 'GROCERY',     labelKey: 'category.grocery' },
-  { value: 'CLOTHING',    labelKey: 'category.clothing' },
-  { value: 'SERVICES',    labelKey: 'category.services' },
-  { value: 'CRAFTS',      labelKey: 'category.crafts' },
-  { value: 'AGRI',        labelKey: 'category.agri' },
-  { value: 'ELECTRONICS', labelKey: 'category.electronics' },
-  { value: 'OTHER',       labelKey: 'category.other' },
-] as const;
+import { CATEGORIES, categoryIcon } from '../../utils/product-categories';
 
 const PRIMARY_CATEGORIES = new Set(['ALL', 'FAST_FOOD', 'GROCERY']);
 const DISTANCE_CAPPED = new Set(['FAST_FOOD', 'GROCERY']);
-
-const CATEGORY_LABEL_KEYS: Record<string, string> = Object.fromEntries(
-  CATEGORIES.map(c => [c.value, c.labelKey])
-);
-
-const CATEGORY_ICONS: Record<string, string> = {
-  FAST_FOOD: 'lunch_dining',
-  GROCERY: 'local_grocery_store',
-  CLOTHING: 'checkroom',
-  SERVICES: 'handyman',
-  CRAFTS: 'palette',
-  AGRI: 'agriculture',
-  ELECTRONICS: 'devices',
-};
 
 type LoadState = 'loading' | 'ready' | 'error';
 
 @Component({
   selector: 'app-community-hub',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, A11yModule, MatIconModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, TranslatePipe],
   template: `
-    <section class="market" aria-labelledby="market-title" [attr.inert]="selectedProduct() ? '' : null">
+    <section class="market" aria-labelledby="market-title">
       <h1 id="market-title" class="market-title">{{ 'marketplace.title' | translate }}</h1>
 
       <div class="search">
@@ -160,9 +132,9 @@ type LoadState = 'loading' | 'ready' | 'error';
               </div>
               <div class="p-body">
                 <h2 class="p-name">
-                  <button type="button" class="p-open" [attr.aria-describedby]="'meta-' + p.id" (click)="openDetail(p)">
+                  <a class="p-open" [routerLink]="['/product', p.id]" [attr.aria-describedby]="'meta-' + p.id">
                     {{ p.name }}
-                  </button>
+                  </a>
                 </h2>
                 <div class="p-meta" [id]="'meta-' + p.id">
                   <p class="p-seller">{{ p.businessName }}</p>
@@ -174,68 +146,6 @@ type LoadState = 'loading' | 'ready' | 'error';
         </ng-container>
       </ng-container>
     </section>
-
-    <ng-container *ngIf="selectedProduct() as sp">
-      <div class="sheet-scrim" (click)="closeDetail()" aria-hidden="true"></div>
-      <div
-        class="sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sheet-title"
-        cdkTrapFocus
-        [cdkTrapFocusAutoCapture]="true"
-        (keydown.escape)="closeDetail()"
-      >
-        <div class="sheet-media">
-          <img
-            *ngIf="sp.mediaUrl && !brokenImages().has(sp.id); else sheetNoPhoto"
-            [src]="resolveUrl(sp.mediaUrl)"
-            [alt]="sp.name"
-            (error)="markBroken(sp.id)"
-          />
-          <ng-template #sheetNoPhoto>
-            <div class="p-fallback p-fallback-lg">
-              <mat-icon aria-hidden="true">{{ categoryIcon(sp.category) }}</mat-icon>
-              <span>{{ 'marketplace.noPhoto' | translate }}</span>
-            </div>
-          </ng-template>
-          <button type="button" class="icon-btn sheet-close" (click)="closeDetail()" [attr.aria-label]="'marketplace.close' | translate">
-            <mat-icon aria-hidden="true">close</mat-icon>
-          </button>
-        </div>
-
-        <div class="sheet-body">
-          <h2 id="sheet-title" class="sheet-title">{{ sp.name }}</h2>
-          <a class="sheet-seller" [routerLink]="['/business', sp.businessId]" (click)="closeDetail()">
-            <mat-icon aria-hidden="true">storefront</mat-icon>{{ sp.businessName }}
-          </a>
-          <p class="sheet-category" *ngIf="sp.category">{{ catLabel(sp.category) }}</p>
-          <p class="sheet-desc" *ngIf="sp.description">{{ sp.description }}</p>
-
-          <fieldset class="option-group" *ngFor="let opt of sp.options; let i = index">
-            <legend class="field-label">{{ opt.name }}</legend>
-            <div class="option-values">
-              <label class="pill" *ngFor="let val of opt.values">
-                <input type="radio" class="pill-input" [name]="'opt-' + i" [value]="val"
-                  [checked]="isOptionSelected(opt.name, val)" (change)="selectOption(opt.name, val)" />
-                <span class="pill-face">{{ val }}</span>
-              </label>
-            </div>
-          </fieldset>
-
-          <p class="sheet-price">R {{ sp.price | number:'1.2-2' }}</p>
-        </div>
-
-        <div class="sheet-footer">
-          <button *ngIf="unifiedAuth.isLoggedIn()" type="button" class="buy-btn" (click)="addToCartAndClose(sp)">
-            {{ 'marketplace.addToCart' | translate }}
-          </button>
-          <button *ngIf="!unifiedAuth.isLoggedIn()" type="button" class="login-btn" (click)="goToLogin()">
-            {{ 'marketplace.loginToBuy' | translate }}
-          </button>
-        </div>
-      </div>
-    </ng-container>
   `,
   styles: `
     :host { display: block; }
@@ -318,45 +228,6 @@ type LoadState = 'loading' | 'ready' | 'error';
 
     /* ── Filters: native radios, styled ─────────────────────────── */
     .filter { border: 0; margin: 0 0 1rem; padding: 0; min-width: 0; }
-
-
-    .pill {
-      display: inline-flex;
-      flex-direction: row;
-      align-items: center;
-      min-height: 48px;
-      flex-shrink: 0;
-      position: relative;
-      cursor: pointer;
-    }
-    .pill-input {
-      position: absolute;
-      opacity: 0;
-      width: 1px;
-      height: 1px;
-      margin: 0;
-    }
-    .pill-face {
-      display: inline-flex;
-      align-items: center;
-      min-height: 40px;
-      padding: 0 1rem;
-      border: 1.5px solid var(--border-base);
-      border-radius: var(--radius-pill);
-      background: var(--bg-surface);
-      color: var(--text-secondary);
-      font-size: 0.9375rem;
-      font-weight: 700;
-      white-space: nowrap;
-      transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
-    }
-    .pill-input:checked + .pill-face {
-      background: var(--hustle-yellow);
-      border-color: var(--hustle-yellow);
-      color: #1C1917;
-      font-weight: 800;
-    }
-    .pill-input:focus-visible + .pill-face { outline: 3px solid var(--text-primary); outline-offset: 2px; }
 
     .radio-row {
       display: flex;
@@ -482,7 +353,6 @@ type LoadState = 'loading' | 'ready' | 'error';
       font-weight: 700;
     }
     .p-fallback mat-icon { width: 32px; height: 32px; font-size: 32px; }
-    .p-fallback-lg mat-icon { width: 56px; height: 56px; font-size: 56px; }
 
     .p-body {
       display: flex;
@@ -506,7 +376,6 @@ type LoadState = 'loading' | 'ready' | 'error';
       font-weight: 800;
       text-align: left;
     }
-    .p-open:active { transform: none; }
     /* One real button, stretched to cover the card: whole-card tap target, no nested controls */
     .p-open::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-md); }
     .p-open:focus-visible { outline: none; }
@@ -565,124 +434,10 @@ type LoadState = 'loading' | 'ready' | 'error';
       text-decoration: underline;
       text-underline-offset: 3px;
     }
-
-    /* ── Detail sheet ───────────────────────────────────────────── */
-    .sheet-scrim {
-      position: fixed;
-      inset: 0;
-      z-index: 400;
-      background: rgba(28, 25, 23, 0.55);
-      animation: scrimIn 200ms ease-out both;
-    }
-    @keyframes scrimIn { from { opacity: 0; } }
-
-    .sheet {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 401;
-      max-height: 92vh;
-      max-height: 92dvh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: var(--bg-surface);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      animation: sheetUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-    @keyframes sheetUp { from { transform: translateY(100%); } }
-    @media (min-width: 600px) {
-      .sheet {
-        left: 50%;
-        right: auto;
-        bottom: auto;
-        top: 50%;
-        width: calc(100% - 3rem);
-        max-width: 480px;
-        max-height: 86vh;
-        border-radius: var(--radius-lg);
-        transform: translate(-50%, -50%);
-        animation: sheetIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
-      }
-      @keyframes sheetIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); } }
-    }
-
-    .sheet-media {
-      position: relative;
-      flex-shrink: 0;
-      height: 240px;
-      background: var(--bg-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .sheet-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
-    .sheet-close {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      background: rgba(28, 25, 23, 0.6);
-      color: #FFFFFF;
-    }
-
-    .sheet-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.25rem 1.25rem 0.5rem;
-      overscroll-behavior: contain;
-    }
-    .sheet-title { margin: 0 0 0.25rem; font-size: 1.25rem; font-weight: 900; line-height: 1.25; color: var(--text-primary); }
-    .sheet-seller {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      min-height: 44px;
-      color: var(--brand-text);
-      font-size: 0.9375rem;
-      font-weight: 800;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-    .sheet-seller mat-icon { width: 20px; height: 20px; font-size: 20px; }
-    .sheet-category { margin: 0 0 0.75rem; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
-    .sheet-desc { margin: 0 0 1rem; font-size: 0.9375rem; line-height: 1.6; color: var(--text-secondary); max-width: 65ch; }
-
-    .option-group { border: 0; margin: 0 0 1rem; padding: 0; min-width: 0; }
-    .option-values { display: flex; flex-wrap: wrap; gap: 0 0.5rem; }
-
-    .sheet-price {
-      margin: 0.25rem 0 0;
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: var(--success-text);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .sheet-footer {
-      flex-shrink: 0;
-      padding: 0.875rem 1.25rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid var(--border-base);
-    }
-    .buy-btn,
-    .login-btn {
-      width: 100%;
-      height: 52px;
-      border-radius: var(--radius-sm);
-      font-size: 1rem;
-      font-weight: 800;
-    }
-    .buy-btn { background: var(--hustle-yellow); color: #1C1917; }
-    .login-btn { background: var(--bg-surface); color: var(--text-primary); border: 2px solid var(--border-base); }
-    .buy-btn:focus-visible,
-    .login-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
   `
 })
 export class CommunityHubComponent implements OnDestroy {
   private readonly api = inject(ApiService);
-  readonly unifiedAuth = inject(UnifiedAuthService);
-  private readonly cart = inject(CartService);
-  private readonly router = inject(Router);
   private readonly i18n = inject(TranslationService);
   readonly community = inject(CommunityService);
 
@@ -693,11 +448,9 @@ export class CommunityHubComponent implements OnDestroy {
   searchQuery       = signal('');
   loadState         = signal<LoadState>('loading');
   showAllCategories = signal(false);
-  selectedProduct   = signal<ProductResponse | null>(null);
   brokenImages      = signal<ReadonlySet<string>>(new Set());
   announcement      = signal('');
 
-  private selectedOptions: Record<string, string> = {};
   private requestSeq = 0;
   private announceTimer?: ReturnType<typeof setTimeout>;
 
@@ -751,10 +504,8 @@ export class CommunityHubComponent implements OnDestroy {
     }, { allowSignalWrites: true });
   }
 
-
   ngOnDestroy(): void {
     clearTimeout(this.announceTimer);
-    document.body.style.overflow = '';
   }
 
   selectCategory(cat: string): void {
@@ -793,44 +544,7 @@ export class CommunityHubComponent implements OnDestroy {
     this.brokenImages.update(set => new Set(set).add(id));
   }
 
-  categoryIcon(category?: string): string {
-    return (category && CATEGORY_ICONS[category]) || 'storefront';
-  }
-
-  catLabel(value: string): string {
-    const key = CATEGORY_LABEL_KEYS[value];
-    return key ? this.i18n.t(key) : value;
-  }
-
-  openDetail(product: ProductResponse): void {
-    this.selectedOptions = {};
-    this.selectedProduct.set(product);
-    document.body.style.overflow = 'hidden';
-  }
-
-  closeDetail(): void {
-    this.selectedProduct.set(null);
-    document.body.style.overflow = '';
-  }
-
-  selectOption(name: string, value: string): void {
-    this.selectedOptions[name] = value;
-  }
-
-  isOptionSelected(name: string, value: string): boolean {
-    return this.selectedOptions[name] === value;
-  }
-
-  addToCartAndClose(product: ProductResponse): void {
-    this.cart.addItem(product);
-    this.closeDetail();
-    this.router.navigate(['/checkout']);
-  }
-
-  goToLogin(): void {
-    this.closeDetail();
-    this.router.navigate(['/login'], { queryParams: { return: '/marketplace' } });
-  }
+  categoryIcon = categoryIcon;
 
   trackById = (_: number, item: { id: string }) => item.id;
   trackByValue = (_: number, item: { value: string }) => item.value;

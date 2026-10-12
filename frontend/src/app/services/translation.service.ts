@@ -76,6 +76,11 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.addToCart': 'Add to Cart',
     'marketplace.loginToBuy': 'Login to buy',
 
+    'product.back': 'Back',
+    'product.loadError': 'We couldn\'t load this item. Check your connection and try again.',
+    'product.notFound': 'We couldn\'t find this item. It may have been removed.',
+    'product.browseMarketplace': 'Browse the marketplace',
+
     'auth.login': 'Login',
     'auth.register': 'Register',
     'auth.phone': 'Phone number',
@@ -163,6 +168,11 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.close': 'Vala',
     'marketplace.addToCart': 'Faka Ekalishini',
     'marketplace.loginToBuy': 'Ngena Ukuze Uthenge',
+
+    'product.back': 'Emuva',
+    'product.loadError': 'Asikwazanga ukulayisha le nto. Hlola uxhumano bese uzama futhi.',
+    'product.notFound': 'Asiyitholanga le nto. Kungenzeka isisusiwe.',
+    'product.browseMarketplace': 'Buka imakethe',
 
     'auth.login': 'Ngena',
     'auth.register': 'Bhalisa',
