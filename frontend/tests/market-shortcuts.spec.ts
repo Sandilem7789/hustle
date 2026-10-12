@@ -131,3 +131,70 @@ test.describe('Marketplace quick add', () => {
     await expect(page).toHaveURL(/\/login\?return=%2Fmarketplace$/);
   });
 });
+
+test.describe('Marketplace recently viewed', () => {
+  const recent = (page: Page) => page.getByRole('region', { name: 'Recently viewed' });
+  const recentNames = (page: Page) => recent(page).locator('.recent-name');
+
+  async function view(page: Page, name: string) {
+    await cards(page).getByRole('button', { name, exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  }
+
+  test('appears after viewing, survives reload, de-duplicates and hides while searching', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/marketplace');
+    await expect(cards(page)).toHaveCount(3);
+    await expect(recent(page)).toHaveCount(0);
+
+    await view(page, 'Vetkoek');
+    await expect(recentNames(page)).toHaveText(['Vetkoek']);
+
+    await view(page, 'Maize Meal 5kg');
+    await view(page, 'Vetkoek');
+    await expect(recentNames(page)).toHaveText(['Vetkoek', 'Maize Meal 5kg']);
+
+    await page.reload();
+    await expect(recentNames(page)).toHaveText(['Vetkoek', 'Maize Meal 5kg']);
+    await expect(recent(page)).toContainText('R 5.00');
+
+    await page.getByLabel('Search products and businesses').fill('maize');
+    await expect(recent(page)).toHaveCount(0);
+    await page.getByRole('button', { name: 'Clear search' }).first().click();
+    await expect(recentNames(page)).toHaveText(['Vetkoek', 'Maize Meal 5kg']);
+
+    await recent(page).getByRole('button', { name: /Maize Meal 5kg/ }).click();
+    await expect(page.getByRole('dialog')).toContainText('Maize Meal 5kg');
+  });
+
+  test('keeps a saved item that is no longer listed, without inventing availability', async ({ page }) => {
+    const gone = { id: 'gone-1', name: 'Old Paraffin Candle', description: '', price: 12, businessId: 'b9', businessName: 'Closed Shop', createdAt: '2026-08-01T08:00:00Z' };
+    await page.addInitScript(item => localStorage.setItem('thenga_recent', JSON.stringify([item])), gone);
+    await mockApi(page);
+    await page.goto('/marketplace');
+    await expect(cards(page)).toHaveCount(3);
+    await expect(recentNames(page)).toHaveText(['Old Paraffin Candle']);
+    await expect(recent(page)).not.toContainText(/stock|available|unavailable/i);
+
+    await recent(page).getByRole('button', { name: /Old Paraffin Candle/ }).click();
+    await expect(page.getByRole('dialog')).toContainText('Closed Shop');
+  });
+
+  test('holds at most ten items', async ({ page }) => {
+    const many = Array.from({ length: 12 }, (_, i) => ({ ...products[0], id: `x${i}`, name: `Item ${i}` }));
+    await page.addInitScript(items => localStorage.setItem('thenga_recent', JSON.stringify(items)), many);
+    await mockApi(page);
+    await page.goto('/marketplace');
+    await expect(recent(page).locator('.recent-item')).toHaveCount(10);
+  });
+
+  test('ignores unreadable storage', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('thenga_recent', '{not json'));
+    await mockApi(page);
+    await page.goto('/marketplace');
+    await expect(cards(page)).toHaveCount(3);
+    await expect(recent(page)).toHaveCount(0);
+  });
+});

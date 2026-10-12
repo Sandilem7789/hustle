@@ -85,6 +85,7 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.addOne': 'Add one more {name}',
     'marketplace.removeOne': 'Remove one {name}',
     'marketplace.inCart': 'in cart',
+    'marketplace.recentlyViewed': 'Recently viewed',
 
     'auth.login': 'Login',
     'auth.register': 'Register',
@@ -183,6 +184,7 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
     'marketplace.addOne': 'Engeza omunye u-{name}',
     'marketplace.removeOne': 'Susa oyedwa u-{name}',
     'marketplace.inCart': 'ekalishini',
+    'marketplace.recentlyViewed': 'Okubukwe muva nje',
 
     'auth.login': 'Ngena',
     'auth.register': 'Bhalisa',

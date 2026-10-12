@@ -8,6 +8,7 @@ import { ApiService, ProductResponse } from '../../services/api.service';
 import { CommunityService } from '../../services/community.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { CartService } from '../../services/cart.service';
+import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
@@ -98,6 +99,33 @@ type LoadState = 'loading' | 'ready' | 'error';
         </div>
         <p class="delivery-note" *ngIf="isDistanceCapped()">{{ 'marketplace.deliveryNote' | translate }}</p>
       </fieldset>
+
+      <section class="recent" *ngIf="recentItems().length > 0 && !searchQuery().trim()" aria-labelledby="recent-title">
+        <h2 id="recent-title" class="recent-title">{{ 'marketplace.recentlyViewed' | translate }}</h2>
+        <ul class="recent-row" role="list">
+          <li class="recent-item" *ngFor="let r of recentItems(); trackBy: trackById">
+            <button type="button" class="recent-card" (click)="openDetail(r)">
+              <span class="recent-media">
+                <img
+                  *ngIf="r.mediaUrl && !brokenImages().has(r.id); else recentNoPhoto"
+                  [src]="resolveUrl(r.mediaUrl)"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="120"
+                  height="90"
+                  (error)="markBroken(r.id)"
+                />
+                <ng-template #recentNoPhoto>
+                  <mat-icon aria-hidden="true">{{ categoryIcon(r.category) }}</mat-icon>
+                </ng-template>
+              </span>
+              <span class="recent-name">{{ r.name }}</span>
+              <span class="recent-price">R {{ r.price | number:'1.2-2' }}</span>
+            </button>
+          </li>
+        </ul>
+      </section>
 
       <p class="sr-only" aria-live="polite">{{ announcement() }}</p>
 
@@ -456,6 +484,64 @@ type LoadState = 'loading' | 'ready' | 'error';
       max-width: 60ch;
     }
 
+    /* ── Recently viewed ────────────────────────────────────────── */
+    .recent { margin: 0 0 1.25rem; min-width: 0; }
+    .recent-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 800; color: var(--text-primary); }
+    .recent-row {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0.25rem;
+      display: flex;
+      gap: 0.625rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+    }
+    .recent-item { flex: 0 0 120px; scroll-snap-align: start; }
+    .recent-card {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      overflow: hidden;
+      text-align: left;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-base);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+    .recent-card:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+    .recent-media {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 4 / 3;
+      background: var(--bg-muted);
+      color: var(--text-secondary);
+    }
+    .recent-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .recent-name {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0.375rem 0.5rem 0;
+      font-size: 0.8125rem;
+      line-height: 1.3;
+    }
+    .recent-price {
+      margin: auto 0.5rem 0.5rem;
+      padding-top: 0.125rem;
+      font-size: 0.875rem;
+      font-weight: 900;
+      color: var(--success-text);
+      font-variant-numeric: tabular-nums;
+    }
+
     /* ── Results ────────────────────────────────────────────────── */
     .result-count {
       font-size: 0.875rem;
@@ -803,6 +889,14 @@ export class CommunityHubComponent implements OnDestroy {
   brokenImages      = signal<ReadonlySet<string>>(new Set());
   announcement      = signal('');
 
+  private readonly recent = inject(RecentlyViewedService);
+
+  // Prefer the freshly loaded copy (current price); fall back to the saved snapshot when it isn't loaded
+  readonly recentItems = computed(() => {
+    const loaded = new Map(this.products().map(p => [p.id, p]));
+    return this.recent.items().map(r => loaded.get(r.id) ?? r);
+  });
+
   readonly cartQty = computed(() => new Map(this.cart.items().map(i => [i.product.id, i.quantity])));
 
   private selectedOptions: Record<string, string> = {};
@@ -918,6 +1012,7 @@ export class CommunityHubComponent implements OnDestroy {
   openDetail(product: ProductResponse): void {
     this.selectedOptions = {};
     this.selectedProduct.set(product);
+    this.recent.record(product);
     document.body.style.overflow = 'hidden';
   }
 
