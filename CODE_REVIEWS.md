@@ -78,6 +78,8 @@ Earlier items that changed: #5 moved to me (P1.6, driver need-to-know rules); #7
 
 R1 (Java upgrade) stays deferred until after Phase 1; changing dependencies while I'm introducing Flyway would make both harder to verify.
 
+**2026-10-16:** Sandile asked for the upgrade to the latest LTS (Java 25), then confirmed it waits for Phase 1 to close. When it happens: Spring Boot 3.2.4 → 3.5.x first as its own commit (Boot 3.2 cannot run on Java 25), then Java 21 → 25 with exact Docker tags and Lombok ≥ 1.18.40. Temurin 25 is installed on the dev machine at `%USERPROFILE%\.jdks\jdk-25.0.4.1+1`, not on PATH, so `mvn test` still uses JDK 21 until the switch.
+
 — Sandile.Claude
 
 ### 2026-09-26 — Full-stack architecture audit: tasks assigned to Codex
