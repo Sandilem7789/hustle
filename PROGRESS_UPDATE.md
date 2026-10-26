@@ -20,6 +20,7 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 - **Hustle Economy, carried quietly:** the eight logo colours are kept, deepened, as the `--hustle-*` tokens (existing styles follow automatically), as the eight-colour "market thread", and as one colour per marketplace category (`--cat-*`), shown as a dot beside each category name.
 - **Toolbar and menu:** ink-green toolbar with the serif wordmark, a gold full stop and the thread underneath. The old icon, rainbow letters and gradient strip are gone. PWA theme colour is ink.
 - **Every other screen:** 851 hard-coded colours in 22 components moved one for one onto the new palette, so hues change but layout and behaviour do not.
+- **Light mode is the default** (Sandile, 2026-10-26), whatever the phone's own setting; dark mode stays one tap away in the menu and is remembered. In light mode the toolbar is light (cream with the ink wordmark); in dark mode it is ink. The browser's address bar colour follows the theme.
 - Not yet: the home-screen icon (waits on the wordmark choice, O10), and the hustler dashboard's cards stay light in dark mode as before; that screen is rebuilt in R3.
 - Tests: production build passes with the same budget warnings as `development`. Playwright suite 47 passed; the only failure is the old `hustle-onboarding.spec.ts`, as before.
 

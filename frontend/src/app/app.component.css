@@ -13,9 +13,9 @@
 
 /* ─── Top Toolbar ────────────────────────────────────────────────────────── */
 .app-toolbar {
-  background: var(--ink);
-  color: var(--cream);
-  border-bottom: 1px solid var(--ink);
+  background: var(--toolbar-bg);
+  color: var(--toolbar-fg);
+  border-bottom: 1px solid var(--border-base);
   box-shadow: var(--shadow-card);
   position: sticky;
   top: 0;
@@ -55,11 +55,11 @@
   background: var(--thread);
 }
 
-.toolbar-logo .wordmark-text { font-size: 1.3rem; color: var(--cream); }
+.toolbar-logo .wordmark-text { font-size: 1.3rem; color: var(--toolbar-fg); }
 
 .app-toolbar .mat-mdc-icon-button,
 .app-toolbar .mat-icon {
-  color: var(--cream);
+  color: var(--toolbar-fg);
 }
 
 /* Mobile has the ☰ Menu item in the bottom nav already — showing it again up
@@ -87,7 +87,7 @@
   font-weight: 800;
   line-height: 16px;
   text-align: center;
-  box-shadow: 0 0 0 2px var(--ink);
+  box-shadow: 0 0 0 2px var(--toolbar-bg);
 }
 
 .toolbar-spacer {
@@ -97,7 +97,7 @@
 .app-toolbar .toolbar-login-btn {
   font-weight: 700;
   font-size: 0.875rem;
-  color: var(--gold);
+  color: var(--toolbar-accent);
 }
 
 /* ─── Hamburger Sidenav ───────────────────────────────────────────────────── */

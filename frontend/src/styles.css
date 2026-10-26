@@ -75,6 +75,11 @@
   /* Gold text fails contrast on cream, so light theme uses a darker gold */
   --accent-text-safe: #8A5A0B;
 
+  /* Top bar: light in light mode, ink in dark mode */
+  --toolbar-bg:     var(--bg-surface);
+  --toolbar-fg:     var(--ink);
+  --toolbar-accent: var(--accent-text-safe);
+
   --success-text: #2E6B4A;   /* leaf: 5.9:1 on cream */
   --success-fill: #2E6B4A;   /* white text on it: 6.4:1 */
   --brand-text:   #1A6B5F;
@@ -125,6 +130,10 @@
 
   --border-base:  #2C4237;
   --accent-text-safe: #E5A31D;
+
+  --toolbar-bg:     var(--ink);
+  --toolbar-fg:     var(--cream);
+  --toolbar-accent: var(--gold);
   --success-text: #7FD1A0;
   --brand-text:   #74D9C9;
 

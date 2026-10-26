@@ -12,6 +12,7 @@ export class ThemeService {
     effect(() => {
       const t = this.theme();
       document.documentElement.setAttribute('data-theme', t);
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#13251E' : '#FBF8F2');
       try { localStorage.setItem(STORAGE_KEY, t); } catch { /* storage unavailable — theme still applies for this load */ }
     });
   }
@@ -28,7 +29,7 @@ export class ThemeService {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === 'light' || saved === 'dark') return saved;
-    } catch { /* storage unavailable — fall through to system preference */ }
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch { /* storage unavailable — fall back to the default */ }
+    return 'light';
   }
 }
