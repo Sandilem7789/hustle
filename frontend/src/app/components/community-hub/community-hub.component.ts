@@ -10,7 +10,7 @@ import { CartService } from '../../services/cart.service';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-import { CATEGORIES, categoryIcon } from '../../utils/product-categories';
+import { CATEGORIES, categoryColor, categoryIcon } from '../../utils/product-categories';
 
 const PRIMARY_CATEGORIES = new Set(['ALL', 'FAST_FOOD', 'GROCERY']);
 const DISTANCE_CAPPED = new Set(['FAST_FOOD', 'GROCERY']);
@@ -58,6 +58,7 @@ type LoadState = 'loading' | 'ready' | 'error';
           <label class="radio" *ngFor="let cat of visibleCategories(); trackBy: trackByValue">
             <input type="radio" name="category" class="radio-input" [value]="cat.value"
               [checked]="selectedCategory() === cat.value" (change)="selectCategory(cat.value)" />
+            <span class="cat-dot" *ngIf="categoryColor(cat.value) as color" [style.background]="color" aria-hidden="true"></span>
             <span>{{ cat.labelKey | translate }}</span>
           </label>
           <button
@@ -756,6 +757,7 @@ export class CommunityHubComponent implements OnDestroy {
   }
 
   categoryIcon = categoryIcon;
+  categoryColor = categoryColor;
 
   quickAdd(product: ProductResponse): void {
     if (!this.unifiedAuth.isLoggedIn()) {

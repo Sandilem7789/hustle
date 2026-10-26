@@ -28,6 +28,12 @@ export function categoryLabelKey(category?: string): string | undefined {
   return category ? CATEGORY_LABEL_KEYS[category] : undefined;
 }
 
+export function categoryColor(category?: string): string | undefined {
+  return category && CATEGORY_LABEL_KEYS[category] && category !== 'ALL'
+    ? `var(--cat-${category.toLowerCase().replace('_', '-')})`
+    : undefined;
+}
+
 export function categoryIcon(category?: string): string {
   return (category && CATEGORY_ICONS[category]) || 'storefront';
 }
