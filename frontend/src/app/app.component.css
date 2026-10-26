@@ -13,9 +13,9 @@
 
 /* ─── Top Toolbar ────────────────────────────────────────────────────────── */
 .app-toolbar {
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border-base);
+  background: var(--ink);
+  color: var(--cream);
+  border-bottom: 1px solid var(--ink);
   box-shadow: var(--shadow-card);
   position: sticky;
   top: 0;
@@ -33,45 +33,34 @@
   transform: translateX(-50%);
 }
 
-/* ─── Brand lockup (icon + wordmark) ─────────────────────────────────────── */
-.brand-lockup {
+/* ─── Wordmark: serif name, gold dot, market thread underneath ───────────── */
+.wordmark {
   display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.brand-icon {
-  height: 100%;
-  width: auto;
-  flex-shrink: 0;
-  display: block;
-}
-
-.brand-word {
-  font-family: 'Nunito', system-ui, sans-serif;
-  font-weight: 900;
+.wordmark-text {
+  font-family: var(--font-display);
+  font-weight: 800;
   line-height: 1;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
-.brand-tld {
-  font-weight: 700;
-  color: var(--text-secondary);
+.wordmark-dot { color: var(--gold); }
+
+.wordmark-thread {
+  height: 3px;
+  background: var(--thread);
 }
 
-.bl-t { color: #F5B800; }
-.bl-h { color: #00A896; }
-.bl-e { color: #E91E8C; }
-.bl-n { color: #2DB344; }
-.bl-g { color: #F06820; }
-.bl-a { color: #1B6FD4; }
+.toolbar-logo .wordmark-text { font-size: 1.3rem; color: var(--cream); }
 
-.toolbar-logo {
-  height: 30px;
+.app-toolbar .mat-mdc-icon-button,
+.app-toolbar .mat-icon {
+  color: var(--cream);
 }
-
-.toolbar-logo .brand-icon { height: 30px; }
-.toolbar-logo .brand-word { font-size: 1.2rem; }
 
 /* Mobile has the ☰ Menu item in the bottom nav already — showing it again up
    here too is a redundant second door to the same drawer. Desktop hides the
@@ -92,33 +81,23 @@
   height: 16px;
   padding: 0 3px;
   border-radius: 999px;
-  background: #E53935;
+  background: #C8443A;
   color: #fff;
   font-size: 0.65rem;
   font-weight: 800;
   line-height: 16px;
   text-align: center;
-  box-shadow: 0 0 0 2px var(--bg-surface);
+  box-shadow: 0 0 0 2px var(--ink);
 }
 
 .toolbar-spacer {
   flex: 1;
 }
 
-.toolbar-login-btn {
+.app-toolbar .toolbar-login-btn {
   font-weight: 700;
   font-size: 0.875rem;
-  color: var(--accent-text-safe);
-}
-
-/* Rainbow accent strip below toolbar */
-.toolbar-rainbow {
-  height: var(--toolbar-strip-height);
-  background: linear-gradient(
-    to right,
-    #F5B800, #00A896, #E91E8C,
-    #2DB344, #F06820, #1B6FD4, #8B2FC9
-  );
+  color: var(--gold);
 }
 
 /* ─── Hamburger Sidenav ───────────────────────────────────────────────────── */
@@ -135,12 +114,7 @@
   border-bottom: 1px solid var(--border-base);
 }
 
-.sidenav-logo {
-  height: 32px;
-}
-
-.sidenav-logo .brand-icon { height: 32px; }
-.sidenav-logo .brand-word { font-size: 1.3rem; }
+.sidenav-logo .wordmark-text { font-size: 1.4rem; color: var(--text-primary); }
 
 .sidenav-close-btn {
   color: var(--text-secondary);
@@ -158,7 +132,7 @@
 
 .sidenav-user-name {
   font-weight: 700 !important;
-  font-family: 'Nunito', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   color: var(--text-primary);
 }
 
@@ -188,7 +162,7 @@
   transition: border-color 0.15s;
 }
 
-.avatar-btn:hover { border-color: #F5B800; }
+.avatar-btn:hover { border-color: #E5A31D; }
 
 .avatar-img {
   width: 40px;
@@ -205,7 +179,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #F5B800;
+  background: #E5A31D;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -216,7 +190,7 @@
   font-size: 11px;
   width: 11px;
   height: 11px;
-  color: #1C1917;
+  color: #13251E;
   line-height: 11px;
 }
 
@@ -264,7 +238,7 @@
   color: var(--text-primary);
   font-size: 0.9375rem;
   font-weight: 600;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .prefs-item-label mat-icon {
@@ -313,7 +287,7 @@
 }
 
 .switch.on {
-  background: var(--hustle-yellow, #F5B800);
+  background: var(--hustle-yellow, #E5A31D);
 }
 
 .switch-knob {
@@ -346,7 +320,7 @@
   font-size: 0.6rem;
   font-weight: 800;
   /* The knob is white in both themes, so its label must stay dark */
-  color: #1C1917;
+  color: #13251E;
   font-family: inherit;
 }
 
@@ -422,7 +396,7 @@
   width: 20px;
   height: 3px;
   border-radius: 999px;
-  background: #F5B800;
+  background: #E5A31D;
 }
 
 .bottom-nav-icon {
@@ -441,10 +415,10 @@
 }
 
 .bottom-nav-item:active {
-  background: rgba(245, 184, 0, 0.08);
+  background: rgba(229, 163, 29, 0.08);
 }
 
-/* ─── Sidenav font — match main screen (Nunito, not bold) ────────────────── */
+/* ─── Sidenav font — match main screen (DM Sans, not bold) ────────────────── */
 .app-sidenav,
 .app-sidenav .mdc-list-item,
 .app-sidenav .mdc-list-item__primary-text,
@@ -452,12 +426,12 @@
 .app-sidenav .mdc-list-item__content,
 .app-sidenav .mat-list-item,
 .app-sidenav .mat-nav-list a {
-  font-family: 'Nunito', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-weight: 400 !important;
 }
 
 .app-sidenav .sidenav-user {
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
@@ -473,12 +447,7 @@
     padding: 0 1rem;
   }
 
-  .toolbar-logo {
-    height: 36px;
-  }
-
-  .toolbar-logo .brand-icon { height: 36px; }
-  .toolbar-logo .brand-word { font-size: 1.4rem; }
+  .toolbar-logo .wordmark-text { font-size: 1.5rem; }
 
   .toolbar-hamburger-btn {
     display: inline-flex;
