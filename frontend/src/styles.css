@@ -86,7 +86,7 @@
   --nav-fg:        var(--ink);
   --nav-fg-muted:  var(--text-secondary);
   --nav-border:    var(--border-base);
-  --nav-accent:    var(--accent-text-safe);
+  --nav-accent:    var(--success-text);
   --nav-seg-bg:    var(--bg-muted);
   --nav-seg-on-bg: var(--ink);
   --nav-seg-on-fg: var(--cream);

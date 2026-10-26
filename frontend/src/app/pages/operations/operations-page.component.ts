@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ApiService, CommunityStats, BusinessProfile } from '../../services/api.service';
+import { MatIconModule } from '@angular/material/icon';
+import { ApiService, ApplicantResponse, CommunityStats, BusinessProfile } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
 import { LoginGateComponent } from '../../components/login-gate/login-gate.component';
 import * as L from 'leaflet';
@@ -9,7 +10,7 @@ import * as L from 'leaflet';
 @Component({
   selector: 'app-operations-page',
   standalone: true,
-  imports: [CommonModule, LoginGateComponent],
+  imports: [CommonModule, MatIconModule, LoginGateComponent],
   template: `
     <app-login-gate *ngIf="!authorized()"
       icon="🗺️"
@@ -19,138 +20,76 @@ import * as L from 'leaflet';
     ></app-login-gate>
 
     <div class="staff-shell ops-shell" *ngIf="authorized()">
-
-      <!-- Header -->
       <header class="staff-shell__header ops-header">
+        <p class="eyebrow">Back office · {{ today }}</p>
         <h1 class="staff-shell__title">Operations</h1>
-        <p class="staff-shell__subtitle">Community performance and GIS mapping</p>
+        <p class="staff-shell__subtitle">Approvals, shops and communities across your area</p>
       </header>
 
       <div class="staff-shell__content ops-content">
+        <div class="kpis">
+          <a class="kpi hot" href="#approvals">
+            <strong>{{ awaiting().length }}</strong><span>Awaiting final approval</span>
+          </a>
+          <div class="kpi"><strong>{{ shopsLive() }}</strong><span>Shops live</span></div>
+          <div class="kpi"><strong>{{ withAgents() }}</strong><span>Waiting for an agent visit</span></div>
+          <div class="kpi"><strong>{{ stats().length }}</strong><span>Communities</span></div>
+        </div>
 
-      <!-- Community Analytics — grouped by province -->
-      <section class="ops-section">
-        <h2 class="section-title">Community Analytics</h2>
-        <div *ngIf="loading()" class="loading-state">Loading stats…</div>
-
-        <!-- Detail view for a selected community -->
-        <ng-container *ngIf="!loading() && selectedCommunity()">
-          <div class="detail-back-row">
-            <button class="back-btn" (click)="clearSelectedCommunity()">← Back</button>
-            <span class="detail-title">{{ selectedCommunity()!.communityName }}</span>
-          </div>
-
-          <!-- Stats summary -->
-          <div class="stat-row detail-stats">
-            <div class="stat">
-              <span class="stat-val">{{ selectedCommunity()!.totalApplicants }}</span>
-              <span class="stat-label">Applicants</span>
-            </div>
-            <div class="stat">
-              <span class="stat-val approved">{{ selectedCommunity()!.stageBreakdown['APPROVED'] ?? 0 }}</span>
-              <span class="stat-label">Approved</span>
-            </div>
-            <div class="stat">
-              <span class="stat-val active">{{ selectedCommunity()!.activeHustlers }}</span>
-              <span class="stat-label">Active Hustlers</span>
-            </div>
-          </div>
-
-          <!-- Pipeline bar -->
-          <div class="pipeline-bar detail-pipeline">
-            <div *ngFor="let entry of stageEntries(selectedCommunity()!.stageBreakdown)"
-                 [title]="entry.stage + ': ' + entry.count"
-                 [style.flex]="entry.count"
-                 [class]="'stage-' + entry.stage.toLowerCase()">
-            </div>
-          </div>
-          <div class="stage-legend" style="margin-bottom:1.25rem">
-            <span *ngFor="let entry of stageEntries(selectedCommunity()!.stageBreakdown)" class="legend-item">
-              <span class="legend-dot" [class]="'stage-' + entry.stage.toLowerCase()"></span>
-              {{ entry.stage | titlecase }}: {{ entry.count }}
-            </span>
-          </div>
-
-          <!-- Active hustlers list -->
-          <div class="hustlers-list-title">Active Hustlers</div>
-          <div *ngIf="hustlersLoading()" class="loading-state">Loading hustlers…</div>
-          <div *ngIf="!hustlersLoading() && communityHustlers().length === 0" class="loading-state">No active hustlers in this community yet.</div>
-          <div class="hustler-list" *ngIf="!hustlersLoading() && communityHustlers().length > 0">
-            <div *ngFor="let h of communityHustlers()" class="hustler-row">
-              <div class="hustler-info">
-                <span class="hustler-name">{{ h.businessName }}</span>
-                <span class="hustler-type">{{ h.businessType }}</span>
+        <div class="ops-grid">
+          <section id="approvals" class="approvals" aria-labelledby="ap-h">
+            <h2 id="ap-h" class="section-title">Awaiting final approval</h2>
+            <p class="mut" *ngIf="awaitingLoading()">Loading…</p>
+            <p class="calm" *ngIf="!awaitingLoading() && awaiting().length === 0">Nobody is waiting. When a Community Agent approves someone, they appear here for your final yes.</p>
+            <article class="card applicant" *ngFor="let a of awaiting()">
+              <div class="app-top">
+                <span class="app-who"><strong>{{ a.firstName }} {{ a.lastName }}</strong><span class="mut">{{ a.typeOfHustle }} · {{ a.communityName }}</span></span>
+                <span class="tag">Merchant</span>
               </div>
-              <span class="hustler-area" *ngIf="h.operatingArea">{{ h.operatingArea }}</span>
-            </div>
-          </div>
-        </ng-container>
-
-        <!-- Community grid -->
-        <ng-container *ngIf="!loading() && !selectedCommunity()">
-          <div *ngFor="let group of groupedStats()" class="province-group">
-            <div class="province-header">
-              <span class="province-name">{{ group.province }}</span>
-              <span class="province-count">{{ group.communities.length }} {{ group.communities.length === 1 ? 'community' : 'communities' }}</span>
-            </div>
-            <div class="community-grid">
-              <div *ngFor="let c of group.communities"
-                   class="community-card clickable-card"
-                   (click)="selectCommunity(c)"
-                   role="button"
-                   tabindex="0"
-                   (keydown.enter)="selectCommunity(c)">
-                <div class="card-header">
-                  <span class="community-name">{{ c.communityName }}</span>
-                  <span class="chevron">›</span>
-                </div>
-                <div class="stat-row">
-                  <div class="stat">
-                    <span class="stat-val">{{ c.totalApplicants }}</span>
-                    <span class="stat-label">Applicants</span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-val approved">{{ c.stageBreakdown['APPROVED'] ?? 0 }}</span>
-                    <span class="stat-label">Approved</span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-val active">{{ c.activeHustlers }}</span>
-                    <span class="stat-label">Active Hustlers</span>
-                  </div>
-                </div>
-                <div class="pipeline-bar">
-                  <div *ngFor="let entry of stageEntries(c.stageBreakdown)"
-                       [title]="entry.stage + ': ' + entry.count"
-                       [style.flex]="entry.count"
-                       [class]="'stage-' + entry.stage.toLowerCase()">
-                  </div>
-                </div>
-                <div class="stage-legend">
-                  <span *ngFor="let entry of stageEntries(c.stageBreakdown)" class="legend-item">
-                    <span class="legend-dot" [class]="'stage-' + entry.stage.toLowerCase()"></span>
-                    {{ entry.stage | titlecase }}: {{ entry.count }}
-                  </span>
-                </div>
+              <p class="mut small">Checked in person · moved to you {{ a.updatedAt | date:'d MMM' }} · phone ending {{ a.phone.slice(-4) }}</p>
+              <div class="pair">
+                <button type="button" class="btn gold" (click)="approve(a)" [disabled]="busyId() === a.id">{{ busyId() === a.id ? 'Saving…' : 'Approve' }}</button>
+                <button type="button" class="btn line" (click)="sendBack(a)" [disabled]="busyId() === a.id">Send back</button>
               </div>
-            </div>
-          </div>
-        </ng-container>
-      </section>
+            </article>
+            <p class="error" *ngIf="actionError()" role="alert">{{ actionError() }}</p>
+          </section>
 
-      <!-- GIS Map -->
-      <section class="ops-section">
-        <h2 class="section-title">GIS — Community Locations</h2>
-        <div id="ops-map" class="ops-map"></div>
-        <p class="map-note">Coordinates are approximate — update via community settings once field-verified.</p>
-      </section>
+          <section class="card communities" aria-labelledby="cm-h">
+            <h2 id="cm-h" class="section-title">Communities</h2>
+            <p class="mut" *ngIf="loading()">Loading…</p>
+            <ng-container *ngIf="!loading() && !selectedCommunity()">
+              <button type="button" class="c-row" *ngFor="let c of stats()" (click)="selectCommunity(c)">
+                <span class="c-name"><strong>{{ c.communityName }}</strong><span class="mut small">{{ c.province ?? '' }}</span></span>
+                <span class="c-num"><strong>{{ c.activeHustlers }}</strong><span class="mut small">shops live</span></span>
+                <span class="c-num"><strong>{{ c.totalApplicants }}</strong><span class="mut small">applied</span></span>
+                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+              </button>
+            </ng-container>
+            <ng-container *ngIf="!loading() && selectedCommunity() as c">
+              <button type="button" class="link" (click)="clearSelectedCommunity()">‹ All communities</button>
+              <p class="c-title">{{ c.communityName }}</p>
+              <p class="mut">{{ c.activeHustlers }} shops live · {{ c.totalApplicants }} applied</p>
+              <p class="mut" *ngIf="hustlersLoading()">Loading shops…</p>
+              <p class="calm" *ngIf="!hustlersLoading() && communityHustlers().length === 0">No shops live here yet.</p>
+              <div class="line-row" *ngFor="let h of communityHustlers()">
+                <span class="c-name"><strong>{{ h.businessName }}</strong><span class="mut small">{{ h.businessType }}</span></span>
+                <span class="mut small">{{ h.operatingArea }}</span>
+              </div>
+            </ng-container>
+          </section>
 
+          <section class="card map-card" aria-labelledby="map-h">
+            <h2 id="map-h" class="section-title">Communities on the map</h2>
+            <div id="ops-map" class="ops-map"></div>
+            <p class="mut small">Pins are approximate until each community is checked on the ground.</p>
+          </section>
+        </div>
       </div>
 
-      <!-- Sign Out -->
       <footer class="staff-shell__footer signout-row">
         <button class="signout-btn" (click)="logout()">Sign Out</button>
       </footer>
-
     </div>
   `,
   styles: `
@@ -176,276 +115,52 @@ import * as L from 'leaflet';
       .signout-btn:hover { border-color: #C8443A; color: #C8443A; }
     }
 
-    .ops-shell {
-      max-width: 1100px;
-    }
+    .ops-shell { max-width: none; }
+    .ops-header .eyebrow { margin: 0 0 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--nav-accent); }
+    .ops-header .staff-shell__title { font-family: var(--font-display); font-size: 1.875rem; font-weight: 800; letter-spacing: -0.015em; }
+    @media (min-width: 768px) { .ops-header .staff-shell__title { font-size: 2.5rem; } .ops-header { padding: 1.5rem 2rem 1.25rem; } }
+    .ops-content { background: var(--bg-page); padding: 16px; }
+    @media (min-width: 768px) { .ops-content { padding: 24px 32px; } }
 
-    .ops-header {
-      border-bottom-width: 2px;
-    }
-    .ops-content {
-      background: var(--bg-page);
-    }
+    .mut { margin: 0; color: var(--text-secondary); }
+    .small { font-size: 0.8125rem; }
+    .calm { margin: 0; color: var(--text-secondary); line-height: 1.45; }
+    .error { margin: 0; color: #8E2A20; font-weight: 700; }
+    .card { background: var(--bg-surface); border: 1px solid var(--border-base); border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .section-title { margin: 0; font-family: var(--font-display); font-size: 1.375rem; font-weight: 600; color: var(--text-primary); }
 
-    .ops-section {
-      margin-bottom: 2rem;
-    }
-    .section-title {
-      font-size: 1rem;
-      font-weight: 800;
-      color: #13251E;
-      margin: 0 0 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .section-desc {
-      font-size: 0.875rem;
-      color: #4A524C;
-      margin: 0 0 0.75rem;
-    }
+    .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    @media (min-width: 900px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; } }
+    .kpi { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 18px; border: 1px solid var(--border-base); background: var(--bg-surface); color: var(--text-primary); text-decoration: none; }
+    .kpi strong { font-family: var(--font-display); font-size: 2.25rem; font-weight: 800; line-height: 1; }
+    .kpi span { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.3; }
+    .kpi.hot { background: var(--gold); border-color: var(--gold); }
+    .kpi.hot span { color: var(--ink); }
+    .kpi.hot strong { color: var(--ink); }
 
-    .loading-state {
-      color: #646A63;
-      font-size: 0.875rem;
-      padding: 1rem 0;
-    }
+    .ops-grid { display: flex; flex-direction: column; gap: 16px; }
+    @media (min-width: 1100px) { .ops-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: start; } .map-card { grid-column: span 2; } }
+    .approvals { display: flex; flex-direction: column; gap: 12px; }
+    .app-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .app-who { display: flex; flex-direction: column; gap: 2px; }
+    .app-who strong { font-size: 1.0625rem; }
+    .tag { padding: 4px 10px; border-radius: 999px; background: var(--bg-muted); font-size: 0.8125rem; font-weight: 700; white-space: nowrap; }
+    .pair { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 10px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 16px; border-radius: 14px; border: 0; font-size: 1rem; font-weight: 700; }
+    .btn.gold { background: var(--gold); color: var(--ink); }
+    .btn.line { background: transparent; color: var(--text-primary); border: 1.5px solid var(--text-primary); }
+    .btn:disabled { opacity: 0.5; }
 
-    /* ── Province grouping ── */
-    .province-group {
-      margin-bottom: 1.5rem;
-    }
-    .province-header {
-      display: flex;
-      align-items: baseline;
-      gap: 0.6rem;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.4rem;
-      border-bottom: 2px solid #E5A31D;
-    }
-    .province-name {
-      font-size: 0.9375rem;
-      font-weight: 900;
-      color: #13251E;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .province-count {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #646A63;
-    }
+    .c-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 24px; gap: 16px; align-items: center; width: 100%; min-height: 56px; padding: 10px 0; border: 0; border-top: 1px solid var(--border-base); border-radius: 0; background: transparent; color: var(--text-primary); text-align: left; font-weight: 400; }
+    .c-row:active { transform: none; }
+    .c-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .c-num { display: flex; flex-direction: column; align-items: flex-end; }
+    .c-title { margin: 0; font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
+    .link { align-self: flex-start; min-height: 40px; padding: 0; background: none; color: var(--success-text); font-weight: 700; font-size: 0.875rem; }
+    .line-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-base); }
 
-    /* ── Community Cards ── */
-    .community-grid {
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: 1fr;
-    }
-    .community-card {
-      background: #fff;
-      border: 1px solid #E3DACA;
-      border-radius: 1rem;
-      padding: 1rem;
-      box-shadow: 0 2px 8px rgba(19, 37, 30,0.05);
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-    .community-name {
-      font-size: 1rem;
-      font-weight: 800;
-      color: #13251E;
-    }
-    .region-badge {
-      font-size: 0.7rem;
-      font-weight: 700;
-      background: #F1EADC;
-      color: #4A524C;
-      border-radius: 999px;
-      padding: 0.2rem 0.6rem;
-    }
-    .stat-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
-    .stat {
-      flex: 1;
-      background: #FBF8F2;
-      border-radius: 0.75rem;
-      padding: 0.6rem 0.5rem;
-      text-align: center;
-    }
-    .stat-val {
-      display: block;
-      font-size: 1.375rem;
-      font-weight: 900;
-      color: #13251E;
-    }
-    .stat-val.approved { color: var(--success-text); }
-    .stat-val.active { color: #2F6DB5; }
-    .stat-label {
-      display: block;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: #646A63;
-      margin-top: 0.1rem;
-    }
-
-    /* ── Pipeline bar ── */
-    .pipeline-bar {
-      display: flex;
-      height: 8px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: #F1EADC;
-      margin-bottom: 0.5rem;
-    }
-    .pipeline-bar [class*="stage-"] { min-width: 4px; }
-    .stage-captured       { background: #646A63; }
-    .stage-calling        { background: #E5A31D; }
-    .stage-interview_scheduled { background: #D9682A; }
-    .stage-interviewed    { background: #7A4BB0; }
-    .stage-business_verification { background: #14897C; }
-    .stage-approved       { background: #3F9A4F; }
-    .stage-rejected       { background: #C93C7E; }
-
-    .stage-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.625rem;
-      font-weight: 700;
-      color: #4A524C;
-    }
-    .legend-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    /* ── GIS Map ── */
-    .ops-map {
-      height: 320px;
-      border-radius: 1rem;
-      overflow: hidden;
-      border: 1px solid #E3DACA;
-      z-index: 1;
-    }
-    .map-note {
-      font-size: 0.75rem;
-      color: #646A63;
-      margin: 0.5rem 0 0;
-      font-style: italic;
-    }
-
-    /* ── Clickable card ── */
-    .clickable-card {
-      cursor: pointer;
-      transition: box-shadow 0.15s, transform 0.15s;
-    }
-    .clickable-card:hover {
-      box-shadow: 0 6px 20px rgba(19, 37, 30,0.12);
-      transform: translateY(-1px);
-    }
-    .clickable-card:active { transform: translateY(0); }
-    .chevron {
-      font-size: 1.25rem;
-      color: #646A63;
-      line-height: 1;
-    }
-
-    /* ── Community detail view ── */
-    .detail-back-row {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-    .back-btn {
-      border: 1.5px solid #E3DACA;
-      background: none;
-      color: #4A524C;
-      border-radius: 999px;
-      padding: 0.4rem 1rem;
-      font-size: 0.8125rem;
-      font-weight: 800;
-      cursor: pointer;
-      font-family: inherit;
-      min-height: 40px;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .back-btn:hover { border-color: #13251E; color: #13251E; }
-    .detail-title {
-      font-size: 1.125rem;
-      font-weight: 900;
-      color: #13251E;
-    }
-    .detail-stats { margin-bottom: 0.75rem; }
-    .detail-pipeline { margin-bottom: 0.5rem; height: 10px; }
-
-    /* ── Hustler list ── */
-    .hustlers-list-title {
-      font-size: 0.8125rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #646A63;
-      margin-bottom: 0.75rem;
-    }
-    .hustler-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .hustler-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #FBF8F2;
-      border: 1px solid #E3DACA;
-      border-radius: 0.75rem;
-      padding: 0.75rem 1rem;
-      gap: 0.5rem;
-    }
-    .hustler-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
-    .hustler-name {
-      font-size: 0.9375rem;
-      font-weight: 800;
-      color: #13251E;
-    }
-    .hustler-type {
-      font-size: 0.75rem;
-      color: #4A524C;
-      font-weight: 600;
-    }
-    .hustler-area {
-      font-size: 0.75rem;
-      color: #646A63;
-      font-weight: 600;
-      text-align: right;
-    }
-
-    @media (min-width: 640px) {
-      .community-grid { grid-template-columns: repeat(2, 1fr); }
-      .ops-map { height: 420px; }
-    }
-    @media (min-width: 960px) {
-      .community-grid { grid-template-columns: repeat(3, 1fr); }
-    }
+    .ops-map { height: 320px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-base); }
+    @media (min-width: 1100px) { .ops-map { height: 380px; } }
   `
 })
 export class OperationsPageComponent implements OnInit, OnDestroy {
@@ -461,11 +176,44 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
 
   readonly authorized = computed(() => this.auth.isStaff());
 
+  readonly today = new Date().toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long' });
+  readonly awaiting = signal<ApplicantResponse[]>([]);
+  readonly awaitingLoading = signal(true);
+  readonly busyId = signal<string | null>(null);
+  readonly actionError = signal('');
+  readonly shopsLive = computed(() => this.stats().reduce((n, c) => n + (c.activeHustlers ?? 0), 0));
+  readonly withAgents = computed(() => this.stats().reduce((n, c) =>
+    n + ['CAPTURED', 'CALLING', 'INTERVIEW_SCHEDULED', 'INTERVIEWED'].reduce((m, st) => m + (c.stageBreakdown[st] ?? 0), 0), 0));
+
+  // Merchants an agent has checked, waiting for the Hub Coordinator's final yes (D17)
+  private loadAwaiting(): void {
+    this.awaitingLoading.set(true);
+    this.api.listApplicants(undefined, 'BUSINESS_VERIFICATION').subscribe({
+      next: list => { this.awaiting.set([...list].sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))); this.awaitingLoading.set(false); },
+      error: () => this.awaitingLoading.set(false)
+    });
+  }
+
+  approve(a: ApplicantResponse): void { this.decide(a, 'APPROVED'); }
+
+  // Back to the agent's To visit list
+  sendBack(a: ApplicantResponse): void { this.decide(a, 'INTERVIEWED'); }
+
+  private decide(a: ApplicantResponse, stage: string): void {
+    this.busyId.set(a.id);
+    this.actionError.set('');
+    this.api.updateApplicantStage(a.id, stage).subscribe({
+      next: () => { this.busyId.set(null); this.awaiting.update(list => list.filter(x => x.id !== a.id)); },
+      error: err => { this.busyId.set(null); this.actionError.set(err?.error?.message || 'That did not save. Try again.'); }
+    });
+  }
+
   private map: L.Map | null = null;
 
   ngOnInit(): void {
     const token = this.auth.getToken();
     if (!token) return;
+    this.loadAwaiting();
 
     this.api.getOperationsStats(token).subscribe({
       next: (data) => {
@@ -533,12 +281,12 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
     const icon = L.divIcon({
       className: '',
       html: `<div style="
-        background:#E5A31D;border:2px solid #13251E;
-        width:12px;height:12px;border-radius:50%;
+        background:#E5A31D;border:3px solid #13251E;
+        width:18px;height:18px;border-radius:50%;box-sizing:border-box;
         box-shadow:0 2px 6px rgba(0,0,0,0.3)">
       </div>`,
-      iconSize: [12, 12],
-      iconAnchor: [6, 6]
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
     });
 
     communities.forEach(c => {
