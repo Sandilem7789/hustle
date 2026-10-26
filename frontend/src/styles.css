@@ -3,54 +3,81 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HUSTLE ECONOMY — Global Design System
-   Color palette extracted directly from the logo wordmark.
+   thenga.com — Global Design System
+   Ink, gold, leaf and cream from the pitch identity. The eight Hustle Economy
+   letter colours live on, deepened, as the market thread and the eight
+   marketplace category colours (docs/THENGA_PLATFORM_PLAN.md, D20).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-  /* Brand palette — every color lifted from the logo letters */
-  --hustle-yellow:  #F5B800;   /* H  — primary CTA, active states          */
-  --hustle-teal:    #00A896;   /* U  — secondary actions, links             */
-  --hustle-purple:  #8B2FC9;   /* S  — premium, creative accent             */
-  --hustle-pink:    #E91E8C;   /* T  — energy, highlights                   */
-  --hustle-green:   #2DB344;   /* L  — income, success, growth              */
-  --hustle-orange:  #F06820;   /* E  — warmth, warning states               */
-  --hustle-blue:    #1B6FD4;   /* E2 — info, marketplace links              */
-  --hustle-red:     #E53935;   /* M  — expense, danger                      */
+  /* Core identity */
+  --ink:   #13251E;
+  --gold:  #E5A31D;   /* the old Hustle yellow, deepened; one main action per screen */
+  --leaf:  #2E6B4A;
+  --cream: #F5EFE3;
+
+  /* The eight Hustle colours, earthed. Names kept so existing styles follow. */
+  --hustle-yellow:  #E5A31D;
+  --hustle-teal:    #14897C;
+  --hustle-purple:  #7A4BB0;
+  --hustle-pink:    #C93C7E;
+  --hustle-green:   #3F9A4F;
+  --hustle-orange:  #D9682A;
+  --hustle-blue:    #2F6DB5;
+  --hustle-red:     #C8443A;
+
+  /* One Hustle colour per marketplace category, shown as a small dot beside its name */
+  --cat-fast-food:   var(--hustle-orange);
+  --cat-grocery:     var(--hustle-teal);
+  --cat-clothing:    var(--hustle-pink);
+  --cat-services:    var(--hustle-blue);
+  --cat-crafts:      var(--hustle-purple);
+  --cat-agri:        var(--hustle-green);
+  --cat-electronics: var(--hustle-red);
+  --cat-other:       var(--hustle-yellow);
+
+  /* The market thread: the old logo's ground line, split into the eight colours */
+  --thread: linear-gradient(90deg,
+    #3F9A4F 0 12%,   transparent 12% 12.5%,
+    #14897C 12.5% 24.5%, transparent 24.5% 25%,
+    #C93C7E 25% 37%, transparent 37% 37.5%,
+    #C8443A 37.5% 49.5%, transparent 49.5% 50%,
+    #2F6DB5 50% 62%, transparent 62% 62.5%,
+    #D9682A 62.5% 74.5%, transparent 74.5% 75%,
+    #7A4BB0 75% 87%, transparent 87% 87.5%,
+    #E5A31D 87.5% 100%);
+
+  --font-sans:    'DM Sans', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
 
   /* Semantic aliases */
-  --color-primary:  var(--hustle-yellow);
+  --color-primary:  var(--gold);
   --color-success:  var(--hustle-green);
   --color-danger:   var(--hustle-red);
   --color-info:     var(--hustle-blue);
   --color-warning:  var(--hustle-orange);
 
   /* Surfaces */
-  --bg-page:    #FFFBF0;   /* warm cream — feels like an outdoor market     */
-  --bg-surface: #FFFFFF;
-  --bg-muted:   #F5F0E8;
+  --bg-page:    #F5EFE3;
+  --bg-surface: #FBF8F2;
+  --bg-muted:   #EFE8DA;
 
   /* Text */
-  --text-primary:   #1C1917;   /* warm near-black                           */
-  --text-secondary: #78716C;   /* warm mid-gray                             */
-  --text-muted:     #A8A29E;
+  --text-primary:   #13251E;
+  --text-secondary: #4A524C;   /* 7:1 on cream  */
+  --text-muted:     #646A63;   /* 4.8:1 on cream */
 
   /* Borders */
-  --border-base:  #E7E5E4;
-  --border-focus: var(--hustle-yellow);
+  --border-base:  #E3DACA;
+  --border-focus: var(--gold);
 
-  /* Brand-yellow text on a surface — #F5B800 fails contrast on a light
-     surface, so light theme uses a darkened readable variant; dark theme
-     can use the brighter accent directly since it reads fine there. */
-  --accent-text-safe: #92620A;
+  /* Gold text fails contrast on cream, so light theme uses a darker gold */
+  --accent-text-safe: #8A5A0B;
 
-  /* Brand green and teal fail AA as text on light surfaces (#2DB344 is
-     2.75:1, #00A896 about 3:1). Money, success and seller text use these
-     instead; the raw brand hues stay for logo art and non-text graphics. */
-  --success-text: #1E7B34;   /* 5.3:1 on white, 4.7:1 on --bg-muted       */
-  --success-fill: #1E7B34;   /* white text on it: 5.3:1                   */
-  --brand-text:   #006B60;   /* 6.4:1 on white                            */
+  --success-text: #2E6B4A;   /* leaf: 5.9:1 on cream */
+  --success-fill: #2E6B4A;   /* white text on it: 6.4:1 */
+  --brand-text:   #1A6B5F;
 
   /* Spacing */
   --space-xs:  0.25rem;
@@ -67,7 +94,7 @@
      Everything that leaves room for the nav uses this, so they cannot drift. */
   --bottom-nav-total: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   --toolbar-height: 64px;
-  --toolbar-strip-height: 3px;
+  --toolbar-strip-height: 0px;   /* the thread now sits under the wordmark, not across the page */
   --header-height:     60px;
   --radius-sm:  8px;
   --radius-md:  14px;
@@ -75,9 +102,9 @@
   --radius-pill: 999px;
 
   /* Shadows */
-  --shadow-card: 0 2px 12px rgba(28, 25, 23, 0.08);
-  --shadow-card-hover: 0 6px 24px rgba(28, 25, 23, 0.14);
-  --shadow-nav:  0 -3px 16px rgba(28, 25, 23, 0.07);
+  --shadow-card: 0 2px 12px rgba(19, 37, 30, 0.08);
+  --shadow-card-hover: 0 6px 24px rgba(19, 37, 30, 0.14);
+  --shadow-nav:  0 -3px 16px rgba(19, 37, 30, 0.07);
 
   color-scheme: light;
 }
@@ -88,17 +115,17 @@
    (reads a saved choice, falling back to prefers-color-scheme on first
    load), so this app never needs a bare prefers-color-scheme media query. */
 :root[data-theme="dark"] {
-  --bg-page:    #17140F;
-  --bg-surface: #211E19;
-  --bg-muted:   #2B2721;
+  --bg-page:    #0E1A15;
+  --bg-surface: #15261E;
+  --bg-muted:   #1D3228;
 
-  --text-primary:   #F5F1EA;
-  --text-secondary: #C9C2B5;
-  --text-muted:     #8F887C;
+  --text-primary:   #F5EFE3;
+  --text-secondary: #C9D3CC;
+  --text-muted:     #93A099;
 
-  --border-base:  #3A352D;
-  --accent-text-safe: #F5D061;
-  --success-text: #2DB344;   /* the brand green reads 6:1 on dark surfaces */
+  --border-base:  #2C4237;
+  --accent-text-safe: #E5A31D;
+  --success-text: #7FD1A0;
   --brand-text:   #74D9C9;
 
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
@@ -115,7 +142,7 @@
 
 body {
   margin: 0;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--bg-page);
   color: var(--text-primary);
   min-height: 100vh;
@@ -126,14 +153,22 @@ p { margin: 0; }
 
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
+}
+
+/* Page titles take the serif; card and list headings stay in the sans */
+h1, .display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 /* ─── Typography Scale ───────────────────────────────────────────────────── */
 .text-display {
+  font-family: var(--font-display);
   font-size: clamp(1.75rem, 5vw, 2.5rem);
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.1;
 }
 
@@ -205,31 +240,18 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ─── Hero Banner ────────────────────────────────────────────────────────── */
 .hero {
-  background: var(--text-primary);
-  color: white;
+  background: var(--ink);
+  color: var(--cream);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  box-shadow: 0 8px 32px rgba(28, 25, 23, 0.25);
+  box-shadow: 0 8px 32px rgba(19, 37, 30, 0.25);
   position: relative;
   overflow: hidden;
 }
 
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg,
-    rgba(245, 184, 0, 0.18)  0%,
-    rgba(0, 168, 150, 0.12)  35%,
-    rgba(233, 30, 140, 0.10) 65%,
-    rgba(43, 179, 68, 0.15)  100%
-  );
-  pointer-events: none;
-}
-
 .hero > * { position: relative; }
 
-.hero .eyebrow { color: rgba(255,255,255,0.55); }
+.hero .eyebrow { color: var(--gold); }
 
 @media (min-width: 768px) {
   .hero { padding: var(--space-xl); }
@@ -349,14 +371,14 @@ label {
   letter-spacing: 0.05em;
 }
 
-.badge-yellow  { background: rgba(245,184,0,0.15);   color: #92620A; }
-.badge-teal    { background: rgba(0,168,150,0.15);   color: #00665E; }
-.badge-green   { background: rgba(45,179,68,0.15);   color: #166534; }
-.badge-pink    { background: rgba(233,30,140,0.15);  color: #9D174D; }
-.badge-purple  { background: rgba(139,47,201,0.15);  color: #5B21B6; }
-.badge-orange  { background: rgba(240,104,32,0.15);  color: #92400E; }
-.badge-red     { background: rgba(229,57,53,0.15);   color: #991B1B; }
-.badge-blue    { background: rgba(27,111,212,0.15);  color: #1E3A8A; }
+.badge-yellow  { background: rgba(229,163,29,0.18);  color: #7A4F08; }
+.badge-teal    { background: rgba(20,137,124,0.15);  color: #0E5A51; }
+.badge-green   { background: rgba(63,154,79,0.15);   color: #24593B; }
+.badge-pink    { background: rgba(201,60,126,0.15);  color: #8A2455; }
+.badge-purple  { background: rgba(122,75,176,0.15);  color: #533180; }
+.badge-orange  { background: rgba(217,104,42,0.15);  color: #8A3E12; }
+.badge-red     { background: rgba(200,68,58,0.15);   color: #8E2A20; }
+.badge-blue    { background: rgba(47,109,181,0.15);  color: #1F4E86; }
 
 /* ─── Tab Bar ────────────────────────────────────────────────────────────── */
 .tab-bar {
@@ -391,8 +413,8 @@ label {
   left: 0;
   right: 0;
   z-index: 999;
-  background: var(--hustle-orange);
-  color: white;
+  background: var(--ink);
+  color: var(--cream);
   font-size: 0.875rem;
   font-weight: 700;
   padding: 0.5rem 1rem;
@@ -540,19 +562,20 @@ main.page-shell {
   display: block;
 }
 
-/* ─── Color Rainbow Strip (decorative, used in hero/header areas) ────────── */
-.rainbow-strip {
-  height: 4px;
-  background: linear-gradient(to right,
-    var(--hustle-yellow),
-    var(--hustle-teal),
-    var(--hustle-pink),
-    var(--hustle-green),
-    var(--hustle-orange),
-    var(--hustle-blue),
-    var(--hustle-purple)
-  );
-  border-radius: var(--radius-pill);
+/* ─── Market thread (decorative, used in hero/header areas) ─────────────── */
+.rainbow-strip,
+.market-thread {
+  height: 3px;
+  background: var(--thread);
+}
+
+/* Category colour dot; always shown next to the category's name */
+.cat-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ─── Leaflet map overrides ──────────────────────────────────────────────── */

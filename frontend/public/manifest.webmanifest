@@ -4,8 +4,8 @@
   "description": "Rural-first community marketplace and hustler economy platform for South Africa.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a1a",
-  "theme_color": "#F5B800",
+  "background_color": "#13251E",
+  "theme_color": "#13251E",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -13,8 +13,12 @@
 $frontend-theme: mat.define-theme((
   color: (
     theme-type: light,
-    primary: mat.$azure-palette,
-    tertiary: mat.$blue-palette,
+    primary: mat.$green-palette,
+    tertiary: mat.$yellow-palette,
+  ),
+  typography: (
+    plain-family: ('DM Sans', system-ui, sans-serif),
+    brand-family: ('Fraunces', Georgia, serif),
   ),
   density: (
     scale: 0,
@@ -34,8 +38,8 @@ $frontend-theme: mat.define-theme((
 $frontend-dark-theme: mat.define-theme((
   color: (
     theme-type: dark,
-    primary: mat.$azure-palette,
-    tertiary: mat.$blue-palette,
+    primary: mat.$green-palette,
+    tertiary: mat.$yellow-palette,
   ),
 ));
 
