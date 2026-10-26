@@ -222,11 +222,11 @@
     <!-- Public / not logged in -->
     <nav class="bottom-nav" *ngIf="!unifiedAuth.isLoggedIn() && !isDriver()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏪</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">storefront</mat-icon></span>
         <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a routerLink="/login" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">👤</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">person</mat-icon></span>
         <span>{{ 'nav.login' | translate }}</span>
       </a>
     </nav>
@@ -235,19 +235,19 @@
     <nav class="bottom-nav"
          *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.isHustler() && !unifiedAuth.isStaff()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏪</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">storefront</mat-icon></span>
         <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">📦</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">receipt_long</mat-icon></span>
         <span>{{ 'nav.orders' | translate }}</span>
       </a>
       <a routerLink="/notifications" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🔔</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">notifications</mat-icon></span>
         <span>{{ 'nav.alerts' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
-        <span class="bottom-nav-icon">☰</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">menu</mat-icon></span>
         <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>
@@ -255,19 +255,19 @@
     <!-- Hustler -->
     <nav class="bottom-nav" *ngIf="unifiedAuth.isHustler()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏪</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">storefront</mat-icon></span>
         <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏠</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">store</mat-icon></span>
         <span>{{ 'nav.myStore' | translate }}</span>
       </a>
       <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">📦</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">receipt_long</mat-icon></span>
         <span>{{ 'nav.orders' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
-        <span class="bottom-nav-icon">☰</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">menu</mat-icon></span>
         <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>
@@ -275,19 +275,19 @@
     <!-- Staff (Facilitator / Coordinator) -->
     <nav class="bottom-nav" *ngIf="unifiedAuth.isStaff()">
       <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏪</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">storefront</mat-icon></span>
         <span>{{ 'nav.market' | translate }}</span>
       </a>
       <a *ngIf="unifiedAuth.hasStore()" routerLink="/dashboard" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏠</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">store</mat-icon></span>
         <span>{{ 'nav.myStore' | translate }}</span>
       </a>
       <a routerLink="/facilitator" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏛️</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">verified</mat-icon></span>
         <span>{{ 'nav.facilitator' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
-        <span class="bottom-nav-icon">☰</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">menu</mat-icon></span>
         <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>
@@ -295,11 +295,11 @@
     <!-- Driver -->
     <nav class="bottom-nav" *ngIf="isDriver()">
       <a routerLink="/driver" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🚚</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">local_shipping</mat-icon></span>
         <span>{{ 'nav.dashboard' | translate }}</span>
       </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
-        <span class="bottom-nav-icon">☰</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">menu</mat-icon></span>
         <span>{{ 'nav.menu' | translate }}</span>
       </button>
     </nav>

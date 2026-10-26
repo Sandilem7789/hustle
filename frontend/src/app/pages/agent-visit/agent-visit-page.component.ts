@@ -28,7 +28,7 @@ const LOCKED_STAGES = new Set(['BUSINESS_VERIFICATION', 'APPROVED', 'REJECTED'])
     ></app-login-gate>
 
     <section class="visit" *ngIf="authorized()">
-      <header class="head">
+      <header class="head dash-head">
         <div class="head-inner">
           <a routerLink="/facilitator" class="back"><mat-icon aria-hidden="true">chevron_left</mat-icon>{{ 'agent.title' | translate }}</a>
           <ng-container *ngIf="applicant() as a">
@@ -147,13 +147,12 @@ const LOCKED_STAGES = new Set(['BUSINESS_VERIFICATION', 'APPROVED', 'REJECTED'])
   styles: `
     :host { display: block; }
     .visit { padding-bottom: 1.5rem; }
-    .head { background: var(--ink); color: var(--cream); }
     .head-inner { max-width: 1100px; margin: 0 auto; padding: 0.25rem 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
-    .back { color: var(--gold); text-decoration: none; font-weight: 700; min-height: 48px; display: inline-flex; align-items: center; margin-left: -0.375rem; align-self: flex-start; }
+    .back { color: var(--nav-accent); text-decoration: none; font-weight: 700; min-height: 48px; display: inline-flex; align-items: center; margin-left: -0.375rem; align-self: flex-start; }
     .title { font-size: 2rem; line-height: 1.05; }
-    .sub { color: #C9D3CC; font-size: 0.9375rem; }
+    .sub { color: var(--nav-fg-muted); font-size: 0.9375rem; }
     .progress { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; margin-top: 0.25rem; }
-    .bar { flex: 1; height: 8px; border-radius: 999px; background: #2A4237; overflow: hidden; }
+    .bar { flex: 1; height: 8px; border-radius: 999px; background: var(--nav-track); overflow: hidden; }
     .bar span { display: block; height: 100%; background: var(--gold); transition: width 0.2s ease-out; }
 
     .body { max-width: 1100px; margin: 0 auto; padding: 1rem; }

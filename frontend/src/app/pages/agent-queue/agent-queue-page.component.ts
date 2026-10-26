@@ -31,19 +31,19 @@ const TAB_STAGES: Record<Tab, ReadonlySet<string>> = {
     ></app-login-gate>
 
     <section class="agent" *ngIf="authorized()">
-      <header class="head">
+      <header class="head dash-head">
         <div class="head-inner">
           <p class="eyebrow">{{ 'agent.eyebrow' | translate }}<ng-container *ngIf="community.selected() as c"> · {{ c.name }}</ng-container></p>
           <h1 class="title">{{ 'agent.title' | translate }}</h1>
           <p class="intro">{{ 'agent.intro' | translate }}</p>
-          <div class="tabs" role="group" [attr.aria-label]="'agent.title' | translate">
-            <button type="button" class="tab" [attr.aria-pressed]="tab() === 'toVisit'" (click)="tab.set('toVisit')">
+          <div class="tabs seg-tabs" role="group" [attr.aria-label]="'agent.title' | translate">
+            <button type="button" [attr.aria-pressed]="tab() === 'toVisit'" (click)="tab.set('toVisit')">
               {{ 'agent.tabToVisit' | translate }} <span class="count">{{ counts().toVisit }}</span>
             </button>
-            <button type="button" class="tab" [attr.aria-pressed]="tab() === 'withHub'" (click)="tab.set('withHub')">
+            <button type="button" [attr.aria-pressed]="tab() === 'withHub'" (click)="tab.set('withHub')">
               {{ 'agent.tabWithHub' | translate }} <span class="count">{{ counts().withHub }}</span>
             </button>
-            <button type="button" class="tab" [attr.aria-pressed]="tab() === 'done'" (click)="tab.set('done')">
+            <button type="button" [attr.aria-pressed]="tab() === 'done'" (click)="tab.set('done')">
               {{ 'agent.tabDone' | translate }} <span class="count">{{ counts().done }}</span>
             </button>
           </div>
@@ -109,15 +109,11 @@ const TAB_STAGES: Record<Tab, ReadonlySet<string>> = {
     :host { display: block; }
     .agent { padding-bottom: 1.5rem; }
 
-    .head { background: var(--ink); color: var(--cream); }
     .head-inner { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-    .eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+    .eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { font-size: 2.125rem; line-height: 1; }
-    .intro { color: #C9D3CC; font-size: 0.9375rem; line-height: 1.4; max-width: 40rem; }
+    .intro { color: var(--nav-fg-muted); font-size: 0.9375rem; line-height: 1.4; max-width: 40rem; }
 
-    .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: #1C3329; border-radius: 14px; padding: 4px; }
-    .tab { min-height: 44px; border-radius: 10px; background: transparent; color: #C9D3CC; font-size: 0.875rem; font-weight: 500; padding: 0 0.25rem; line-height: 1.15; }
-    .tab[aria-pressed="true"] { background: var(--cream); color: var(--ink); font-weight: 700; }
     .count { font-weight: 700; }
 
     .body { max-width: 1100px; margin: 0 auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }

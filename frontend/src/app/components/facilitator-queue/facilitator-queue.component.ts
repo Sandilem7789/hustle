@@ -16,11 +16,11 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
   template: `
     <section class="card">
       <!-- TOP TABS -->
-      <div class="top-tabs">
-        <button [class.active]="fTab() === 'pipeline'" (click)="fTab.set('pipeline')">Pipeline</button>
-        <button [class.active]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Active<br>Hustlers</button>
-        <button [class.active]="fTab() === 'surveys'" (click)="fTab.set('surveys')">Surveys</button>
-        <button [class.active]="fTab() === 'exports'" (click)="fTab.set('exports')">Exports</button>
+      <div class="top-tabs seg-tabs" role="group" aria-label="Back office">
+        <button type="button" [attr.aria-pressed]="fTab() === 'pipeline'" (click)="fTab.set('pipeline')">Pipeline</button>
+        <button type="button" [attr.aria-pressed]="fTab() === 'hustlers'" (click)="fTab.set('hustlers')">Active<br>Hustlers</button>
+        <button type="button" [attr.aria-pressed]="fTab() === 'surveys'" (click)="fTab.set('surveys')">Surveys</button>
+        <button type="button" [attr.aria-pressed]="fTab() === 'exports'" (click)="fTab.set('exports')">Exports</button>
       </div>
 
       <div class="queue-scroll">
@@ -1018,9 +1018,7 @@ import { FacilitatorSurveysComponent } from '../facilitator-surveys/facilitator-
     @media (min-width: 601px) { .card { padding: 2rem; border-radius: 1.5rem; } }
 
     /* Top-level tabs */
-    .top-tabs { flex: 0 0 auto; display: flex; border-bottom: 2px solid #E3DACA; margin-bottom: 0.75rem; background: white; position: relative; z-index: 1; }
-    .top-tabs button { flex: 1; padding: 0.75rem 0.5rem; border: none; background: none; font-size: 0.85rem; font-weight: 700; color: #646A63; cursor: pointer; transition: color 0.2s, border-color 0.2s; font-family: inherit; min-height: 48px; text-align: center; line-height: 1.25; }
-    .top-tabs button.active { color: #13251E; border-bottom: 2px solid #E5A31D; margin-bottom: -2px; }
+    .top-tabs { flex: 0 0 auto; margin-bottom: 0.75rem; position: relative; z-index: 1; }
 
     @media (min-width: 601px) {
       .top-tabs { margin-bottom: 1.5rem; }

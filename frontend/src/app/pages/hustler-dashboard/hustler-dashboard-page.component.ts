@@ -25,26 +25,31 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
 
     <section class="layout" *ngIf="auth.isLoggedIn()">
     <div class="dashboard-shell">
-    <nav class="rail-nav">
-      <div class="rail-brand">thenga.com</div>
-      <button type="button" class="rail-item" [class.rail-active]="tab() === 'sell'" (click)="tab.set('sell')"><span>🧺</span>Sell</button>
-      <button type="button" class="rail-item" [class.rail-active]="tab() === 'income'" (click)="tab.set('income')"><span>💰</span>Money</button>
-      <button type="button" class="rail-item" [class.rail-active]="tab() === 'products'" (click)="tab.set('products')"><span>📦</span>Stock</button>
-      <button type="button" class="rail-item" [class.rail-active]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')"><span>🛍</span>Orders</button>
-      <div class="rail-spacer"></div>
-      <div class="rail-sync mut">● synced</div>
+    <nav class="rail-nav dash-rail" aria-label="Sell">
+      <span class="wordmark" role="img" aria-label="thenga.com">
+        <span class="wordmark-text" aria-hidden="true">thenga<span class="wordmark-dot">.</span>com</span>
+        <span class="wordmark-thread" aria-hidden="true"></span>
+      </span>
+      <button type="button" class="dash-rail__item" [class.active]="tab() === 'sell'" [attr.aria-current]="tab() === 'sell' ? 'page' : null" (click)="tab.set('sell')">Sell</button>
+      <button type="button" class="dash-rail__item" [class.active]="tab() === 'income'" [attr.aria-current]="tab() === 'income' ? 'page' : null" (click)="tab.set('income')">Money</button>
+      <button type="button" class="dash-rail__item" [class.active]="tab() === 'products'" [attr.aria-current]="tab() === 'products' ? 'page' : null" (click)="tab.set('products')">Stock</button>
+      <button type="button" class="dash-rail__item" [class.active]="tab() === 'orders'" [attr.aria-current]="tab() === 'orders' ? 'page' : null" (click)="loadOrders(); tab.set('orders')">Orders</button>
+      <div class="dash-rail__foot">
+        <strong class="rail-shop">{{ auth.state()?.businessName }}</strong>
+        <span>● synced</span>
+      </div>
     </nav>
     <div class="main-col">
 
       <!-- ── MOBILE GREETING (mobile only; hero-banner/fin-grid below take over on desktop) ── -->
       <!-- Income/expenses/profit live only in the Money tab (money-summary-card below) — not repeated here. -->
-      <div class="mobile-greeting-bar">
+      <div class="mobile-greeting-bar dash-head">
         <span>Hi {{ auth.state()?.firstName }}! <b>{{ auth.state()?.businessName }}</b></span>
         <span class="tag-chip">● synced</span>
       </div>
 
       <!-- ── HERO BANNER (desktop) ── -->
-      <div class="hero-banner">
+      <div class="hero-banner dash-head">
         <div class="hero-inner">
           <div class="hero-text">
             <p class="hero-greeting">Hi {{ auth.state()?.firstName }}!</p>
@@ -86,11 +91,11 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
       </div>
 
       <!-- ── TAB BAR (mobile) ── -->
-      <div class="tab-bar">
-        <button [class.tab-active-sell]="tab() === 'sell'" (click)="tab.set('sell')">Sell</button>
-        <button [class.tab-active-finances]="tab() === 'income'" (click)="tab.set('income')">Money</button>
-        <button [class.tab-active-products]="tab() === 'products'" (click)="tab.set('products')">Stock</button>
-        <button [class.tab-active-orders]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')">Orders</button>
+      <div class="tab-bar seg-tabs" role="group" aria-label="Sell">
+        <button type="button" [attr.aria-pressed]="tab() === 'sell'" (click)="tab.set('sell')">Sell</button>
+        <button type="button" [attr.aria-pressed]="tab() === 'income'" (click)="tab.set('income')">Money</button>
+        <button type="button" [attr.aria-pressed]="tab() === 'products'" (click)="tab.set('products')">Stock</button>
+        <button type="button" [attr.aria-pressed]="tab() === 'orders'" (click)="loadOrders(); tab.set('orders')">Orders</button>
       </div>
 
       <!-- ── MONEY TAB ── -->
@@ -680,12 +685,12 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
     /* ── Mobile compact greeting + summary (replaces hero-banner/fin-grid below 960px) ── */
     .mobile-greeting-bar {
       display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
-      background: white; border: 1px solid #E3DACA; border-radius: 1rem;
-      padding: 0.85rem 1.1rem; font-size: 0.95rem; color: #13251E;
+      border: 1px solid var(--nav-border); border-radius: 1rem;
+      padding: 0.85rem 1.1rem; font-size: 0.95rem;
     }
     .mobile-greeting-bar b { font-weight: 800; }
     .tag-chip {
-      flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: #2E6B4A;
+      flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: var(--success-text);
       background: rgba(45,179,68,0.1); border-radius: 999px; padding: 0.2rem 0.6rem; white-space: nowrap;
     }
     .hero-banner, .fin-grid { display: none; }
@@ -697,34 +702,18 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
 
     /* ── Hero Banner (desktop) ── */
     .hero-banner {
-      background: #13251E;
+      border: 1px solid var(--nav-border);
       border-radius: 1.5rem;
       padding: 1.75rem;
-      color: white;
-      box-shadow: 0 8px 32px rgba(19, 37, 30,0.3);
-      position: relative;
-      overflow: hidden;
     }
-    .hero-banner::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg,
-        rgba(229, 163, 29,0.22) 0%,
-        rgba(0,168,150,0.14) 40%,
-        rgba(43,179,68,0.12) 100%
-      );
-      pointer-events: none;
-    }
-    .hero-banner > * { position: relative; }
     .hero-inner { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
     .hero-text { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
-    .hero-greeting { font-size: 1rem; font-weight: 500; opacity: 0.9; margin: 0; }
+    .hero-greeting { font-size: 1rem; font-weight: 500; color: var(--nav-fg-muted); margin: 0; }
     .hero-shop { font-size: 1.6rem; font-weight: 800; margin: 0; line-height: 1.15; word-break: break-word; }
     .biz-type-badge {
       display: inline-block;
-      background: rgba(255,255,255,0.25);
-      border: 1px solid rgba(255,255,255,0.4);
+      background: var(--nav-seg-bg);
+      border: 1px solid var(--nav-border);
       border-radius: 999px;
       padding: 0.25rem 0.85rem;
       font-size: 0.8rem;
@@ -773,11 +762,7 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
     .fin-period { font-size: 0.66rem; color: #646A63; margin: 0; }
 
     /* ── Tab Bar ── */
-    .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
-    .tab-bar button { flex: 1; padding: 0.9rem; border: none; background: none; font-size: 1rem; font-weight: 700; color: #646A63; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; min-height: 48px; font-family: inherit; border-bottom: 3px solid transparent; }
-    .tab-active-finances { color: #92400e !important; border-bottom: 3px solid #E5A31D !important; background: rgba(229, 163, 29,0.12) !important; }
-    .tab-active-products { color: #2E6B4A !important; border-bottom: 3px solid #3F9A4F !important; background: rgba(45,179,68,0.09) !important; }
-    .tab-active-orders   { color: #1e3a8a !important; border-bottom: 3px solid #2F6DB5 !important; background: rgba(27,111,212,0.09) !important; }
+    .tab-bar > button { font-size: 1rem; }
 
     /* ── Cards ── */
     .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
@@ -1022,7 +1007,6 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
     .logout-btn:hover { border-color: #C8443A; color: #C8443A; }
 
     /* ── Sell tab ── */
-    .tab-active-sell { color: #92400e !important; border-bottom: 3px solid #E5A31D !important; background: rgba(229, 163, 29,0.12) !important; }
     .pos-subtabs { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 2px 10px rgba(19, 37, 30,0.06); border: 1px solid #E3DACA; }
     .pos-subtabs button { flex: 1; padding: 0.7rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #646A63; cursor: pointer; font-family: inherit; min-height: 44px; border-bottom: 2px solid transparent; }
     .pos-subtab-active { color: #13251E !important; border-bottom: 2px solid #E5A31D !important; background: rgba(229, 163, 29,0.06) !important; }
@@ -1091,9 +1075,7 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
     @media (min-width: 960px) {
       .dashboard-shell { flex-direction: row; align-items: flex-start; gap: 1.5rem; }
       .rail-nav {
-        display: flex; flex-direction: column; gap: 0.5rem; width: 150px; flex-shrink: 0;
-        background: white; border: 1px solid #E3DACA; border-radius: 1.25rem;
-        padding: 1.25rem 0.9rem; position: sticky; top: 1rem;
+        display: flex; width: 216px; flex-shrink: 0; position: sticky; top: 1rem;
       }
       .tab-bar { display: none; }
       .quick-log-panel {
@@ -1102,17 +1084,8 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
         padding: 1.25rem 1rem; position: sticky; top: 1rem;
       }
     }
-    .rail-brand { font-weight: 900; font-size: 0.95rem; color: #13251E; letter-spacing: 0.03em; padding: 0 0.3rem 0.5rem; }
-    .rail-item {
-      display: flex; align-items: center; gap: 0.6rem; border: none; background: none; border-radius: 0.75rem;
-      padding: 0.65rem 0.6rem; font-size: 0.88rem; font-weight: 700; color: #4A524C; cursor: pointer;
-      font-family: inherit; text-align: left; min-height: 44px;
-    }
-    .rail-item span { font-size: 1.05rem; }
-    .rail-item:hover { background: #FBF8F2; }
-    .rail-active { background: rgba(229, 163, 29,0.12) !important; color: #13251E !important; }
-    .rail-spacer { flex: 1; }
-    .rail-sync { font-size: 0.72rem; padding: 0 0.3rem; }
+    .dash-rail__foot { display: flex; flex-direction: column; gap: 2px; margin-top: 0.5rem; border-top: 1px solid var(--nav-border); }
+    .rail-shop { color: var(--nav-fg); font-size: 0.875rem; }
 
     /* ── Quick log panel (desktop) ── */
     .ql-title { margin: 0; font-size: 0.95rem; font-weight: 800; color: #13251E; }

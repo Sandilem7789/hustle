@@ -80,6 +80,19 @@
   --toolbar-fg:     var(--ink);
   --toolbar-accent: var(--accent-text-safe);
 
+  /* Dashboard navigation (header bands, tab switches, side rails): light in
+     light mode, ink in dark mode, the same as the top bar */
+  --nav-bg:        var(--bg-surface);
+  --nav-fg:        var(--ink);
+  --nav-fg-muted:  var(--text-secondary);
+  --nav-border:    var(--border-base);
+  --nav-accent:    var(--accent-text-safe);
+  --nav-seg-bg:    var(--bg-muted);
+  --nav-seg-on-bg: var(--ink);
+  --nav-seg-on-fg: var(--cream);
+  --nav-track:     #E3DACA;
+  --wordmark-dot:  var(--leaf);   /* the Brand board: leaf dot on light, gold dot on ink */
+
   --success-text: #2E6B4A;   /* leaf: 5.9:1 on cream */
   --success-fill: #2E6B4A;   /* white text on it: 6.4:1 */
   --brand-text:   #1A6B5F;
@@ -134,6 +147,17 @@
   --toolbar-bg:     var(--ink);
   --toolbar-fg:     var(--cream);
   --toolbar-accent: var(--gold);
+
+  --nav-bg:        var(--ink);
+  --nav-fg:        var(--cream);
+  --nav-fg-muted:  #C9D3CC;
+  --nav-border:    #2C4237;
+  --nav-accent:    var(--gold);
+  --nav-seg-bg:    #1C3329;
+  --nav-seg-on-bg: var(--cream);
+  --nav-seg-on-fg: var(--ink);
+  --nav-track:     #2A4237;
+  --wordmark-dot:  var(--gold);
   --success-text: #7FD1A0;
   --brand-text:   #74D9C9;
 
@@ -415,6 +439,89 @@ label {
   box-shadow: 0 2px 8px rgba(28,25,23,0.1);
 }
 
+/* ─── Dashboard navigation ───────────────────────────────────────────────
+   Shared by every dashboard: a header band, a segmented tab switch and, on
+   big screens, a side rail. Colours come from the --nav-* tokens. */
+.dash-head {
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  border-bottom: 1px solid var(--nav-border);
+}
+
+.dash-head .eyebrow { color: var(--nav-accent); }
+
+.seg-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  background: var(--nav-seg-bg);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.seg-tabs > button {
+  min-height: var(--touch-target);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--nav-fg-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0 0.25rem;
+  line-height: 1.15;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+}
+
+.seg-tabs > button.active,
+.seg-tabs > button[aria-pressed="true"] {
+  background: var(--nav-seg-on-bg);
+  color: var(--nav-seg-on-fg);
+  font-weight: 700;
+}
+
+.dash-rail {
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  border: 1px solid var(--nav-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-rail .wordmark { padding: 0 0.5rem 1rem; }
+.dash-rail .wordmark-text { font-size: 1.375rem; color: var(--nav-fg); }
+
+.dash-rail__item {
+  min-height: var(--touch-target);
+  border-radius: 12px;
+  padding: 0 0.75rem;
+  background: transparent;
+  color: var(--nav-fg);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dash-rail__item:hover { background: var(--nav-seg-bg); }
+
+.dash-rail__item.active {
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.dash-rail__foot {
+  margin-top: auto;
+  padding: 0.75rem 0.75rem 0;
+  font-size: 0.8125rem;
+  color: var(--nav-fg-muted);
+}
+
 /* ─── Offline Bar ────────────────────────────────────────────────────────── */
 .offline-bar {
   position: fixed;
@@ -467,19 +574,21 @@ main.page-shell {
 
 .staff-shell__header {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-base);
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  border-bottom: 1px solid var(--nav-border);
 }
 
 .staff-shell__title {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--nav-fg);
   font-size: 1.125rem;
   font-weight: 900;
 }
 
 .staff-shell__subtitle {
   margin: 0.2rem 0 0;
-  color: var(--text-secondary);
+  color: var(--nav-fg-muted);
   font-size: 0.8125rem;
   line-height: 1.35;
 }
@@ -569,6 +678,28 @@ main.page-shell {
   font-size: 3rem;
   margin-bottom: var(--space-md);
   display: block;
+}
+
+/* ─── Wordmark: serif name, gold dot, market thread underneath ───────────── */
+.wordmark {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wordmark-text {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.wordmark-dot { color: var(--wordmark-dot); }
+
+.wordmark-thread {
+  height: 3px;
+  background: var(--thread);
 }
 
 /* ─── Market thread (decorative, used in hero/header areas) ─────────────── */

@@ -21,7 +21,7 @@ import { DriverAuthService } from '../../services/driver-auth.service';
       <ng-container *ngIf="driverAuth.isLoggedIn()">
 
         <!-- Header -->
-        <div class="dash-header">
+        <div class="dash-header dash-head">
           <div>
             <h1 class="driver-name">{{ driverAuth.state()?.firstName }} {{ driverAuth.state()?.lastName }}</h1>
             <span class="muted">{{ driverAuth.state()?.vehicleType }} · {{ driverAuth.state()?.communityName }}</span>
@@ -29,10 +29,10 @@ import { DriverAuthService } from '../../services/driver-auth.service';
         </div>
 
         <!-- Tabs -->
-        <div class="tab-bar">
-          <button [class.active]="tab() === 'jobs'" (click)="tab.set('jobs')">Jobs</button>
-          <button [class.active]="tab() === 'active'" (click)="tab.set('active')">Active Delivery</button>
-          <button [class.active]="tab() === 'earnings'" (click)="tab.set('earnings')">Earnings</button>
+        <div class="seg-tabs" role="group" aria-label="Drive">
+          <button type="button" [attr.aria-pressed]="tab() === 'jobs'" (click)="tab.set('jobs')">Jobs</button>
+          <button type="button" [attr.aria-pressed]="tab() === 'active'" (click)="tab.set('active')">Active Delivery</button>
+          <button type="button" [attr.aria-pressed]="tab() === 'earnings'" (click)="tab.set('earnings')">Earnings</button>
         </div>
 
         <!-- JOBS TAB -->
@@ -184,13 +184,11 @@ import { DriverAuthService } from '../../services/driver-auth.service';
     .small { font-size: 0.82rem; }
 
     /* Header */
-    .dash-header { background: white; border-radius: 1.25rem; padding: 1.25rem 1.5rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
-    .driver-name { margin: 0 0 0.2rem; font-size: 1.25rem; font-weight: 800; color: #13251E; }
+    .dash-header { border-radius: 1.25rem; padding: 1.25rem 1.5rem; border: 1px solid var(--nav-border); }
+    .dash-header .muted { color: var(--nav-fg-muted); }
+    .driver-name { margin: 0 0 0.2rem; font-size: 1.25rem; font-weight: 800; color: var(--nav-fg); }
 
     /* Tabs */
-    .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
-    .tab-bar button { flex: 1; padding: 0.85rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #646A63; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; min-height: 48px; font-family: inherit; }
-    .tab-bar button.active { color: #13251E; border-bottom: 3px solid #E5A31D; background: rgba(229, 163, 29,0.05); }
 
     /* Job cards */
     .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }

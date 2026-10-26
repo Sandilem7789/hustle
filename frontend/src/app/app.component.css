@@ -33,28 +33,6 @@
   transform: translateX(-50%);
 }
 
-/* ─── Wordmark: serif name, gold dot, market thread underneath ───────────── */
-.wordmark {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.wordmark-text {
-  font-family: var(--font-display);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.wordmark-dot { color: var(--gold); }
-
-.wordmark-thread {
-  height: 3px;
-  background: var(--thread);
-}
-
 .toolbar-logo .wordmark-text { font-size: 1.3rem; color: var(--toolbar-fg); }
 
 .app-toolbar .mat-mdc-icon-button,
@@ -367,55 +345,47 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--text-muted);
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
   text-decoration: none;
   min-height: 48px;
   font-family: inherit;
-  transition: color 0.15s;
-  position: relative;
+  transition: color 0.15s ease-out;
   background: none;
   border: none;
+  border-radius: 0;
   cursor: pointer;
   padding: 0;
 }
 
 .bottom-nav-item.active {
   color: var(--text-primary);
-  font-weight: 800;
+  font-weight: 700;
 }
 
-.bottom-nav-item.active::before {
-  content: '';
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 3px;
-  border-radius: 999px;
-  background: #E5A31D;
-}
-
+/* The icon sits in a pill; the active item's pill turns gold */
 .bottom-nav-icon {
-  font-size: 1.375rem;
-  line-height: 1;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  padding: 4px 16px;
+  border-radius: 999px;
+  transition: background-color 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.bottom-nav-icon mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
 }
 
 .bottom-nav-item.active .bottom-nav-icon {
-  transform: scale(1.1);
+  background: var(--gold);
+  color: var(--ink);
 }
 
 .bottom-nav-item:active .bottom-nav-icon {
-  transform: scale(0.78);
-  transition: transform 0.08s ease-out;
-}
-
-.bottom-nav-item:active {
-  background: rgba(229, 163, 29, 0.08);
+  transform: scale(0.9);
 }
 
 /* ─── Sidenav font — match main screen (DM Sans, not bold) ────────────────── */
