@@ -1,254 +1,276 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, inject, signal, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService, DeliveryJobResponse } from '../../services/api.service';
 import { DriverAuthService } from '../../services/driver-auth.service';
 
 @Component({
   selector: 'app-driver-dashboard-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, MatIconModule, TranslatePipe],
   template: `
-    <div class="layout">
+    <div class="card guard" *ngIf="!driverAuth.isLoggedIn()">
+      <h2>Driver sign in</h2>
+      <p class="mut">Sign in to see delivery jobs near you.</p>
+      <a routerLink="/driver/login" class="btn gold">Sign in</a>
+    </div>
 
-      <!-- Guard -->
-      <div class="card" *ngIf="!driverAuth.isLoggedIn()">
-        <h2>Driver Login Required</h2>
-        <p class="muted">Please log in to access the driver dashboard.</p>
-        <a routerLink="/driver/login" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Go to Login</a>
-      </div>
+    <ng-container *ngIf="driverAuth.isLoggedIn()">
 
-      <ng-container *ngIf="driverAuth.isLoggedIn()">
-
-        <!-- Header -->
-        <div class="dash-header dash-head">
-          <div>
-            <h1 class="driver-name">{{ driverAuth.state()?.firstName }} {{ driverAuth.state()?.lastName }}</h1>
-            <span class="muted">{{ driverAuth.state()?.vehicleType }} · {{ driverAuth.state()?.communityName }}</span>
+      <!-- ══ JOBS ══ -->
+      <ng-container *ngIf="tab() === 'jobs'">
+        <header class="head dash-head">
+          <div class="wrap">
+            <p class="eyebrow">{{ 'nav.drive' | translate }}</p>
+            <h1 class="title">{{ 'drive.jobsNear' | translate }}</h1>
+            <p class="mut">{{ driverAuth.state()?.vehicleType }} · {{ 'drive.basedIn' | translate }} {{ driverAuth.state()?.communityName }}</p>
+            <p class="today-line"><strong>R {{ earnedToday() | number:'1.0-2' }}</strong> {{ 'drive.earnedToday' | translate }} <strong class="gap">{{ deliveredToday() }}</strong> {{ 'drive.delivered' | translate }}</p>
           </div>
+        </header>
+        <div class="wrap stack">
+          <p class="mut small">{{ 'drive.refreshes' | translate }}</p>
+          <p *ngIf="jobsLoading() && visibleJobs().length === 0" class="mut">{{ 'marketplace.loading' | translate }}</p>
+          <p *ngIf="!jobsLoading() && visibleJobs().length === 0" class="calm">{{ 'drive.noJobs' | translate }}</p>
+          <article *ngFor="let job of visibleJobs(); let first = first" class="card job" [class.first]="first">
+            <div class="job-top">
+              <div class="fee"><span class="fee-amount">R {{ job.payoutAmount | number:'1.0-2' }}</span><span class="mut small">{{ 'drive.youEarn' | translate }}</span></div>
+              <span class="mut" *ngIf="distanceKm(job) as km">{{ km | number:'1.1-1' }} km {{ 'drive.inTotal' | translate }}</span>
+            </div>
+            <div class="stop">
+              <span class="stop-dot collect" aria-hidden="true"></span>
+              <span class="stop-text"><strong>{{ 'drive.collectAt' | translate }} {{ job.sellerName }}</strong><span class="mut">{{ job.sellerAddress }} · {{ itemCount(job) }}</span></span>
+            </div>
+            <div class="stop">
+              <span class="stop-dot drop" aria-hidden="true"></span>
+              <span class="stop-text"><strong>{{ 'drive.deliverToBuyer' | translate }}</strong><span class="mut">{{ 'drive.dropAfter' | translate }}</span></span>
+            </div>
+            <div class="pair">
+              <button type="button" class="btn" [class.gold]="first" [class.line]="!first" (click)="acceptJob(job)" [disabled]="acceptingJobId() === job.jobId || !!activeJob()">
+                {{ (acceptingJobId() === job.jobId ? 'drive.taking' : 'drive.takeJob') | translate }}
+              </button>
+              <button type="button" class="btn line skip" (click)="skip(job)">{{ 'drive.skip' | translate }}</button>
+            </div>
+            <p class="mut small" *ngIf="activeJob() && first">{{ 'drive.finishFirst' | translate }}</p>
+          </article>
         </div>
+      </ng-container>
 
-        <!-- Tabs -->
-        <div class="seg-tabs" role="group" aria-label="Drive">
-          <button type="button" [attr.aria-pressed]="tab() === 'jobs'" (click)="tab.set('jobs')">Jobs</button>
-          <button type="button" [attr.aria-pressed]="tab() === 'active'" (click)="tab.set('active')">Active Delivery</button>
-          <button type="button" [attr.aria-pressed]="tab() === 'earnings'" (click)="tab.set('earnings')">Earnings</button>
-        </div>
-
-        <!-- JOBS TAB -->
-        <ng-container *ngIf="tab() === 'jobs'">
-          <div class="card">
-            <div class="tab-header">
-              <h2>Open Jobs</h2>
-              <span class="muted small">Auto-refreshes every 30s</span>
-            </div>
-
-            <div *ngIf="jobsLoading()" class="muted">Loading jobs…</div>
-
-            <div *ngIf="!jobsLoading() && openJobs().length === 0" class="empty-state">
-              <p>No open delivery jobs available right now.</p>
-            </div>
-
-            <div class="job-list">
-              <div *ngFor="let job of openJobs()" class="job-card">
-                <div class="job-header">
-                  <div>
-                    <p class="job-seller">{{ job.sellerName }}</p>
-                    <p class="muted small">{{ job.sellerAddress }}</p>
-                  </div>
-                  <span class="payout">R {{ job.payoutAmount | number:'1.2-2' }}</span>
-                </div>
-                <div class="job-meta">
-                  <span class="meta-chip">📦 {{ job.items.length }} item{{ job.items.length === 1 ? '' : 's' }}</span>
-                  <span class="meta-chip">🚚 {{ job.deliveryAddress }}</span>
-                </div>
-                <button
-                  class="btn-accept"
-                  (click)="acceptJob(job)"
-                  [disabled]="acceptingJobId() === job.jobId"
-                >
-                  {{ acceptingJobId() === job.jobId ? 'Accepting…' : '✓ Accept Job' }}
-                </button>
-              </div>
-            </div>
+      <!-- ══ CURRENT JOB ══ -->
+      <ng-container *ngIf="tab() === 'active'">
+        <div class="wrap current">
+          <p *ngIf="activeJobsLoading() && !activeJob()" class="mut stack">{{ 'marketplace.loading' | translate }}</p>
+          <div *ngIf="!activeJobsLoading() && !activeJob()" class="stack">
+            <h1 class="title">{{ 'nav.currentJob' | translate }}</h1>
+            <p class="calm">{{ 'drive.noCurrent' | translate }}</p>
+            <a class="btn gold" routerLink="/driver" [queryParams]="{ tab: 'jobs' }">{{ 'drive.seeJobs' | translate }}</a>
           </div>
-        </ng-container>
 
-        <!-- ACTIVE DELIVERY TAB -->
-        <ng-container *ngIf="tab() === 'active'">
-          <div class="card">
-            <h2 class="tab-title">Active Delivery</h2>
-
-            <div *ngIf="activeJobsLoading()" class="muted">Loading…</div>
-
-            <div *ngIf="!activeJobsLoading() && !activeJob()" class="empty-state">
-              <p>No active delivery. Accept a job from the Jobs tab.</p>
-            </div>
-
-            <ng-container *ngIf="activeJob() as job">
-              <div class="active-job">
-                <div class="customer-info">
-                  <p class="info-label">Customer</p>
-                  <p class="info-value">{{ job.customerName }}</p>
-                  <p class="muted small">📱 ****{{ job.customerPhone.slice(-4) }}</p>
-                </div>
-
-                <div class="delivery-info">
-                  <p class="info-label">Deliver to</p>
-                  <p class="info-value">{{ job.deliveryAddress }}</p>
-                </div>
-
-                <div class="pickup-info">
-                  <p class="info-label">Pickup from</p>
-                  <p class="info-value">{{ job.sellerName }}</p>
-                  <p class="muted small">{{ job.sellerAddress }}</p>
-                </div>
-
-                <!-- Map -->
+          <ng-container *ngIf="activeJob() as job">
+            <div class="current-grid">
+              <div class="map-box">
                 <ng-container *ngIf="job.sellerLat && job.sellerLng && job.deliveryLat && job.deliveryLng; else noMap">
                   <div class="map-container" id="driver-map"></div>
                 </ng-container>
                 <ng-template #noMap>
-                  <div class="no-map">Map unavailable — coordinates not set</div>
+                  <div class="no-map">{{ 'drive.noMap' | translate }}</div>
                 </ng-template>
-
-                <!-- Status actions -->
-                <div class="status-actions">
-                  <ng-container *ngIf="job.status === 'ASSIGNED'">
-                    <button class="btn-status pickup" (click)="updateStatus(job, 'PICKED_UP')" [disabled]="updatingStatus()">
-                      {{ updatingStatus() ? 'Updating…' : '📦 Mark as Picked Up' }}
-                    </button>
-                  </ng-container>
-
-                  <ng-container *ngIf="job.status === 'PICKED_UP'">
-                    <button class="btn-status enroute" (click)="updateStatus(job, 'EN_ROUTE')" [disabled]="updatingStatus()">
-                      {{ updatingStatus() ? 'Updating…' : '🚚 Mark as En Route' }}
-                    </button>
-                  </ng-container>
-
-                  <ng-container *ngIf="job.status === 'EN_ROUTE'">
-                    <div class="proof-upload">
-                      <label>Proof of delivery photo</label>
-                      <input type="file" accept="image/*" (change)="onProofFileChange($event)" class="file-input" />
-                    </div>
-                    <button class="btn-status delivered" (click)="markDelivered(job)" [disabled]="updatingStatus()">
-                      {{ updatingStatus() ? 'Updating…' : '✅ Mark as Delivered' }}
-                    </button>
-                  </ng-container>
-                </div>
-
-                <p *ngIf="statusError()" class="error-msg">{{ statusError() }}</p>
-              </div>
-            </ng-container>
-          </div>
-        </ng-container>
-
-        <!-- EARNINGS TAB -->
-        <ng-container *ngIf="tab() === 'earnings'">
-          <div class="card">
-            <h2 class="tab-title">Earnings</h2>
-
-            <div *ngIf="earningsLoading()" class="muted">Loading earnings…</div>
-
-            <ng-container *ngIf="!earningsLoading()">
-              <div class="total-earnings">
-                <span class="earnings-label">Total Earnings</span>
-                <span class="earnings-amount">R {{ totalEarnings() | number:'1.2-2' }}</span>
               </div>
 
-              <div *ngIf="deliveredJobs().length === 0" class="empty-state">
-                <p>No completed deliveries yet.</p>
-              </div>
+              <div class="panel">
+                <ol class="steps card" [attr.aria-label]="'drive.progress' | translate">
+                  <li *ngFor="let st of steps(job); let i = index" class="step" [class.done]="st.state === 'done'" [class.now]="st.state === 'now'" [attr.aria-current]="st.state === 'now' ? 'step' : null">
+                    <span class="step-dot" aria-hidden="true"><mat-icon *ngIf="st.state === 'done'">check</mat-icon><ng-container *ngIf="st.state !== 'done'">{{ i + 1 }}</ng-container></span>
+                    <span class="step-label">{{ st.key | translate }}</span>
+                  </li>
+                </ol>
 
-              <div class="earnings-list">
-                <div *ngFor="let job of deliveredJobs()" class="earnings-row">
-                  <div>
-                    <p class="job-seller">{{ job.sellerName }}</p>
-                    <p class="muted small">{{ job.acceptedAt | date:'d MMM yyyy' }}</p>
+                <section class="card goal">
+                  <h2 class="eyebrow">{{ (job.status === 'ASSIGNED' ? 'drive.goCollect' : 'drive.takeToBuyer') | translate }}</h2>
+                  <p class="goal-name">{{ job.status === 'ASSIGNED' ? job.sellerName : job.customerName }}</p>
+                  <p class="mut" *ngIf="job.status === 'ASSIGNED'">{{ job.sellerAddress }} · {{ 'drive.order' | translate }} #{{ job.orderId.slice(0, 4).toUpperCase() }} · {{ itemCount(job) }}</p>
+                  <p class="mut" *ngIf="job.status !== 'ASSIGNED'">{{ job.deliveryAddress }}</p>
+                  <div class="pair">
+                    <a class="btn line" [href]="directionsHref(job)" target="_blank" rel="noopener">{{ 'drive.directions' | translate }}</a>
+                    <a class="btn line" *ngIf="job.status !== 'ASSIGNED'" [href]="'tel:' + job.customerPhone">{{ 'drive.callBuyer' | translate }}</a>
                   </div>
-                  <span class="payout">R {{ job.payoutAmount | number:'1.2-2' }}</span>
-                </div>
-              </div>
-            </ng-container>
-          </div>
-        </ng-container>
+                </section>
 
+                <p class="lock" *ngIf="job.status === 'ASSIGNED'">
+                  <mat-icon aria-hidden="true">lock</mat-icon>{{ 'drive.buyerAfter' | translate }}
+                </p>
+
+                <label class="proof" *ngIf="job.status === 'EN_ROUTE'">
+                  <span>{{ 'drive.proof' | translate }}</span>
+                  <input type="file" accept="image/*" capture="environment" (change)="onProofFileChange($event)" />
+                </label>
+
+                <p *ngIf="statusError()" class="error" role="alert">{{ statusError() }}</p>
+
+                <button *ngIf="job.status === 'ASSIGNED'" class="btn gold big-btn" (click)="updateStatus(job, 'PICKED_UP')" [disabled]="updatingStatus()">{{ 'drive.collected' | translate }}</button>
+                <button *ngIf="job.status === 'PICKED_UP'" class="btn gold big-btn" (click)="updateStatus(job, 'EN_ROUTE')" [disabled]="updatingStatus()">{{ 'drive.onTheWay' | translate }}</button>
+                <button *ngIf="job.status === 'EN_ROUTE'" class="btn gold big-btn" (click)="markDelivered(job)" [disabled]="updatingStatus()">{{ 'drive.markDelivered' | translate }}</button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
       </ng-container>
-    </div>
+
+      <!-- ══ EARNINGS ══ -->
+      <ng-container *ngIf="tab() === 'earnings'">
+        <header class="head dash-head">
+          <div class="wrap">
+            <p class="eyebrow">{{ 'nav.drive' | translate }}</p>
+            <h1 class="title">{{ 'nav.earnings' | translate }}</h1>
+          </div>
+        </header>
+        <div class="wrap stack">
+          <p *ngIf="earningsLoading()" class="mut">{{ 'marketplace.loading' | translate }}</p>
+          <ng-container *ngIf="!earningsLoading()">
+            <section class="card">
+              <h2 class="eyebrow">{{ 'drive.allTime' | translate }}</h2>
+              <p class="big">R {{ totalEarnings() | number:'1.0-2' }}</p>
+              <p class="mut">{{ deliveredJobs().length }} {{ 'drive.delivered' | translate }} · R {{ earnedToday() | number:'1.0-2' }} {{ 'drive.earnedToday' | translate }}</p>
+            </section>
+            <p *ngIf="deliveredJobs().length === 0" class="calm">{{ 'drive.noEarnings' | translate }}</p>
+            <section class="card" *ngIf="deliveredJobs().length > 0">
+              <div class="line-row" *ngFor="let job of deliveredJobs()">
+                <span class="line-text"><strong>{{ job.sellerName }}</strong><span class="mut small">{{ job.acceptedAt | date:'EEE d MMM' }}</span></span>
+                <strong>R {{ job.payoutAmount | number:'1.0-2' }}</strong>
+              </div>
+            </section>
+          </ng-container>
+        </div>
+      </ng-container>
+    </ng-container>
   `,
   styles: `
-    .layout { max-width: 600px; margin: 0 auto; padding: 1rem 1rem 5rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
-    @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
-    .muted { color: #4A524C; }
-    .small { font-size: 0.82rem; }
+    :host { display: block; padding-bottom: 2rem; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; box-sizing: border-box; }
+    @media (min-width: 768px) { .wrap { padding: 0 32px; } }
+    .head { padding: 20px 0 18px; }
+    @media (min-width: 768px) { .head { padding: 32px 0 20px; background: transparent; border-bottom: 0; } }
+    .head .wrap { display: flex; flex-direction: column; gap: 6px; }
+    .eyebrow { margin: 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--success-text); }
+    .title { margin: 0; font-family: var(--font-display); font-size: 2.125rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.015em; color: var(--nav-fg); }
+    @media (min-width: 768px) { .title { font-size: 2.75rem; } }
+    .mut { margin: 0; color: var(--text-secondary); }
+    .small { font-size: 0.8125rem; }
+    .calm { margin: 0; color: var(--text-secondary); line-height: 1.45; }
+    .today-line { margin: 8px 0 0; font-size: 1rem; color: var(--nav-fg-muted); }
+    .today-line strong { color: var(--nav-fg); font-size: 1.125rem; }
+    .today-line .gap { margin-left: 16px; }
+    .stack { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; max-width: 640px; }
+    .card { background: var(--bg-surface); border: 1px solid var(--border-base); border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+    @media (min-width: 768px) { .card { padding: 22px; } }
+    .guard { max-width: 480px; margin: 24px auto; }
+    .guard h2 { margin: 0; }
 
-    /* Header */
-    .dash-header { border-radius: 1.25rem; padding: 1.25rem 1.5rem; border: 1px solid var(--nav-border); }
-    .dash-header .muted { color: var(--nav-fg-muted); }
-    .driver-name { margin: 0 0 0.2rem; font-size: 1.25rem; font-weight: 800; color: var(--nav-fg); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 20px; border-radius: 14px; border: 0; font-size: 1rem; font-weight: 700; text-decoration: none; }
+    .btn.gold { background: var(--gold); color: var(--ink); }
+    .btn.line { background: transparent; color: var(--text-primary); border: 1.5px solid var(--text-primary); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+    .big-btn { width: 100%; min-height: 60px; font-size: 1.125rem; border-radius: 16px; }
+    .pair { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 10px; }
 
-    /* Tabs */
+    .job.first { border: 2px solid var(--text-primary); }
+    .job-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .fee { display: flex; flex-direction: column; }
+    .fee-amount { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; line-height: 1; }
+    .stop { display: flex; gap: 14px; align-items: flex-start; }
+    .stop-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .stop-dot.collect { background: var(--gold); box-shadow: inset 0 0 0 3px var(--ink); }
+    .stop-dot.drop { background: var(--success-fill); }
+    .stop-text { display: flex; flex-direction: column; gap: 2px; }
+    .stop-text strong { font-size: 1.0625rem; }
 
-    /* Job cards */
-    .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .tab-header h2 { margin: 0; font-size: 1.1rem; }
-    .tab-title { margin: 0 0 1.25rem; font-size: 1.1rem; }
-    .job-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .job-card { border: 1px solid #E3DACA; border-radius: 1rem; padding: 1rem; background: #FBF8F2; }
-    .job-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.6rem; }
-    .job-seller { margin: 0; font-weight: 800; font-size: 0.95rem; color: #13251E; }
-    .payout { font-size: 1.15rem; font-weight: 800; color: var(--success-text); white-space: nowrap; }
-    .job-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-    .meta-chip { font-size: 0.78rem; color: #4A524C; background: #EFE8DA; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; }
-    .btn-accept { width: 100%; height: 48px; border: none; border-radius: 999px; font-size: 0.95rem; font-weight: 800; background: #E5A31D; color: #13251E; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
-    .btn-accept:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
-    .btn-accept:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+    .current { padding-top: 16px; }
+    .current-grid { display: flex; flex-direction: column; gap: 14px; }
+    @media (min-width: 960px) { .current-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; } }
+    .map-box { border-radius: 20px; overflow: hidden; border: 1px solid var(--border-base); background: var(--bg-muted); }
+    .map-container { height: 300px; width: 100%; }
+    @media (min-width: 960px) { .map-container { height: calc(100dvh - 64px); max-height: 760px; } }
+    .no-map { padding: 48px 16px; text-align: center; color: var(--text-secondary); }
+    .panel { display: flex; flex-direction: column; gap: 14px; }
+    .steps { list-style: none; margin: 0; flex-direction: row; justify-content: space-between; gap: 4px; padding: 16px 12px; }
+    .step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; text-align: center; font-size: 0.8125rem; color: var(--text-secondary); }
+    .step-dot { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border-base); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-secondary); }
+    .step-dot mat-icon { width: 20px; height: 20px; font-size: 20px; }
+    .step.done .step-dot { background: var(--success-fill); border-color: var(--success-fill); color: #FFFFFF; }
+    .step.now { color: var(--text-primary); font-weight: 700; }
+    .step.now .step-dot { background: var(--gold); border: 2px solid var(--ink); color: var(--ink); }
+    .goal { gap: 8px; }
+    .goal-name { margin: 0; font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; line-height: 1.1; }
+    .goal .pair { margin-top: 6px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .lock { margin: 0; display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 16px; border: 1px dashed var(--border-base); background: var(--bg-muted); line-height: 1.4; }
+    .lock mat-icon { flex-shrink: 0; }
+    .proof { display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 0.875rem; }
+    .error { margin: 0; color: #8E2A20; font-weight: 700; }
 
-    /* Active delivery */
-    .active-job { display: flex; flex-direction: column; gap: 1rem; }
-    .customer-info, .delivery-info, .pickup-info { background: #FBF8F2; border-radius: 0.75rem; padding: 0.75rem 1rem; border: 1px solid #E3DACA; }
-    .info-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #646A63; margin: 0 0 0.25rem; }
-    .info-value { font-weight: 700; color: #13251E; margin: 0 0 0.15rem; font-size: 0.95rem; }
-
-    /* Map */
-    .map-container { height: 300px; border-radius: 0.75rem; overflow: hidden; margin: 0.5rem 0; background: #E3DACA; }
-    @media (min-width: 768px) { .map-container { height: 400px; } }
-    .no-map { height: 80px; display: flex; align-items: center; justify-content: center; background: #EFE8DA; border-radius: 0.75rem; color: #646A63; font-size: 0.9rem; }
-
-    /* Status buttons */
-    .status-actions { display: flex; flex-direction: column; gap: 0.5rem; }
-    .btn-status { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit; width: 100%; transition: opacity 0.15s; }
-    .btn-status:disabled { opacity: 0.5; cursor: not-allowed; }
-    .pickup { background: #E5A31D; color: #13251E; }
-    .enroute { background: #14897C; color: white; }
-    .delivered { background: var(--success-fill); color: white; }
-
-    .proof-upload { display: flex; flex-direction: column; gap: 0.25rem; }
-    .proof-upload label { font-size: 0.875rem; font-weight: 700; color: #13251E; }
-    .file-input { border: none; padding: 0; font-size: 0.9rem; height: auto; }
-
-    /* Earnings */
-    .total-earnings { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(45,179,68,0.07); border: 1px solid rgba(45,179,68,0.2); border-radius: 0.75rem; margin-bottom: 1rem; }
-    .earnings-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--success-text); }
-    .earnings-amount { font-size: 1.5rem; font-weight: 800; color: var(--success-text); }
-    .earnings-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .earnings-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #E3DACA; }
-
-    /* Misc */
-    .empty-state { text-align: center; padding: 2rem 1rem; color: #646A63; }
-    .error-msg { color: #C8443A; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; }
-
-    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #E5A31D; color: #13251E; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
+    .big { margin: 0; font-family: var(--font-display); font-size: 3rem; font-weight: 800; line-height: 1; }
+    .line-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-base); }
+    .line-row:first-child { border-top: 0; }
+    .line-text { display: flex; flex-direction: column; gap: 2px; }
   `
 })
 export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterViewInit {
   readonly driverAuth = inject(DriverAuthService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   tab = signal<'jobs' | 'active' | 'earnings'>('jobs');
+  private readonly skipped = signal<ReadonlySet<string>>(new Set());
+
+  readonly visibleJobs = computed(() => this.openJobs().filter(j => !this.skipped().has(j.jobId)));
+  private readonly today = new Date().toDateString();
+  readonly deliveredTodayJobs = computed(() => this.deliveredJobs().filter(j => j.acceptedAt && new Date(j.acceptedAt).toDateString() === this.today));
+  readonly earnedToday = computed(() => this.deliveredTodayJobs().reduce((sum, j) => sum + j.payoutAmount, 0));
+  readonly deliveredToday = computed(() => this.deliveredTodayJobs().length);
+
+  constructor() {
+    // The Drive nav links to tabs by address, e.g. /driver?tab=active
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const t = params.get('tab');
+      this.tab.set(t === 'active' || t === 'earnings' ? t : 'jobs');
+      if (this.tab() === 'active') setTimeout(() => this.initMapIfNeeded(), 200);
+    });
+  }
+
+  skip(job: DeliveryJobResponse): void {
+    this.skipped.update(s => new Set(s).add(job.jobId));
+  }
+
+  itemCount(job: DeliveryJobResponse): string {
+    const n = job.items.reduce((sum, i) => sum + i.quantity, 0);
+    return n === 1 ? '1 item' : `${n} items`;
+  }
+
+  // Straight-line distance from the shop to the drop-off, when both are pinned
+  distanceKm(job: DeliveryJobResponse): number | null {
+    if (!job.sellerLat || !job.sellerLng || !job.deliveryLat || !job.deliveryLng) return null;
+    const rad = (d: number) => d * Math.PI / 180;
+    const dLat = rad(job.deliveryLat - job.sellerLat);
+    const dLng = rad(job.deliveryLng - job.sellerLng);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(job.sellerLat)) * Math.cos(rad(job.deliveryLat)) * Math.sin(dLng / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  steps(job: DeliveryJobResponse): { key: string; state: 'done' | 'now' | 'next' }[] {
+    const at = job.status === 'ASSIGNED' ? 1 : job.status === 'PICKED_UP' || job.status === 'EN_ROUTE' ? 2 : 3;
+    return ['drive.stepTaken', 'drive.stepCollect', 'drive.stepOnWay', 'drive.stepDelivered']
+      .map((key, i) => ({ key, state: i < at ? 'done' : i === at ? 'now' : 'next' }));
+  }
+
+  directionsHref(job: DeliveryJobResponse): string {
+    const [lat, lng] = job.status === 'ASSIGNED' ? [job.sellerLat, job.sellerLng] : [job.deliveryLat, job.deliveryLng];
+    if (lat && lng) return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
+    const where = job.status === 'ASSIGNED' ? job.sellerAddress : job.deliveryAddress;
+    return `https://www.openstreetmap.org/search?query=${encodeURIComponent(where ?? '')}`;
+  }
 
   openJobs = signal<DeliveryJobResponse[]>([]);
   allMyJobs = signal<DeliveryJobResponse[]>([]);
@@ -366,29 +388,31 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
 
       // Seller pin (green)
       const sellerIcon = L.divIcon({
-        html: '<div style="background:#16a34a;width:12px;height:12px;border-radius:50%;border:2px solid white;"></div>',
-        iconSize: [16, 16],
+        html: '<div style="background:#E5A31D;width:18px;height:18px;border-radius:50%;border:3px solid #13251E;box-sizing:border-box;"></div>',
+        iconSize: [18, 18],
         className: ''
       });
       L.marker([job.sellerLat, job.sellerLng], { icon: sellerIcon })
         .addTo(this.map)
         .bindPopup(`Pickup: ${job.sellerName}`);
 
-      // Customer pin (red)
-      const customerIcon = L.divIcon({
-        html: '<div style="background:#dc2626;width:12px;height:12px;border-radius:50%;border:2px solid white;"></div>',
-        iconSize: [16, 16],
-        className: ''
-      });
-      L.marker([job.deliveryLat, job.deliveryLng], { icon: customerIcon })
-        .addTo(this.map)
-        .bindPopup(`Deliver to: ${job.customerName}`);
-
-      // Polyline between seller and customer
-      L.polyline(
-        [[job.sellerLat, job.sellerLng], [job.deliveryLat, job.deliveryLng]],
-        { color: '#14897C', weight: 3, opacity: 0.7 }
-      ).addTo(this.map);
+      // The buyer's drop-off appears only once the parcel is collected (D10)
+      if (job.status !== 'ASSIGNED') {
+        const customerIcon = L.divIcon({
+          html: '<div style="background:#2E6B4A;width:16px;height:16px;border-radius:50%;border:3px solid #FFFFFF;box-sizing:border-box;"></div>',
+          iconSize: [16, 16],
+          className: ''
+        });
+        L.marker([job.deliveryLat, job.deliveryLng], { icon: customerIcon })
+          .addTo(this.map)
+          .bindPopup(`Deliver to: ${job.customerName}`);
+        L.polyline(
+          [[job.sellerLat, job.sellerLng], [job.deliveryLat, job.deliveryLng]],
+          { color: '#13251E', weight: 4, opacity: 0.85, dashArray: '2 10', lineCap: 'round' }
+        ).addTo(this.map);
+      } else {
+        this.map.setView([job.sellerLat, job.sellerLng], 14);
+      }
 
       // Watch driver position
       if (navigator.geolocation) {
@@ -400,8 +424,8 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
           } else {
             const driverIcon = L.circleMarker([driverLat, driverLng], {
               radius: 8,
-              color: '#14897C',
-              fillColor: '#14897C',
+              color: '#FFFFFF',
+              fillColor: '#2F6DB5',
               fillOpacity: 0.8,
               weight: 2
             });
@@ -423,7 +447,7 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
         this.acceptingJobId.set(null);
         this.loadOpenJobs();
         this.loadMyJobs();
-        this.tab.set('active');
+        this.router.navigate(['/driver'], { queryParams: { tab: 'active' } });
       },
       error: (err) => {
         this.acceptingJobId.set(null);
@@ -439,6 +463,8 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
     this.api.updateDeliveryStatus(job.jobId, { status }, token).subscribe({
       next: () => {
         this.updatingStatus.set(false);
+        // Redraw the map: the drop-off appears once the parcel is collected
+        if (this.map) { this.map.remove(); this.map = null; this.driverMarker = null; }
         this.loadMyJobs();
       },
       error: (err) => {

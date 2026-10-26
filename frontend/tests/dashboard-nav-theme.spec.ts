@@ -27,7 +27,7 @@ const driver = { token: 'd-token', driverId: 'driver-1', firstName: 'Sipho', las
 const dashboards = [
   { path: '/facilitator', head: '.dash-head', tabs: '.seg-tabs' },
   { path: '/dashboard?tab=money', head: '.dash-head', tabs: '.seg-tabs' },
-  { path: '/driver', head: '.dash-head', tabs: '.seg-tabs' },
+  { path: '/driver', head: '.dash-head', tabs: null },
   { path: '/coordinator', head: '.staff-shell__header', tabs: '.seg-tabs' },
   { path: '/operations', head: '.staff-shell__header', tabs: null }
 ];
