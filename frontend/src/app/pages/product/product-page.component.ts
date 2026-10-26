@@ -10,7 +10,7 @@ import { CartService } from '../../services/cart.service';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
-import { categoryIcon, categoryLabelKey } from '../../utils/product-categories';
+import { categoryColor, categoryIcon, categoryLabelKey } from '../../utils/product-categories';
 
 type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
 
@@ -20,9 +20,12 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
   imports: [CommonModule, RouterLink, MatIconModule, TranslatePipe, LoadingSkeletonComponent],
   template: `
     <div class="page">
-      <button type="button" class="back-btn" (click)="goBack()">
-        <mat-icon aria-hidden="true">arrow_back</mat-icon>{{ 'product.back' | translate }}
-      </button>
+      <div class="bar">
+        <button type="button" class="back-btn" (click)="goBack()" [attr.aria-label]="'product.back' | translate">
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        </button>
+        <span class="bar-title" *ngIf="product() && categoryKey(product()!.category) as key">{{ key | translate }}</span>
+      </div>
 
       <app-loading-skeleton [loading]="state() === 'loading'" variant="product"></app-loading-skeleton>
 
@@ -40,7 +43,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
 
       <ng-container *ngIf="state() === 'ready' && product() as p">
         <article class="detail">
-          <div class="media">
+          <div class="media" [style.--cat]="categoryColor(p.category)">
             <img
               *ngIf="p.mediaUrl && !photoBroken(); else noPhoto"
               [src]="resolveUrl(p.mediaUrl)"
@@ -52,21 +55,22 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
               (error)="photoBroken.set(true)"
             />
             <ng-template #noPhoto>
-              <div class="p-fallback p-fallback-lg">
+              <div class="p-fallback">
                 <mat-icon aria-hidden="true">{{ categoryIcon(p.category) }}</mat-icon>
-                <span>{{ 'marketplace.noPhoto' | translate }}</span>
+                <span class="sr-only">{{ 'marketplace.noPhoto' | translate }}</span>
               </div>
             </ng-template>
           </div>
 
           <div class="info">
-            <h1 class="name">{{ p.name }}</h1>
-            <p class="price">R {{ p.price | number:'1.2-2' }}</p>
-            <p class="category" *ngIf="categoryKey(p.category) as key">{{ key | translate }}</p>
-            <a class="seller" [routerLink]="['/business', p.businessId]">
-              <mat-icon aria-hidden="true">storefront</mat-icon>{{ p.businessName }}
-            </a>
-            <p class="desc" *ngIf="p.description">{{ p.description }}</p>
+            <div class="head">
+              <p class="category" *ngIf="categoryKey(p.category) as key">
+                <span class="cat-dot" [style.background]="categoryColor(p.category)" aria-hidden="true"></span>{{ key | translate }}
+              </p>
+              <h1 class="name">{{ p.name }}</h1>
+              <p class="price">R {{ p.price | number:'1.0-2' }}</p>
+              <p class="desc" *ngIf="p.description && p.description !== p.name">{{ p.description }}</p>
+            </div>
 
             <fieldset class="option-group" *ngFor="let opt of p.options; let i = index">
               <legend class="field-label">{{ opt.name }}</legend>
@@ -78,10 +82,15 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
               </div>
             </fieldset>
 
-            <button *ngIf="unifiedAuth.isLoggedIn()" type="button" class="buy-btn" (click)="addToCart(p)">
-              {{ 'marketplace.addToCart' | translate }}
-            </button>
-            <button *ngIf="!unifiedAuth.isLoggedIn()" type="button" class="login-btn" (click)="goToLogin()">
+            <div class="buy-row" *ngIf="unifiedAuth.isLoggedIn()">
+              <button type="button" class="step" [attr.aria-label]="'product.lessOne' | translate" [disabled]="qty() <= 1" (click)="qty.set(qty() - 1)">−</button>
+              <span class="qty" aria-live="polite">{{ qty() }}</span>
+              <button type="button" class="step" [attr.aria-label]="'product.moreOne' | translate" (click)="qty.set(qty() + 1)">+</button>
+              <button type="button" class="buy-btn" (click)="addToCart(p)">
+                {{ 'marketplace.addToCart' | translate }} · R {{ p.price * qty() | number:'1.0-2' }}
+              </button>
+            </div>
+            <button *ngIf="!unifiedAuth.isLoggedIn()" type="button" class="buy-btn login-btn" (click)="goToLogin()">
               {{ 'marketplace.loginToBuy' | translate }}
             </button>
 
@@ -90,9 +99,33 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
                 <mat-icon aria-hidden="true">share</mat-icon>{{ 'share.native' | translate }}
               </button>
               <a class="share-btn" [href]="whatsappHref(p)" target="_blank" rel="noopener">
-                <mat-icon aria-hidden="true">chat</mat-icon>{{ 'share.whatsapp' | translate }}
+                <mat-icon aria-hidden="true">chat_bubble_outline</mat-icon>{{ 'share.whatsapp' | translate }}
               </a>
             </div>
+
+            <a class="seller card" [routerLink]="['/business', p.businessId]">
+              <span class="seller-mark" aria-hidden="true">{{ p.businessName.charAt(0) }}</span>
+              <span class="seller-text">
+                <strong>{{ p.businessName }}</strong>
+                <span class="muted">{{ 'product.seeShop' | translate }}</span>
+              </span>
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </a>
+
+            <section class="card getting" aria-labelledby="get-title">
+              <h2 id="get-title" class="eyebrow-leaf">{{ 'product.gettingIt' | translate }}</h2>
+              <p class="get-row">
+                <mat-icon aria-hidden="true">local_shipping</mat-icon>
+                <span>
+                  <strong>{{ 'product.delivery' | translate }}</strong>
+                  <ng-container *ngIf="isFood(p.category)"> {{ 'product.foodRadius' | translate }}</ng-container>
+                </span>
+              </p>
+              <p class="get-row">
+                <mat-icon aria-hidden="true">location_on</mat-icon>
+                <span><strong>{{ 'product.collect' | translate }}</strong> {{ 'product.collectHow' | translate }}</span>
+              </p>
+            </section>
           </div>
         </article>
 
@@ -101,7 +134,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
           <ul class="more-row" role="list">
             <li class="m-card" *ngFor="let r of related(); trackBy: trackById">
               <a class="m-link" [routerLink]="['/product', r.id]">
-                <div class="m-media">
+                <div class="m-media" [style.--cat]="categoryColor(r.category)">
                   <img *ngIf="r.mediaUrl; else noThumb" [src]="resolveUrl(r.mediaUrl)" alt=""
                     loading="lazy" decoding="async" width="320" height="240" />
                   <ng-template #noThumb>
@@ -109,7 +142,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
                   </ng-template>
                 </div>
                 <span class="m-name">{{ r.name }}</span>
-                <span class="m-price">R {{ r.price | number:'1.2-2' }}</span>
+                <span class="m-price">R {{ r.price | number:'1.0-2' }}</span>
               </a>
             </li>
           </ul>
@@ -119,99 +152,79 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
   `,
   styles: `
     :host { display: block; }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-    .page {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 0.5rem 1rem 1.5rem;
-    }
+    .page { max-width: 1120px; margin: 0 auto; padding: 0 1rem 1.5rem; }
     @media (min-width: 768px) { .page { padding: 1rem 1.5rem 2.5rem; } }
 
+    .bar { position: relative; display: flex; align-items: center; justify-content: center; min-height: 56px; margin: 0 -0.5rem; }
     .back-btn {
+      position: absolute;
+      left: 0;
+      width: 48px;
+      height: 48px;
+      min-height: 48px;
+      padding: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--text-primary);
       display: inline-flex;
       align-items: center;
-      gap: 0.375rem;
-      min-height: 48px;
-      padding: 0 0.5rem 0 0;
-      margin-bottom: 0.5rem;
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 0.9375rem;
-      font-weight: 700;
-      border-radius: var(--radius-sm);
+      justify-content: center;
     }
+    .back-btn mat-icon { width: 28px; height: 28px; font-size: 28px; }
     .back-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+    .bar-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
 
     .detail { display: flex; flex-direction: column; gap: 1rem; animation: enter 200ms ease-out both; }
-    @keyframes enter { from { opacity: 0; transform: translateY(8px); } }
-    @media (prefers-reduced-motion: reduce) { .detail { animation: none; } }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     @media (min-width: 768px) {
       .detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; align-items: start; }
     }
 
-    /* Whole photo, never cropped: a buyer judges the item by its picture */
     .media {
       aspect-ratio: 4 / 3;
-      background: var(--bg-muted);
-      border-radius: var(--radius-md);
+      border-radius: 20px;
       overflow: hidden;
+      background: color-mix(in srgb, var(--cat, var(--bg-muted)) 16%, var(--bg-surface));
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .p-fallback { color: color-mix(in srgb, var(--cat, var(--text-secondary)) 80%, var(--text-primary)); display: flex; }
+    .p-fallback mat-icon { width: 96px; height: 96px; font-size: 96px; }
 
-    .p-fallback {
-      display: flex;
-      flex-direction: column;
+    .info { display: flex; flex-direction: column; gap: 1rem; }
+    .head { display: flex; flex-direction: column; gap: 0.375rem; }
+    .category {
+      margin: 0;
+      display: inline-flex;
       align-items: center;
-      gap: 0.25rem;
-      color: var(--text-secondary);
-      font-size: 0.875rem;
+      gap: 6px;
+      font-size: 0.8125rem;
       font-weight: 700;
+      color: var(--text-secondary);
     }
-    .p-fallback-lg mat-icon { width: 56px; height: 56px; font-size: 56px; }
-
-    .info { display: flex; flex-direction: column; }
     .name {
-      margin: 0 0 0.25rem;
-      font-size: 1.5rem;
-      font-weight: 900;
-      line-height: 1.25;
-      letter-spacing: -0.01em;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.015em;
       color: var(--text-primary);
+      overflow-wrap: anywhere;
     }
-    @media (min-width: 768px) { .name { font-size: 1.875rem; } }
     .price {
-      margin: 0 0 0.5rem;
-      font-size: 1.5rem;
-      font-weight: 900;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 800;
       color: var(--success-text);
       font-variant-numeric: tabular-nums;
     }
-    .category { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
-    .seller {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      align-self: flex-start;
-      min-height: 48px;
-      color: var(--brand-text);
-      font-size: 0.9375rem;
-      font-weight: 800;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-    .seller mat-icon { width: 20px; height: 20px; font-size: 20px; }
-    .seller:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
-    .desc {
-      margin: 0.25rem 0 1rem;
-      font-size: 0.9375rem;
-      line-height: 1.6;
-      color: var(--text-secondary);
-      max-width: 65ch;
-      white-space: pre-line;
-    }
+    .desc { margin: 0.25rem 0 0; font-size: 1rem; line-height: 1.45; color: var(--text-secondary); white-space: pre-line; }
 
     .field-label {
       display: block;
@@ -221,15 +234,9 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
       margin: 0 0 0.375rem;
       padding: 0;
     }
-    .option-group { border: 0; margin: 0 0 1rem; padding: 0; min-width: 0; }
+    .option-group { border: 0; margin: 0; padding: 0; min-width: 0; }
     .option-values { display: flex; flex-wrap: wrap; gap: 0 0.5rem; }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 48px;
-      position: relative;
-      cursor: pointer;
-    }
+    .pill { display: inline-flex; align-items: center; min-height: 48px; position: relative; cursor: pointer; }
     .pill-input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
     .pill-face {
       display: inline-flex;
@@ -243,32 +250,40 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
       font-size: 0.9375rem;
       font-weight: 700;
       white-space: nowrap;
-      transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
     }
-    .pill-input:checked + .pill-face {
-      background: var(--hustle-yellow);
-      border-color: var(--hustle-yellow);
-      color: #13251E;
-      font-weight: 800;
-    }
-    .pill-input:focus-visible + .pill-face { outline: 3px solid var(--text-primary); outline-offset: 2px; }
+    .pill-input:checked + .pill-face { background: var(--text-primary); border-color: var(--text-primary); color: var(--bg-surface); }
+    .pill-input:focus-visible + .pill-face { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
-    .buy-btn,
-    .login-btn {
-      width: 100%;
-      height: 52px;
-      margin-top: 0.5rem;
-      border-radius: var(--radius-sm);
-      font-size: 1rem;
-      font-weight: 800;
+    .buy-row { display: flex; align-items: center; gap: 12px; }
+    .step {
+      width: 48px;
+      height: 48px;
+      min-height: 48px;
+      flex-shrink: 0;
+      padding: 0;
+      border-radius: 12px;
+      border: 1.5px solid var(--text-primary);
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 1.375rem;
+      font-weight: 700;
     }
-    @media (min-width: 768px) { .buy-btn, .login-btn { max-width: 360px; } }
-    .buy-btn { background: var(--hustle-yellow); color: #13251E; }
-    .login-btn { background: var(--bg-surface); color: var(--text-primary); border: 2px solid var(--border-base); }
+    .step:disabled { opacity: 0.4; cursor: default; }
+    .qty { min-width: 28px; text-align: center; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .buy-btn {
+      flex: 1;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--gold);
+      color: var(--ink);
+      font-size: 1.0625rem;
+      font-weight: 700;
+    }
+    .login-btn { width: 100%; flex: none; }
     .buy-btn:focus-visible,
-    .login-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
+    .step:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
 
-    .share { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .share { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .share-btn {
       display: inline-flex;
       align-items: center;
@@ -277,20 +292,46 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
       flex: 1 1 10rem;
       min-height: 48px;
       padding: 0 1rem;
-      border: 2px solid var(--border-base);
-      border-radius: var(--radius-sm);
-      background: var(--bg-surface);
+      border: 1.5px solid var(--text-primary);
+      border-radius: 14px;
+      background: transparent;
       color: var(--text-primary);
       font-size: 0.9375rem;
-      font-weight: 800;
+      font-weight: 700;
       text-decoration: none;
     }
-    @media (min-width: 768px) { .share { max-width: 360px; } }
-    .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; color: var(--brand-text); }
+    .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; }
     .share-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
+    .card { background: var(--bg-surface); border: 1px solid var(--border-base); border-radius: 20px; padding: 16px; }
+    .seller { display: flex; align-items: center; gap: 14px; color: var(--text-primary); text-decoration: none; }
+    .seller:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+    .seller-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      flex-shrink: 0;
+      background: var(--ink);
+      color: var(--cream);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-transform: uppercase;
+    }
+    .seller-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    .seller-text strong { font-size: 1rem; }
+    .seller-text .muted { font-size: 0.875rem; }
+
+    .getting { display: flex; flex-direction: column; gap: 10px; }
+    .eyebrow-leaf { margin: 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--success-text); }
+    .get-row { margin: 0; display: flex; gap: 12px; align-items: flex-start; font-size: 0.9375rem; line-height: 1.4; color: var(--text-primary); }
+    .get-row mat-icon { flex-shrink: 0; width: 22px; height: 22px; font-size: 22px; }
+
     .more { margin-top: 2rem; }
-    .more-title { margin: 0 0 0.75rem; font-size: 1.125rem; font-weight: 900; color: var(--text-primary); }
+    .more-title { margin: 0 0 0.75rem; font-family: var(--font-display); font-size: 1.375rem; font-weight: 600; color: var(--text-primary); }
     .more-row {
       list-style: none;
       margin: 0 -1rem;
@@ -308,25 +349,25 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
       scroll-snap-align: start;
       background: var(--bg-surface);
       border: 1px solid var(--border-base);
-      border-radius: var(--radius-md);
+      border-radius: 16px;
       overflow: hidden;
     }
-    @media (min-width: 768px) { .m-card { flex-basis: 180px; } }
+    @media (min-width: 768px) { .m-card { flex-basis: 200px; } }
     .m-link { display: flex; flex-direction: column; gap: 0.25rem; height: 100%; padding-bottom: 0.75rem; color: inherit; text-decoration: none; }
     .m-link:focus-visible { outline: 3px solid var(--border-focus); outline-offset: -3px; border-radius: var(--radius-md); }
     .m-media {
       aspect-ratio: 4 / 3;
-      background: var(--bg-muted);
+      background: color-mix(in srgb, var(--cat, var(--bg-muted)) 16%, var(--bg-surface));
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--text-secondary);
+      color: color-mix(in srgb, var(--cat, var(--text-secondary)) 80%, var(--text-primary));
     }
     .m-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
     .m-name {
       padding: 0 0.75rem;
       font-size: 0.9375rem;
-      font-weight: 800;
+      font-weight: 700;
       line-height: 1.3;
       color: var(--text-primary);
       display: -webkit-box;
@@ -334,7 +375,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .m-price { padding: 0 0.75rem; margin-top: auto; font-weight: 900; color: var(--success-text); font-variant-numeric: tabular-nums; }
+    .m-price { padding: 0 0.75rem; margin-top: auto; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 
     .state {
       display: flex;
@@ -375,6 +416,7 @@ export class ProductPageComponent {
   product     = signal<ProductResponse | null>(null);
   state       = signal<LoadState>('loading');
   photoBroken = signal(false);
+  qty         = signal(1);
   related     = signal<ProductResponse[]>([]);
 
   private productId = '';
@@ -383,6 +425,7 @@ export class ProductPageComponent {
   readonly canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
   readonly categoryIcon = categoryIcon;
   readonly categoryKey = categoryLabelKey;
+  readonly categoryColor = categoryColor;
 
   constructor() {
     // The same component instance is reused when moving between products
@@ -398,6 +441,7 @@ export class ProductPageComponent {
     const seq = ++this.requestSeq;
     this.state.set('loading');
     this.photoBroken.set(false);
+    this.qty.set(1);
     this.related.set([]);
     this.api.getProduct(this.productId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: p => {
@@ -425,8 +469,12 @@ export class ProductPageComponent {
   }
 
   addToCart(product: ProductResponse): void {
-    this.cart.addItem(product);
+    for (let i = 0; i < this.qty(); i++) this.cart.addItem(product);
     this.router.navigate(['/checkout']);
+  }
+
+  isFood(category?: string): boolean {
+    return category === 'FAST_FOOD' || category === 'GROCERY';
   }
 
   goToLogin(): void {

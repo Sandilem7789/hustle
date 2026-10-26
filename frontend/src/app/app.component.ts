@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, computed, ViewChild, ElementRef, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, IsActiveMatchOptions } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -41,6 +41,10 @@ export class AppComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly isDriver = computed(() => this.driverAuth.isLoggedIn());
+
+  // Shop and Search both live on /marketplace; the query parameter tells them apart
+  readonly exactNoQuery: IsActiveMatchOptions = { paths: 'exact', queryParams: 'exact', matrixParams: 'ignored', fragment: 'ignored' };
+  readonly exactWithQuery: IsActiveMatchOptions = { paths: 'exact', queryParams: 'subset', matrixParams: 'ignored', fragment: 'ignored' };
   avatarUrl = signal<string | null>(null);
 
   ngOnInit(): void {

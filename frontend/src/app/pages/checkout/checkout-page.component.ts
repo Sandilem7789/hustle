@@ -1,181 +1,209 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../services/api.service';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
-import { CartService } from '../../services/cart.service';
+import { CartItem, CartService } from '../../services/cart.service';
+import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { MapPickerComponent } from '../../components/map-picker/map-picker.component';
+
+interface ShopGroup { businessId: string; businessName: string; items: CartItem[]; }
 
 @Component({
   selector: 'app-checkout-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, TranslatePipe, MapPickerComponent],
   template: `
-    <div class="layout">
-
-      <!-- Guard: not logged in -->
-      <div class="card" *ngIf="!unifiedAuth.isLoggedIn()">
-        <h2>Please log in to checkout</h2>
-        <p class="muted">You need a customer account to place an order.</p>
-        <a routerLink="/login" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Go to Login</a>
+    <div class="page">
+      <div class="bar">
+        <a routerLink="/marketplace" class="back" [attr.aria-label]="'checkout.keepShopping' | translate">
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        </a>
+        <h1 class="title">{{ 'checkout.yourCart' | translate }}</h1>
       </div>
 
-      <!-- Empty cart -->
-      <div class="card" *ngIf="unifiedAuth.isLoggedIn() && cart.items().length === 0">
-        <h2>Your cart is empty</h2>
-        <p class="muted">Browse the marketplace to find products you love.</p>
-        <a routerLink="/marketplace" class="btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;">Shop Now</a>
-      </div>
+      <section class="card state" *ngIf="!unifiedAuth.isLoggedIn()">
+        <h2>{{ 'checkout.signInTitle' | translate }}</h2>
+        <p class="muted">{{ 'checkout.signInText' | translate }}</p>
+        <a routerLink="/login" [queryParams]="{ return: '/checkout' }" class="gold-btn">{{ 'nav.signIn' | translate }}</a>
+      </section>
 
-      <!-- Checkout Form -->
-      <ng-container *ngIf="unifiedAuth.isLoggedIn() && cart.items().length > 0">
+      <section class="card state" *ngIf="unifiedAuth.isLoggedIn() && cart.items().length === 0">
+        <h2>{{ 'checkout.emptyTitle' | translate }}</h2>
+        <p class="muted">{{ 'checkout.emptyText' | translate }}</p>
+        <a routerLink="/marketplace" class="gold-btn">{{ 'checkout.shopNow' | translate }}</a>
+      </section>
 
-        <div class="card">
-          <h2 class="section-title">{{ 'checkout.yourCart' | translate }}</h2>
-          <div class="cart-items">
-            <div *ngFor="let item of cart.items()" class="cart-item">
-              <div class="item-info">
-                <span class="item-name">{{ item.product.name }}</span>
-                <span class="item-shop muted">{{ item.product.businessName }}</span>
-              </div>
-              <div class="item-controls">
-                <button class="qty-btn" (click)="cart.updateQuantity(item.product.id, item.quantity - 1)">−</button>
-                <span class="qty">{{ item.quantity }}</span>
-                <button class="qty-btn" (click)="cart.updateQuantity(item.product.id, item.quantity + 1)">+</button>
-              </div>
-              <div class="item-price">
-                <span>R {{ (item.product.price * item.quantity) | number:'1.2-2' }}</span>
-                <button class="remove-btn" (click)="cart.removeItem(item.product.id)">✕</button>
-              </div>
+      <div class="grid" *ngIf="unifiedAuth.isLoggedIn() && cart.items().length > 0">
+        <div class="main">
+          <section class="card" *ngFor="let g of groups()" [attr.aria-label]="g.businessName">
+            <div class="card-head">
+              <h2 class="eyebrow">{{ fromShop(g.businessName) }}</h2>
+              <a class="link" [routerLink]="['/business', g.businessId]">{{ 'checkout.addMore' | translate }} ›</a>
             </div>
-          </div>
-
-          <div class="order-total">
-            <span class="total-label">{{ 'checkout.orderTotal' | translate }}</span>
-            <span class="total-amount">R {{ cart.total() | number:'1.2-2' }}</span>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2 class="section-title">{{ 'checkout.orderDetails' | translate }}</h2>
-
-          <!-- Transaction Type -->
-          <div class="field-group">
-            <p class="field-label">{{ 'checkout.transactionType' | translate }}</p>
-            <div class="radio-group">
-              <label class="radio-option" [class.selected]="transactionType === 'B2C'">
-                <input type="radio" name="txType" value="B2C" [(ngModel)]="transactionType" />
-                <span>{{ 'checkout.personalPurchase' | translate }}</span>
-              </label>
-              <label class="radio-option" [class.selected]="transactionType === 'B2B'">
-                <input type="radio" name="txType" value="B2B" [(ngModel)]="transactionType" />
-                <span>{{ 'checkout.businessPurchase' | translate }}</span>
-              </label>
+            <div class="line" *ngFor="let item of g.items">
+              <span class="line-name">
+                <strong>{{ item.product.name }}</strong>
+                <span class="muted">R {{ item.product.price | number:'1.0-2' }} {{ 'checkout.each' | translate }}</span>
+              </span>
+              <strong class="line-total">R {{ item.product.price * item.quantity | number:'1.0-2' }}</strong>
+              <span class="stepper">
+                <button type="button" class="step" [attr.aria-label]="withName('checkout.lessOf', item.product.name)" (click)="cart.updateQuantity(item.product.id, item.quantity - 1)">−</button>
+                <span class="qty" aria-live="polite">{{ item.quantity }}</span>
+                <button type="button" class="step" [attr.aria-label]="withName('checkout.moreOf', item.product.name)" (click)="cart.updateQuantity(item.product.id, item.quantity + 1)">+</button>
+              </span>
+              <button type="button" class="remove" (click)="cart.removeItem(item.product.id)">
+                {{ 'checkout.remove' | translate }}<span class="sr-only"> {{ item.product.name }}</span>
+              </button>
             </div>
-          </div>
+          </section>
 
-          <div class="field" *ngIf="transactionType === 'B2B'">
-            <label for="poRef">Purchase Order Reference *</label>
-            <input id="poRef" type="text" [(ngModel)]="businessPurchaseOrderRef" placeholder="e.g. PO-2025-001" />
-          </div>
+          <p class="note warn" *ngIf="groups().length > 1" role="status">{{ 'checkout.oneShop' | translate }}</p>
 
-          <!-- Fulfillment Type -->
-          <div class="field-group">
-            <p class="field-label">{{ 'checkout.fulfillmentMethod' | translate }}</p>
-            <div class="radio-group">
-              <label class="radio-option" [class.selected]="fulfillmentType === 'DELIVERY'">
+          <section class="card" aria-labelledby="get-title">
+            <h2 id="get-title" class="eyebrow">{{ 'checkout.howWant' | translate }}</h2>
+            <fieldset class="options">
+              <legend class="muted">{{ 'checkout.chooseOne' | translate }}</legend>
+              <label class="opt" [class.on]="fulfillmentType === 'DELIVERY'">
                 <input type="radio" name="fulfillment" value="DELIVERY" [(ngModel)]="fulfillmentType" />
-                <span>🚚 {{ 'checkout.deliverToMe' | translate }}</span>
+                <span class="opt-text">
+                  <strong>{{ 'checkout.deliverToMe' | translate }}</strong>
+                  <span class="muted">{{ 'checkout.deliverSub' | translate }}</span>
+                </span>
               </label>
-              <label class="radio-option" [class.selected]="fulfillmentType === 'COLLECTION'">
+              <label class="opt" [class.on]="fulfillmentType === 'COLLECTION'">
                 <input type="radio" name="fulfillment" value="COLLECTION" [(ngModel)]="fulfillmentType" />
-                <span>🏪 {{ 'checkout.collectMyself' | translate }}</span>
+                <span class="opt-text">
+                  <strong>{{ 'checkout.collectMyself' | translate }}</strong>
+                  <span class="muted">{{ 'checkout.collectSub' | translate }}</span>
+                </span>
               </label>
+            </fieldset>
+
+            <div class="where" *ngIf="fulfillmentType === 'DELIVERY'">
+              <p class="label">{{ 'checkout.whereBring' | translate }}</p>
+              <div class="where-grid">
+                <app-map-picker [lat]="locationCoords()?.lat ?? null" [lng]="locationCoords()?.lng ?? null" (coordsChange)="locationCoords.set($event)"></app-map-picker>
+                <div class="where-side">
+                  <button class="line-btn" type="button" (click)="useCurrentLocation()" [disabled]="gettingLocation()">
+                    <mat-icon aria-hidden="true">my_location</mat-icon>
+                    {{ (gettingLocation() ? 'checkout.locating' : 'checkout.useCurrentLocation') | translate }}
+                  </button>
+                  <label class="field">
+                    <span class="label">{{ 'checkout.directions' | translate }}</span>
+                    <input id="deliveryAddress" type="text" [(ngModel)]="deliveryAddress" [placeholder]="'checkout.directionsHint' | translate" required />
+                  </label>
+                  <p class="ok" *ngIf="locationCoords()">
+                    <mat-icon aria-hidden="true">check</mat-icon>{{ 'checkout.pinSet' | translate }}
+                  </p>
+                  <p class="err" *ngIf="locationError()">{{ locationError() | translate }}</p>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <!-- Delivery fields -->
-          <ng-container *ngIf="fulfillmentType === 'DELIVERY'">
-            <div class="field">
-              <label for="deliveryAddress">{{ 'checkout.deliveryAddress' | translate }} *</label>
-              <input id="deliveryAddress" type="text" [(ngModel)]="deliveryAddress" placeholder="e.g. 12 Main Street, Durban, 4001" required />
-            </div>
-
-            <button class="btn-secondary" type="button" (click)="useCurrentLocation()" [disabled]="gettingLocation()">
-              {{ gettingLocation() ? '📍 Getting location…' : '📍 ' + ('checkout.useCurrentLocation' | translate) }}
-            </button>
-
-            <p *ngIf="locationCoords()" class="coords-text">
-              ✅ Location set: {{ locationCoords()!.lat.toFixed(5) }}, {{ locationCoords()!.lng.toFixed(5) }}
-            </p>
-            <p *ngIf="locationError()" class="location-error">{{ locationError() }}</p>
-          </ng-container>
-
-          <ng-container *ngIf="fulfillmentType === 'COLLECTION'">
-            <div class="collection-note">
-              <p>📞 Contact the seller to arrange collection time and location.</p>
-            </div>
-          </ng-container>
-
-          <p *ngIf="errorMsg()" class="error-msg">{{ errorMsg() }}</p>
-
-          <button class="btn-primary" (click)="placeOrder()" [disabled]="loading()">
-            {{ loading() ? 'Placing order…' : ('checkout.placeOrder' | translate) + ' — R ' + (cart.total() | number:'1.2-2') }}
-          </button>
+          </section>
         </div>
 
-      </ng-container>
+        <aside class="card summary" aria-labelledby="total-title">
+          <h2 id="total-title" class="eyebrow">{{ 'checkout.total' | translate }}</h2>
+          <div class="row"><span class="muted">{{ 'checkout.items' | translate }}</span><span>R {{ cart.total() | number:'1.0-2' }}</span></div>
+          <div class="row pay"><strong>{{ 'checkout.youPay' | translate }}</strong><strong class="big">R {{ cart.total() | number:'1.0-2' }}</strong></div>
+          <p class="muted small">{{ orderingAs() }}</p>
+          <p *ngIf="errorMsg()" class="error-msg" role="alert">{{ errorMsg() }}</p>
+          <div class="place">
+            <button type="button" class="gold-btn" (click)="placeOrder()" [disabled]="loading() || groups().length > 1">
+              {{ loading() ? ('checkout.placing' | translate) : ('checkout.placeOrder' | translate) + ' · R ' + (cart.total() | number:'1.0-2') }}
+            </button>
+          </div>
+        </aside>
+      </div>
     </div>
   `,
   styles: `
-    .layout { max-width: 600px; margin: 0 auto; padding: 1rem 1rem 5rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: var(--bg-surface); border-radius: 1.5rem; padding: 1.5rem; box-shadow: var(--shadow-card); border: 1px solid var(--border-base); }
-    .section-title { margin: 0 0 1.25rem; font-size: 1.15rem; color: var(--text-primary); font-weight: 800; }
+    :host { display: block; }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .muted { color: var(--text-secondary); }
 
-    /* Cart */
-    .cart-items { display: flex; flex-direction: column; gap: 0.75rem; }
-    .cart-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #E3DACA; }
-    .item-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
-    .item-name { font-weight: 700; font-size: 0.95rem; color: #13251E; }
-    .item-shop { font-size: 0.78rem; color: #646A63; }
-    .item-controls { display: flex; align-items: center; gap: 0.5rem; }
-    .qty-btn { width: 32px; height: 32px; border: 1.5px solid #E3DACA; border-radius: 50%; background: white; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; min-height: unset; font-weight: 800; color: #13251E; transition: border-color 0.15s; }
-    .qty-btn:hover { border-color: #E5A31D; }
-    .qty { font-weight: 800; min-width: 1.5rem; text-align: center; color: #13251E; }
-    .item-price { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; color: var(--success-text); white-space: nowrap; }
-    .remove-btn { background: none; border: none; color: #646A63; cursor: pointer; font-size: 0.85rem; min-height: unset; padding: 0; transition: color 0.15s; }
-    .remove-btn:hover { color: #C8443A; }
-    .order-total { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #E3DACA; }
-    .total-label { font-size: 0.9rem; font-weight: 800; color: #646A63; text-transform: uppercase; letter-spacing: 0.05em; }
-    .total-amount { font-size: 1.35rem; font-weight: 800; color: #13251E; }
+    .page { max-width: 1120px; margin: 0 auto; padding: 0 16px 120px; }
+    @media (min-width: 768px) { .page { padding: 16px 24px 40px; } }
 
-    /* Form */
-    .field-group { margin-bottom: 1rem; }
-    .field { display: flex; flex-direction: column; gap: 0.375rem; margin-bottom: 1rem; }
-    .field-label { font-size: 0.875rem; font-weight: 800; color: #13251E; margin: 0 0 0.5rem; }
-    label[for] { font-size: 0.875rem; font-weight: 700; color: #13251E; display: block; margin-bottom: 0.25rem; }
-    input[type="text"] { height: 48px; border: 2px solid #E3DACA; border-radius: 0.75rem; padding: 0 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; font-family: inherit; font-weight: 600; color: #13251E; outline: none; transition: border-color 0.15s; }
-    input:focus { border-color: #E5A31D; box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2); }
+    .bar { display: flex; align-items: center; gap: 4px; min-height: 60px; margin-left: -10px; }
+    .back { width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-primary); }
+    .back mat-icon { width: 28px; height: 28px; font-size: 28px; }
+    .back:focus-visible { outline: 3px solid var(--border-focus); }
+    .title { margin: 0; font-family: var(--font-display); font-size: 1.375rem; font-weight: 800; color: var(--text-primary); }
+    @media (min-width: 768px) { .title { font-size: 2.5rem; } }
 
-    .radio-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .radio-option { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border: 1.5px solid #E3DACA; border-radius: 0.75rem; cursor: pointer; font-size: 0.95rem; color: #4A524C; font-weight: 700; transition: border-color 0.15s, background-color 0.15s, color 0.15s; }
-    .radio-option.selected { border-color: #E5A31D; background: rgba(229, 163, 29,0.06); color: #13251E; font-weight: 800; }
-    .radio-option input[type="radio"] { width: 16px; height: 16px; accent-color: #E5A31D; }
+    .grid { display: flex; flex-direction: column; gap: 14px; }
+    @media (min-width: 900px) { .grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; } }
+    .main { display: flex; flex-direction: column; gap: 14px; }
 
-    .btn-secondary { height: 48px; border: 1.5px solid #E3DACA; border-radius: 999px; background: white; color: #4A524C; font-size: 0.9rem; font-weight: 700; cursor: pointer; width: 100%; margin-bottom: 0.5rem; font-family: inherit; transition: border-color 0.15s, color 0.15s; }
-    .btn-secondary:hover { border-color: #E5A31D; color: #13251E; }
-    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .coords-text { font-size: 0.85rem; color: var(--success-text); font-weight: 700; margin: 0 0 0.75rem; }
-    .location-error { font-size: 0.85rem; color: #C8443A; margin: 0 0 0.75rem; font-weight: 700; }
-    .collection-note { background: rgba(0,168,150,0.05); border: 1px solid rgba(0,168,150,0.2); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; font-size: 0.9rem; color: #00665E; font-weight: 700; }
-    .collection-note p { margin: 0; }
+    .card { background: var(--bg-surface); border: 1px solid var(--border-base); border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+    @media (min-width: 768px) { .card { padding: 22px; } }
+    .state h2 { margin: 0; font-size: 1.25rem; }
+    .state p { margin: 0; }
+    .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .eyebrow { margin: 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--success-text); }
+    .link { color: var(--success-text); font-size: 0.875rem; font-weight: 700; text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
 
-    .btn-primary { height: 52px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #E5A31D; color: #13251E; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    .error-msg { color: #C8443A; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+    .line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-base); }
+    @media (min-width: 768px) { .line { grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 16px; } .line-total { order: 3; } .stepper { order: 2; } .remove { order: 4; } }
+    .line-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .line-name strong { font-size: 1rem; }
+    .line-name .muted { font-size: 0.875rem; }
+    .line-total { font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
+    .stepper { display: flex; align-items: center; gap: 8px; }
+    .step { width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 12px; border: 1.5px solid var(--text-primary); background: transparent; color: var(--text-primary); font-size: 1.25rem; font-weight: 700; }
+    .qty { min-width: 20px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .remove { justify-self: end; min-height: 48px; padding: 0; background: transparent; color: #8E2A20; font-size: 0.875rem; font-weight: 700; }
+    :host-context([data-theme="dark"]) .remove { color: #F2A49B; }
+    .step:focus-visible, .remove:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+
+    .note { margin: 0; padding: 12px 14px; border-radius: 14px; font-size: 0.9375rem; line-height: 1.4; }
+    .warn { background: var(--bg-muted); color: var(--text-primary); }
+
+    .options { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    @media (min-width: 768px) { .options { flex-direction: row; flex-wrap: wrap; } .options legend { width: 100%; } .opt { flex: 1; } }
+    .options legend { padding: 0; margin-bottom: 10px; font-size: 0.875rem; }
+    .opt { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid var(--border-base); border-radius: 16px; cursor: pointer; flex-direction: row; font-weight: 400; }
+    .opt.on { border-color: var(--text-primary); background: var(--bg-page); }
+    .opt input { width: 22px; height: 22px; min-height: 0; margin: 1px 0 0; accent-color: var(--text-primary); flex-shrink: 0; }
+    .opt-text { display: flex; flex-direction: column; gap: 2px; }
+    .opt-text strong { font-size: 1rem; color: var(--text-primary); }
+    .opt-text .muted { font-size: 0.875rem; line-height: 1.35; }
+
+    .where { display: flex; flex-direction: column; gap: 10px; }
+    .where-grid { display: flex; flex-direction: column; gap: 10px; }
+    @media (min-width: 768px) { .where-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; } }
+    .where-side { display: flex; flex-direction: column; gap: 10px; }
+    .label { margin: 0; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field input { height: 52px; border-radius: 14px; border: 1.5px solid var(--border-base); background: var(--bg-surface); }
+    .line-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 14px; border: 1.5px solid var(--text-primary); background: transparent; color: var(--text-primary); font-size: 0.9375rem; font-weight: 700; }
+    .line-btn mat-icon { width: 20px; height: 20px; font-size: 20px; }
+    .line-btn:disabled { opacity: 0.5; }
+    .ok { margin: 0; display: flex; align-items: center; gap: 6px; color: var(--success-text); font-size: 0.875rem; font-weight: 700; }
+    .ok mat-icon { width: 18px; height: 18px; font-size: 18px; }
+    .err { margin: 0; color: #8E2A20; font-size: 0.875rem; font-weight: 700; }
+
+    .summary { gap: 10px; }
+    @media (min-width: 900px) { .summary { position: sticky; top: 96px; } }
+    .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9375rem; }
+    .row.pay { border-top: 1px solid var(--border-base); padding-top: 10px; font-size: 1.125rem; }
+    .big { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; }
+    .small { margin: 0; font-size: 0.8125rem; }
+    .error-msg { margin: 0; color: #8E2A20; font-size: 0.875rem; font-weight: 700; background: var(--bg-muted); border-radius: 12px; padding: 10px 12px; }
+
+    .gold-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border-radius: 16px; background: var(--gold); color: var(--ink); font-size: 1.0625rem; font-weight: 700; text-decoration: none; }
+    .gold-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .gold-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
+
+    /* Phone: the order button stays in reach above the bottom nav */
+    .place { position: fixed; left: 0; right: 0; bottom: var(--bottom-nav-total); z-index: 40; padding: 12px 16px; background: var(--bg-surface); border-top: 1px solid var(--border-base); }
+    @media (min-width: 900px) { .place { position: static; padding: 0; background: none; border: 0; } }
+    @media (min-width: 768px) and (max-width: 899.98px) { .place { bottom: 0; } }
   `
 })
 export class CheckoutPageComponent {
@@ -183,11 +211,10 @@ export class CheckoutPageComponent {
   readonly cart = inject(CartService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(TranslationService);
 
-  transactionType: 'B2C' | 'B2B' = 'B2C';
   fulfillmentType: 'DELIVERY' | 'COLLECTION' = 'DELIVERY';
   deliveryAddress = '';
-  businessPurchaseOrderRef = '';
 
   loading = signal(false);
   gettingLocation = signal(false);
@@ -195,9 +222,33 @@ export class CheckoutPageComponent {
   locationError = signal('');
   errorMsg = signal('');
 
+  // One card per shop: the server takes one shop per order
+  readonly groups = computed<ShopGroup[]>(() => {
+    const byShop = new Map<string, ShopGroup>();
+    for (const item of this.cart.items()) {
+      const id = item.product.businessId;
+      if (!byShop.has(id)) byShop.set(id, { businessId: id, businessName: item.product.businessName, items: [] });
+      byShop.get(id)!.items.push(item);
+    }
+    return [...byShop.values()];
+  });
+
+  readonly orderingAs = computed(() => {
+    this.i18n.lang();
+    return this.i18n.t('checkout.orderingAs').replace('{name}', this.unifiedAuth.displayName() ?? '');
+  });
+
+  fromShop(name: string): string {
+    return this.i18n.t('checkout.from').replace('{shop}', name);
+  }
+
+  withName(key: string, name: string): string {
+    return this.i18n.t(key).replace('{name}', name);
+  }
+
   useCurrentLocation(): void {
     if (!navigator.geolocation) {
-      this.locationError.set('Geolocation is not supported by your browser.');
+      this.locationError.set('checkout.noGeo');
       return;
     }
     this.gettingLocation.set(true);
@@ -208,7 +259,7 @@ export class CheckoutPageComponent {
         this.gettingLocation.set(false);
       },
       () => {
-        this.locationError.set('Could not get your location. Please enter address manually.');
+        this.locationError.set('checkout.geoFailed');
         this.gettingLocation.set(false);
       },
       { timeout: 10000, maximumAge: 60000 }
@@ -224,29 +275,20 @@ export class CheckoutPageComponent {
     }
 
     if (this.fulfillmentType === 'DELIVERY' && !this.deliveryAddress.trim()) {
-      this.errorMsg.set('Please enter a delivery address.');
+      this.errorMsg.set(this.i18n.t('checkout.needAddress'));
       return;
     }
 
-    if (this.transactionType === 'B2B' && !this.businessPurchaseOrderRef.trim()) {
-      this.errorMsg.set('Please enter a purchase order reference for B2B orders.');
-      return;
-    }
-
-    const items = this.cart.items().map(i => ({
-      productId: i.product.id,
-      quantity: i.quantity
-    }));
-
+    const items = this.cart.items().map(i => ({ productId: i.product.id, quantity: i.quantity }));
     const coords = this.locationCoords();
+    // Buying in Shop is always personal (B2C); business restocking happens inside Sell
     const payload = {
       items,
-      transactionType: this.transactionType,
+      transactionType: 'B2C' as const,
       fulfillmentType: this.fulfillmentType,
       deliveryAddress: this.fulfillmentType === 'DELIVERY' ? this.deliveryAddress : undefined,
       deliveryLat: coords?.lat,
       deliveryLng: coords?.lng,
-      businessPurchaseOrderRef: this.transactionType === 'B2B' ? this.businessPurchaseOrderRef : undefined
     };
 
     this.loading.set(true);
@@ -257,7 +299,7 @@ export class CheckoutPageComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMsg.set(err?.error?.message || 'Failed to place order. Please try again.');
+        this.errorMsg.set(err?.error?.message || this.i18n.t('checkout.failed'));
       }
     });
   }

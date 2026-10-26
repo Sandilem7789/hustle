@@ -52,6 +52,7 @@ test.describe('Order status timeline', () => {
 
   test('a delivered order is complete', async ({ page }) => {
     await openOrders(page);
+    await page.getByRole('button', { name: 'Done' }).click();
     const s = steps(page, 'CCCC3333');
     await expect(s).toHaveCount(5);
     await expect(s.filter({ hasText: '(done)' })).toHaveCount(5);
@@ -60,6 +61,7 @@ test.describe('Order status timeline', () => {
 
   test('a cancelled order shows its own state instead of the line', async ({ page }) => {
     await openOrders(page);
+    await page.getByRole('button', { name: 'Done' }).click();
     const cancelled = card(page, 'DDDD4444');
     await expect(cancelled).toContainText('This order was cancelled.');
     await expect(cancelled.getByRole('list', { name: 'Order progress' })).toHaveCount(0);

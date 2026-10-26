@@ -65,7 +65,7 @@ test.describe('Business page in dark mode', () => {
     await page.goto('/business/b1');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Liskomz Tuck Shop' })).toBeVisible();
-    for (const selector of ['.biz-name', '.product-name', '.cat-tag', '.desc', '.price', '.back-btn', '.login-buy-btn']) {
+    for (const selector of ['.biz-name', '.product-name', '.cat-tag', '.price', '.back-btn', '.login-buy-btn']) {
       expect(await readable(page, selector), selector).toBeGreaterThanOrEqual(4.5);
     }
   });
@@ -101,13 +101,15 @@ async function openOrders(page: Page, lang: 'en' | 'zu' = 'en') {
   await page.route('**/api/**', route => route.fulfill({ json: [] }));
   await page.route('**/api/orders/my', route => route.fulfill({ json: orders }));
   await page.goto('/orders');
-  await expect(page.locator('.order-card')).toHaveCount(statuses.length);
+  // Orders still on the go show first; finished ones sit under the Done tab
+  await expect(page.locator('.order-card')).toHaveCount(4);
 }
 
 test.describe('My Orders in dark mode', () => {
   test('every status badge is readable', async ({ page }) => {
     await openOrders(page);
-    for (const status of statuses) {
+    for (const [i, status] of statuses.entries()) {
+      if (i === 4) await page.getByRole('button', { name: 'Done' }).click();
       const cls = '.status-' + status.toLowerCase().replace(/_/g, '-');
       expect(await readable(page, cls), status).toBeGreaterThanOrEqual(4.5);
     }
@@ -117,8 +119,9 @@ test.describe('My Orders in dark mode', () => {
     await openOrders(page, 'zu');
     await expect(page.getByRole('heading', { level: 1, name: 'Ama-oda Ami' })).toBeVisible();
     await expect(page.locator('.status-en-route')).toHaveText('Isendleleni');
-    await expect(page.locator('.status-cancelled')).toHaveText('Ikhanseliwe');
     await expect(page.locator('.meta-chip').first()).toContainText('Ukulethwa');
     await expect(page.locator('.total-label').first()).toHaveText('Isamba');
+    await page.getByRole('button', { name: 'Kuqediwe' }).click();
+    await expect(page.locator('.status-cancelled')).toHaveText('Ikhanseliwe');
   });
 });

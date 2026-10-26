@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { CommunityService } from '../../services/community.service';
@@ -23,7 +23,11 @@ type LoadState = 'loading' | 'ready' | 'error';
   imports: [CommonModule, FormsModule, RouterLink, MatIconModule, TranslatePipe],
   template: `
     <section class="market" aria-labelledby="market-title">
-      <h1 id="market-title" class="market-title">{{ 'marketplace.title' | translate }}</h1>
+      <div class="market-head">
+        <div class="market-heading">
+          <p class="market-eyebrow">{{ community.selected()?.name ?? ('marketplace.allCommunities' | translate) }} · {{ 'marketplace.changeInMenu' | translate }}</p>
+          <h1 id="market-title" class="market-title">{{ 'marketplace.title' | translate }}</h1>
+        </div>
 
       <div class="search">
         <label class="field-label" for="market-search">{{ 'marketplace.searchLabel' | translate }}</label>
@@ -51,6 +55,7 @@ type LoadState = 'loading' | 'ready' | 'error';
           </button>
         </div>
       </div>
+      </div>
 
       <fieldset class="filter">
         <legend class="field-label">{{ 'marketplace.category' | translate }}</legend>
@@ -62,6 +67,7 @@ type LoadState = 'loading' | 'ready' | 'error';
             <span>{{ cat.labelKey | translate }}</span>
           </label>
           <button
+            *ngIf="!wide()"
             type="button"
             class="more-btn"
             aria-controls="category-options"
@@ -96,7 +102,7 @@ type LoadState = 'loading' | 'ready' | 'error';
                 </ng-template>
               </span>
               <span class="recent-name">{{ r.name }}</span>
-              <span class="recent-price">R {{ r.price | number:'1.2-2' }}</span>
+              <span class="recent-price">R {{ r.price | number:'1.0-2' }}</span>
             </a>
           </li>
         </ul>
@@ -153,7 +159,7 @@ type LoadState = 'loading' | 'ready' | 'error';
           </div>
           <ul class="grid" role="list">
             <li class="p-card" *ngFor="let p of filteredProducts(); trackBy: trackById">
-              <div class="p-media">
+              <div class="p-media" [style.--cat]="categoryColor(p.category)">
                 <img
                   *ngIf="p.mediaUrl && !brokenImages().has(p.id); else noPhoto"
                   [src]="resolveUrl(p.mediaUrl)"
@@ -167,7 +173,7 @@ type LoadState = 'loading' | 'ready' | 'error';
                 <ng-template #noPhoto>
                   <div class="p-fallback">
                     <mat-icon aria-hidden="true">{{ categoryIcon(p.category) }}</mat-icon>
-                    <span>{{ 'marketplace.noPhoto' | translate }}</span>
+                    <span class="sr-only">{{ 'marketplace.noPhoto' | translate }}</span>
                   </div>
                 </ng-template>
               </div>
@@ -179,7 +185,7 @@ type LoadState = 'loading' | 'ready' | 'error';
                 </h2>
                 <div class="p-meta" [id]="'meta-' + p.id">
                   <p class="p-seller">{{ p.businessName }}</p>
-                  <p class="p-price">R {{ p.price | number:'1.2-2' }}</p>
+                  <p class="p-price">R {{ p.price | number:'1.0-2' }}</p>
                 </div>
                 <div class="p-cart">
                   <button
@@ -190,7 +196,6 @@ type LoadState = 'loading' | 'ready' | 'error';
                     [attr.aria-label]="withName('marketplace.quickAdd', p.name)"
                     (click)="quickAdd(p)"
                   >
-                    <mat-icon aria-hidden="true">add_shopping_cart</mat-icon>
                     <span>{{ 'marketplace.add' | translate }}</span>
                   </button>
                   <ng-template #stepper>
@@ -210,6 +215,11 @@ type LoadState = 'loading' | 'ready' | 'error';
           </ul>
         </ng-container>
       </ng-container>
+
+      <a *ngIf="cart.count() > 0" routerLink="/checkout" class="cart-bar">
+        <span>{{ 'marketplace.viewCart' | translate }} · {{ cartCountLabel() }}</span>
+        <span>R {{ cart.total() | number:'1.0-2' }} ›</span>
+      </a>
     </section>
   `,
   styles: `
@@ -224,18 +234,34 @@ type LoadState = 'loading' | 'ready' | 'error';
     .market {
       max-width: 1120px;
       margin: 0 auto;
-      padding: 1rem 1rem 1.5rem;
+      padding: 1.125rem 1rem 5.5rem;
     }
-    @media (min-width: 768px) { .market { padding: 1.5rem 1.5rem 2.5rem; } }
+    @media (min-width: 768px) { .market { padding: 2rem 1.5rem 2.5rem; } }
 
-    .market-title {
-      font-size: 1.5rem;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-      margin: 0 0 1rem;
+    .market-head { display: flex; flex-direction: column; gap: 0.875rem; margin-bottom: 0.875rem; }
+    @media (min-width: 1024px) {
+      .market-head { flex-direction: row; align-items: flex-end; gap: 2rem; margin-bottom: 1.125rem; }
+      .market-head .search { flex: 1; margin: 0; }
     }
-    @media (min-width: 768px) { .market-title { font-size: 1.875rem; } }
+    .market-heading { display: flex; flex-direction: column; gap: 0.375rem; }
+    .market-eyebrow {
+      margin: 0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--success-text);
+    }
+    .market-title {
+      font-family: var(--font-display);
+      font-size: 1.875rem;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.015em;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    @media (min-width: 768px) { .market-title { font-size: 2.5rem; } }
 
     .field-label {
       display: block;
@@ -257,18 +283,18 @@ type LoadState = 'loading' | 'ready' | 'error';
     }
     .search-input {
       width: 100%;
-      height: 48px;
+      height: 52px;
       padding: 0 3.25rem 0 2.875rem;
-      border: 2px solid var(--border-base);
-      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border-base);
+      border-radius: var(--radius-md);
       background: var(--bg-surface);
       color: var(--text-primary);
       font: inherit;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 500;
       transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
     }
-    .search-input::placeholder { color: var(--text-muted); font-weight: 600; }
+    .search-input::placeholder { color: var(--text-muted); font-weight: 500; }
     .search-input::-webkit-search-cancel-button { display: none; }
     .search-input:focus {
       outline: none;
@@ -298,7 +324,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      column-gap: 1.25rem;
+      column-gap: 1rem;
     }
     .radio {
       display: inline-flex;
@@ -307,7 +333,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       gap: 0.5rem;
       min-height: 48px;
       font-size: 0.9375rem;
-      font-weight: 700;
+      font-weight: 500;
       color: var(--text-primary);
       cursor: pointer;
     }
@@ -328,13 +354,13 @@ type LoadState = 'loading' | 'ready' | 'error';
     }
     .radio-input:checked {
       border-color: var(--text-primary);
-      background: var(--hustle-yellow);
-      box-shadow: inset 0 0 0 3px var(--bg-surface);
+      background: var(--text-primary);
+      box-shadow: inset 0 0 0 4px var(--bg-surface);
     }
     .radio-input:focus { box-shadow: none; }
     .radio-input:checked:focus { box-shadow: inset 0 0 0 3px var(--bg-surface); }
     .radio-input:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
-    .radio:has(.radio-input:checked) { font-weight: 800; }
+    .radio:has(.radio-input:checked) { font-weight: 700; }
 
     .more-btn {
       display: inline-flex;
@@ -343,9 +369,9 @@ type LoadState = 'loading' | 'ready' | 'error';
       min-height: 48px;
       padding: 0 0.25rem;
       background: transparent;
-      color: var(--brand-text);
+      color: var(--success-text);
       font-size: 0.9375rem;
-      font-weight: 800;
+      font-weight: 700;
       border-radius: var(--radius-sm);
     }
     .more-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 0; }
@@ -432,7 +458,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       gap: 0.25rem 0.75rem;
       margin: 0.25rem 0 0.75rem;
     }
-    .result-bar .result-count { margin: 0; }
+    .result-bar .result-count { margin: 0; color: var(--text-primary); font-size: 0.9375rem; }
     .sort { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; }
     .sort-label {
       display: inline;
@@ -465,7 +491,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       flex-direction: column;
       background: var(--bg-surface);
       border: 1px solid var(--border-base);
-      border-radius: var(--radius-md);
+      border-radius: 16px;
       overflow: hidden;
       transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms ease-out;
       -webkit-tap-highlight-color: transparent;
@@ -478,7 +504,7 @@ type LoadState = 'loading' | 'ready' | 'error';
     /* Whole photos, never cropped: a buyer judges the item by its picture */
     .p-media {
       aspect-ratio: 4 / 3;
-      background: var(--bg-muted);
+      background: color-mix(in srgb, var(--cat, var(--bg-muted)) 16%, var(--bg-surface));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -492,14 +518,11 @@ type LoadState = 'loading' | 'ready' | 'error';
 
     .p-fallback {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 0.25rem;
-      color: var(--text-secondary);
-      font-size: 0.8125rem;
-      font-weight: 700;
+      justify-content: center;
+      color: color-mix(in srgb, var(--cat, var(--text-secondary)) 80%, var(--text-primary));
     }
-    .p-fallback mat-icon { width: 32px; height: 32px; font-size: 32px; }
+    .p-fallback mat-icon { width: 44px; height: 44px; font-size: 44px; }
 
     .p-body {
       display: flex;
@@ -508,7 +531,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       padding: 0.625rem 0.75rem 0.75rem;
       gap: 0.25rem;
     }
-    .p-name { margin: 0; font-size: 1rem; line-height: 1.3; }
+    .p-name { margin: 0; font-size: 0.9375rem; line-height: 1.25; }
     .p-open {
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -520,7 +543,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       border-radius: 0;
       color: var(--text-primary);
       font: inherit;
-      font-weight: 800;
+      font-weight: 700;
       text-align: left;
     }
     /* One real button, stretched to cover the card: whole-card tap target, no nested controls */
@@ -531,18 +554,18 @@ type LoadState = 'loading' | 'ready' | 'error';
     .p-meta { display: flex; flex-direction: column; gap: 0.125rem; margin-top: auto; }
     .p-seller {
       margin: 0;
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: 0.8125rem;
+      font-weight: 400;
       color: var(--text-secondary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .p-price {
-      margin: 0;
+      margin: 0.25rem 0 0;
       font-size: 1.0625rem;
-      font-weight: 900;
-      color: var(--success-text);
+      font-weight: 700;
+      color: var(--text-primary);
       font-variant-numeric: tabular-nums;
     }
 
@@ -554,24 +577,25 @@ type LoadState = 'loading' | 'ready' | 'error';
       align-items: center;
       justify-content: center;
       min-height: 48px;
-      border-radius: var(--radius-sm);
+      border-radius: 12px;
       font-size: 0.9375rem;
-      font-weight: 800;
+      font-weight: 700;
     }
     .qa-add {
       width: 100%;
       gap: 0.375rem;
       padding: 0 0.75rem;
-      background: var(--hustle-yellow);
-      color: #13251E;
+      background: transparent;
+      border: 1.5px solid var(--text-primary);
+      color: var(--text-primary);
     }
     .qa-add mat-icon,
     .qa-step mat-icon { width: 22px; height: 22px; font-size: 22px; }
     .qa-stepper {
       display: flex;
       align-items: center;
-      border: 2px solid var(--border-base);
-      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--text-primary);
+      border-radius: 12px;
       background: var(--bg-surface);
     }
     .qa-step {
@@ -594,6 +618,29 @@ type LoadState = 'loading' | 'ready' | 'error';
     .qa-step:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
     .p-skeleton .p-media { background: var(--bg-muted); }
+
+    /* Phone: the cart sits above the bottom nav; big screens use the gold cart in the top bar */
+    .cart-bar {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: calc(var(--bottom-nav-total) + 10px);
+      z-index: 40;
+      height: 56px;
+      padding: 0 18px;
+      border-radius: 16px;
+      background: var(--gold);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 6px 18px rgba(19, 37, 30, 0.16);
+    }
+    .cart-bar:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
+    @media (min-width: 768px) { .cart-bar { display: none; } .market { padding-bottom: 2.5rem; } }
     .sk-line { display: block; height: 0.875rem; border-radius: 4px; background: var(--bg-muted); }
     .sk-line.sk-short { width: 55%; margin-top: 0.375rem; }
 
@@ -630,7 +677,7 @@ type LoadState = 'loading' | 'ready' | 'error';
     }
   `
 })
-export class CommunityHubComponent implements OnDestroy {
+export class CommunityHubComponent implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(TranslationService);
   readonly community = inject(CommunityService);
@@ -647,7 +694,14 @@ export class CommunityHubComponent implements OnDestroy {
   announcement      = signal('');
 
   private readonly recent = inject(RecentlyViewedService);
-  private readonly cart = inject(CartService);
+  readonly cart = inject(CartService);
+  private readonly route = inject(ActivatedRoute);
+
+  // Big screens show every category; phones show three and a More button
+  private readonly wideQuery = window.matchMedia('(min-width: 1024px)');
+  readonly wide = signal(this.wideQuery.matches);
+  private readonly onWideChange = (e: MediaQueryListEvent) => this.wide.set(e.matches);
+  @ViewChild('searchInput') private searchInputRef?: ElementRef<HTMLInputElement>;
   private readonly unifiedAuth = inject(UnifiedAuthService);
   private readonly router = inject(Router);
 
@@ -679,7 +733,7 @@ export class CommunityHubComponent implements OnDestroy {
 
   // Keeps a selected extra category visible while the list is collapsed
   visibleCategories = computed(() => {
-    if (this.showAllCategories()) return [...CATEGORIES];
+    if (this.showAllCategories() || this.wide()) return [...CATEGORIES];
     const selected = this.selectedCategory();
     return CATEGORIES.filter(c => PRIMARY_CATEGORIES.has(c.value) || c.value === selected);
   });
@@ -693,6 +747,12 @@ export class CommunityHubComponent implements OnDestroy {
     const count = n === 1 ? this.i18n.t('marketplace.itemsOne') : this.i18n.t('marketplace.itemsMany').replace('{n}', String(n));
     const place = this.community.selected();
     return place ? `${count} ${this.i18n.t('marketplace.inCommunity').replace('{c}', place.name)}` : count;
+  });
+
+  cartCountLabel = computed(() => {
+    this.i18n.lang();
+    const n = this.cart.count();
+    return n === 1 ? this.i18n.t('marketplace.itemsOne') : this.i18n.t('marketplace.itemsMany').replace('{n}', String(n));
   });
 
   noMatchesText = computed(() => {
@@ -716,8 +776,17 @@ export class CommunityHubComponent implements OnDestroy {
     }, { allowSignalWrites: true });
   }
 
+  ngAfterViewInit(): void {
+    this.wideQuery.addEventListener('change', this.onWideChange);
+    // The bottom nav's Search opens Shop with the search box ready to type in
+    this.route.queryParamMap.subscribe(params => {
+      if (params.has('search')) setTimeout(() => this.searchInputRef?.nativeElement.focus());
+    });
+  }
+
   ngOnDestroy(): void {
     clearTimeout(this.announceTimer);
+    this.wideQuery.removeEventListener('change', this.onWideChange);
   }
 
   selectCategory(cat: string): void {

@@ -30,30 +30,32 @@ test.describe('Marketplace', () => {
     await page.goto('/marketplace');
     await expect(cards(page)).toHaveCount(3);
 
-    await page.getByLabel('Search products and businesses').fill('maize');
+    await page.getByLabel('Search products and shops').fill('maize');
     await expect(cards(page)).toHaveCount(1);
     await expect(cards(page).first()).toContainText('Maize Meal 5kg');
 
-    await page.getByLabel('Search products and businesses').fill('nothing-like-this');
+    await page.getByLabel('Search products and shops').fill('nothing-like-this');
     await expect(page.getByText('No items match “nothing-like-this”.')).toBeVisible();
 
     await page.getByRole('button', { name: 'Clear search' }).first().click();
     await expect(cards(page)).toHaveCount(3);
-    await expect(page.getByLabel('Search products and businesses')).toBeFocused();
+    await expect(page.getByLabel('Search products and shops')).toBeFocused();
   });
 
   test('the search query survives a category change', async ({ page }) => {
     await mockApi(page);
     await page.goto('/marketplace');
-    await page.getByLabel('Search products and businesses').fill('vet');
+    await page.getByLabel('Search products and shops').fill('vet');
     await page.getByRole('radio', { name: 'Fast Food' }).check();
 
-    await expect(page.getByLabel('Search products and businesses')).toHaveValue('vet');
+    await expect(page.getByLabel('Search products and shops')).toHaveValue('vet');
     await expect(cards(page)).toHaveCount(1);
     await expect(cards(page).first()).toContainText('Vetkoek');
   });
 
   test('More categories reveals all, and a selected extra stays visible when collapsed', async ({ page }) => {
+    // Phones show three categories and a More button; big screens show all of them
+    await page.setViewportSize({ width: 390, height: 844 });
     await mockApi(page);
     await page.goto('/marketplace');
     const categoryRadios = page.locator('input[name=category]');

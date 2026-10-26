@@ -11,61 +11,111 @@
   color: var(--text-primary);
 }
 
-/* ─── Top Toolbar ────────────────────────────────────────────────────────── */
+/* ─── Top Toolbar ────────────────────────────────────────────────────────────
+   Phone: wordmark left, bag right (menu lives in the bottom nav).
+   Big screen: wordmark, Shop links, community, name (opens the menu), cart. */
 .app-toolbar {
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);
   border-bottom: 1px solid var(--border-base);
-  box-shadow: var(--shadow-card);
   position: sticky;
   top: 0;
   z-index: 50;
   height: var(--toolbar-height);
-  padding: 0 0.5rem;
+  padding: 0 6px 0 16px;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  letter-spacing: normal;
 }
+
+.app-toolbar a,
+.app-toolbar button { font-family: var(--font-sans); letter-spacing: normal; }
 
 .toolbar-logo-link {
   display: flex;
   align-items: center;
+  min-height: 48px;
   text-decoration: none;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
 }
 
-.toolbar-logo .wordmark-text { font-size: 1.3rem; color: var(--toolbar-fg); }
+.toolbar-logo .wordmark-text { font-size: 1.25rem; color: var(--toolbar-fg); }
 
-.app-toolbar .mat-mdc-icon-button,
-.app-toolbar .mat-icon {
-  color: var(--toolbar-fg);
-}
+.app-toolbar .mat-icon { color: var(--toolbar-fg); }
 
-/* Mobile has the ☰ Menu item in the bottom nav already — showing it again up
-   here too is a redundant second door to the same drawer. Desktop hides the
-   bottom nav entirely, so this is its only entry point there — keep it. */
-.toolbar-hamburger-btn {
+.toolbar-links,
+.toolbar-community,
+.toolbar-menu-btn,
+.toolbar-cart-text {
   display: none;
+}
+
+.toolbar-link {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  color: var(--toolbar-fg);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.toolbar-link.active {
+  background: var(--nav-seg-bg);
+  font-weight: 700;
+}
+
+.toolbar-community {
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--nav-fg-muted);
+}
+
+.toolbar-community .mat-icon { color: var(--nav-fg-muted); font-size: 18px; width: 18px; height: 18px; }
+
+.toolbar-menu-btn {
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--toolbar-fg);
+  font-size: 0.9375rem;
+  font-weight: 500;
 }
 
 .toolbar-cart-btn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  color: var(--toolbar-fg);
+  text-decoration: none;
 }
 
 .toolbar-cart-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 3px;
+  top: 6px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
   border-radius: 999px;
-  background: #C8443A;
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 800;
-  line-height: 16px;
+  background: var(--toolbar-fg);
+  color: var(--toolbar-bg);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 18px;
   text-align: center;
-  box-shadow: 0 0 0 2px var(--toolbar-bg);
 }
 
 .toolbar-spacer {
@@ -73,9 +123,14 @@
 }
 
 .app-toolbar .toolbar-login-btn {
+  min-height: 48px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: var(--toolbar-accent);
+  text-decoration: none;
 }
 
 /* ─── Hamburger Sidenav ───────────────────────────────────────────────────── */
@@ -414,14 +469,27 @@
 /* ─── Desktop Overrides ───────────────────────────────────────────────────── */
 @media (min-width: 768px) {
   .app-toolbar {
-    padding: 0 1rem;
+    padding: 0 max(1.5rem, calc((100% - 1120px) / 2));
+    gap: 12px;
   }
 
   .toolbar-logo .wordmark-text { font-size: 1.5rem; }
 
-  .toolbar-hamburger-btn {
-    display: inline-flex;
+  .toolbar-links { display: flex; gap: 4px; margin-left: 16px; }
+  .toolbar-community,
+  .toolbar-menu-btn { display: inline-flex; }
+
+  .toolbar-cart-btn {
+    width: auto;
+    padding: 0 18px;
+    border-radius: 14px;
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 700;
   }
+  .app-toolbar .toolbar-cart-btn .mat-icon { color: var(--ink); }
+  .toolbar-cart-text { display: inline; }
+  .toolbar-cart-badge { display: none; }
 
   .bottom-nav {
     display: none;

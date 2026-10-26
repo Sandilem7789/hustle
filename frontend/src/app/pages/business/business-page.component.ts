@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService, ProductResponse } from '../../services/api.service';
 import { CustomerAuthService } from '../../services/customer-auth.service';
@@ -7,38 +7,61 @@ import { CartService } from '../../services/cart.service';
 import { LoadingSkeletonComponent } from '../../components/loading-skeleton/loading-skeleton.component';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-import { categoryIcon, categoryLabelKey } from '../../utils/product-categories';
+import { CATEGORIES, categoryColor, categoryIcon, categoryLabelKey } from '../../utils/product-categories';
 
 @Component({
   selector: 'app-business-page',
   standalone: true,
   imports: [CommonModule, RouterLink, MatIconModule, TranslatePipe, LoadingSkeletonComponent],
   template: `
-    <div class="page">
-      <button type="button" class="back-btn" (click)="goBack()">
-        <mat-icon aria-hidden="true">arrow_back</mat-icon>{{ 'business.backToMarket' | translate }}
-      </button>
-
-      <app-loading-skeleton [loading]="loading()" variant="product"></app-loading-skeleton>
-
-      <div *ngIf="!loading()">
-        <header class="biz-header">
-          <h1 class="biz-name">{{ businessName() }}</h1>
-          <div class="share" *ngIf="businessName()">
+    <header class="shop-head dash-head">
+      <div class="shop-head-inner">
+        <button type="button" class="back-btn" (click)="goBack()" [attr.aria-label]="'business.backToMarket' | translate">
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        </button>
+        <ng-container *ngIf="!loading() && businessName()">
+          <div class="who">
+            <span class="mark" aria-hidden="true">{{ businessName().charAt(0) }}</span>
+            <div class="who-text">
+              <p class="eyebrow">{{ 'business.shop' | translate }}</p>
+              <h1 class="biz-name">{{ businessName() }}</h1>
+            </div>
+          </div>
+          <ul class="chips" role="list" *ngIf="categories().length > 0">
+            <li class="cat-tag" *ngFor="let c of categories()">
+              <span class="cat-dot" [style.background]="categoryColor(c.value)" aria-hidden="true"></span>{{ c.key | translate }}
+            </li>
+          </ul>
+          <div class="share">
             <button *ngIf="canNativeShare" type="button" class="share-btn" (click)="nativeShare()">
               <mat-icon aria-hidden="true">share</mat-icon>{{ 'share.native' | translate }}
             </button>
             <a class="share-btn" [href]="whatsappHref()" target="_blank" rel="noopener">
-              <mat-icon aria-hidden="true">chat</mat-icon>{{ 'share.whatsapp' | translate }}
+              <mat-icon aria-hidden="true">chat_bubble_outline</mat-icon>{{ 'share.whatsapp' | translate }}
             </a>
           </div>
-        </header>
+        </ng-container>
+      </div>
+    </header>
 
+    <div class="page">
+      <app-loading-skeleton [loading]="loading()" variant="product"></app-loading-skeleton>
+
+      <ng-container *ngIf="!loading()">
         <p *ngIf="products().length === 0" class="empty">{{ 'business.noProducts' | translate }}</p>
 
-        <div class="product-grid" *ngIf="products().length > 0">
-          <article *ngFor="let p of products()" class="product-card">
-            <a class="media" [routerLink]="['/product', p.id]" tabindex="-1" aria-hidden="true">
+        <div class="seg-tabs filter" role="group" [attr.aria-label]="'marketplace.category' | translate" *ngIf="categories().length > 1">
+          <button type="button" [attr.aria-pressed]="filter() === 'ALL'" (click)="filter.set('ALL')">
+            {{ 'category.all' | translate }} {{ products().length }}
+          </button>
+          <button type="button" *ngFor="let c of categories()" [attr.aria-pressed]="filter() === c.value" (click)="filter.set(c.value)">
+            {{ c.key | translate }} {{ c.count }}
+          </button>
+        </div>
+
+        <ul class="product-grid" role="list" *ngIf="products().length > 0">
+          <li *ngFor="let p of visible(); trackBy: trackById" class="product-card">
+            <a class="media" [routerLink]="['/product', p.id]" tabindex="-1" aria-hidden="true" [style.--cat]="categoryColor(p.category)">
               <img *ngIf="p.mediaUrl" [src]="resolveUrl(p.mediaUrl)" alt="" class="product-img" loading="lazy" decoding="async" width="400" height="300" />
               <span class="no-img" *ngIf="!p.mediaUrl">
                 <mat-icon aria-hidden="true">{{ categoryIcon(p.category) }}</mat-icon>
@@ -46,106 +69,163 @@ import { categoryIcon, categoryLabelKey } from '../../utils/product-categories';
             </a>
             <div class="product-body">
               <h2 class="product-name"><a class="product-link" [routerLink]="['/product', p.id]">{{ p.name }}</a></h2>
-              <span *ngIf="categoryLabelKey(p.category) as key" class="cat-tag">{{ key | translate }}</span>
-              <p class="desc" *ngIf="p.description">{{ p.description }}</p>
-              <p class="price">R {{ p.price | number:'1.2-2' }}</p>
+              <p class="price">R {{ p.price | number:'1.0-2' }}</p>
 
-              <button *ngIf="customerAuth.isLoggedIn()" type="button" class="buy-btn" (click)="addToCart(p)">
-                <mat-icon aria-hidden="true">add_shopping_cart</mat-icon>{{ 'marketplace.addToCart' | translate }}
-              </button>
+              <ng-container *ngIf="customerAuth.isLoggedIn()">
+                <button *ngIf="!cartQty().get(p.id); else stepper" type="button" class="buy-btn" (click)="cart.addItem(p)">
+                  {{ 'marketplace.add' | translate }}
+                </button>
+                <ng-template #stepper>
+                  <div class="stepper" role="group" [attr.aria-label]="p.name">
+                    <button type="button" class="step" [attr.aria-label]="'product.lessOne' | translate" (click)="cart.updateQuantity(p.id, cartQty().get(p.id)! - 1)">−</button>
+                    <span class="qty" aria-live="polite">{{ cartQty().get(p.id) }}</span>
+                    <button type="button" class="step" [attr.aria-label]="'product.moreOne' | translate" (click)="cart.addItem(p)">+</button>
+                  </div>
+                </ng-template>
+              </ng-container>
               <button *ngIf="!customerAuth.isLoggedIn()" type="button" class="login-buy-btn" (click)="goToLogin()">
-                <mat-icon aria-hidden="true">login</mat-icon>{{ 'marketplace.loginToBuy' | translate }}
+                {{ 'marketplace.loginToBuy' | translate }}
               </button>
             </div>
-          </article>
-        </div>
-      </div>
+          </li>
+        </ul>
+
+        <section class="collect" *ngIf="products().length > 0" aria-labelledby="collect-title">
+          <h2 id="collect-title" class="eyebrow">{{ 'business.collectTitle' | translate }}</h2>
+          <p>{{ 'business.collectText' | translate }}</p>
+        </section>
+      </ng-container>
     </div>
   `,
   styles: `
-    .page { max-width: 960px; margin: 0 auto; padding: 1rem; }
-    @media (min-width: 768px) { .page { padding: 1.5rem; } }
+    :host { display: block; }
 
+    .shop-head-inner { max-width: 1120px; margin: 0 auto; padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+    @media (min-width: 768px) { .shop-head-inner { padding: 12px 24px 24px; } }
     .back-btn {
-      display: inline-flex; align-items: center; gap: 0.375rem;
-      min-height: 48px; padding: 0 0.25rem; margin-bottom: 1rem;
-      background: none; border: none; border-radius: var(--radius-sm);
-      color: var(--text-secondary); font: inherit; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+      align-self: flex-start;
+      width: 48px; height: 48px; min-height: 48px; margin-left: -10px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; border-radius: 12px; color: var(--nav-fg);
     }
+    .back-btn mat-icon { width: 28px; height: 28px; font-size: 28px; }
     .back-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
-    .biz-header { margin-bottom: 1.5rem; }
-    .biz-name { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin: 0; }
-    @media (min-width: 768px) { .biz-name { font-size: 1.75rem; } }
+    .who { display: flex; align-items: center; gap: 14px; }
+    .mark {
+      width: 64px; height: 64px; border-radius: 18px; flex-shrink: 0;
+      background: var(--ink); color: var(--cream);
+      font-family: var(--font-display); font-weight: 800; font-size: 1.875rem;
+      display: flex; align-items: center; justify-content: center; text-transform: uppercase;
+    }
+    :host-context([data-theme="dark"]) .mark { background: var(--cream); color: var(--ink); }
+    .who-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .eyebrow { margin: 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--success-text); }
+    .biz-name {
+      margin: 0; font-family: var(--font-display); font-size: 1.75rem; font-weight: 800;
+      line-height: 1.05; letter-spacing: -0.015em; color: var(--nav-fg); overflow-wrap: anywhere;
+    }
+    @media (min-width: 768px) { .biz-name { font-size: 2.5rem; } }
 
-    .share { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
-    @media (min-width: 768px) { .share { max-width: 360px; } }
+    .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+    .cat-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border: 1px solid var(--nav-border); border-radius: 999px;
+      background: var(--bg-page); color: var(--nav-fg); font-size: 0.8125rem; font-weight: 500;
+    }
+
+    .share { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    @media (min-width: 768px) { .share { max-width: 420px; } }
     .share-btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
       flex: 1 1 10rem; min-height: 48px; padding: 0 1rem;
-      border: 2px solid var(--border-base); border-radius: var(--radius-sm);
-      background: var(--bg-surface); color: var(--text-primary);
-      font-size: 0.9375rem; font-weight: 800; text-decoration: none;
+      border: 1.5px solid var(--nav-fg); border-radius: 14px;
+      background: transparent; color: var(--nav-fg);
+      font-size: 0.9375rem; font-weight: 700; text-decoration: none;
     }
-    .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; color: var(--brand-text); }
+    .share-btn mat-icon { width: 20px; height: 20px; font-size: 20px; color: inherit; }
     .share-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
 
-    .empty { margin: 2rem 0 0; font-size: 1rem; font-weight: 700; color: var(--text-secondary); }
+    .page { max-width: 1120px; margin: 0 auto; padding: 18px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
+    @media (min-width: 768px) { .page { padding: 24px; } }
 
-    .product-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 600px) { .product-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); } }
+    .filter { max-width: 640px; }
+
+    .empty { margin: 1rem 0 0; font-size: 1rem; font-weight: 700; color: var(--text-secondary); }
+
+    .product-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
+    @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; } }
 
     .product-card {
       display: flex; flex-direction: column; overflow: hidden;
-      border: 1px solid var(--border-base); border-radius: var(--radius-md);
-      background: var(--bg-surface);
+      border: 1px solid var(--border-base); border-radius: 16px; background: var(--bg-surface);
     }
-    .media { display: block; aspect-ratio: 4 / 3; background: var(--bg-muted); }
+    .media {
+      display: block; aspect-ratio: 4 / 3;
+      background: color-mix(in srgb, var(--cat, var(--bg-muted)) 16%, var(--bg-surface));
+    }
     .product-img { width: 100%; height: 100%; object-fit: contain; display: block; }
-    .no-img { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: var(--text-secondary); }
-    .no-img mat-icon { width: 40px; height: 40px; font-size: 40px; }
+    .no-img {
+      display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+      color: color-mix(in srgb, var(--cat, var(--text-secondary)) 80%, var(--text-primary));
+    }
+    .no-img mat-icon { width: 44px; height: 44px; font-size: 44px; }
 
-    .product-body { display: flex; flex-direction: column; align-items: flex-start; flex: 1; padding: 0.75rem 0.875rem 0.875rem; }
-    .product-name { margin: 0; font-size: 1rem; font-weight: 800; color: var(--text-primary); }
-    .product-link { display: inline-flex; align-items: center; min-height: 48px; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+    .product-body { display: flex; flex-direction: column; flex: 1; padding: 10px 12px 12px; gap: 2px; }
+    .product-name { margin: 0; font-size: 0.9375rem; font-weight: 700; line-height: 1.25; color: var(--text-primary); }
+    .product-link { color: inherit; text-decoration: none; }
     .product-link:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
-    .cat-tag {
-      display: inline-block; margin-bottom: 0.375rem; padding: 0.15rem 0.5rem;
-      border: 1px solid var(--border-base); border-radius: var(--radius-pill);
-      color: var(--brand-text); font-size: 0.75rem; font-weight: 800;
-    }
-    .desc {
-      margin: 0.25rem 0 0.5rem; font-size: 0.875rem; line-height: 1.4; color: var(--text-secondary);
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .price { margin: auto 0 0.75rem; font-size: 1.0625rem; font-weight: 900; color: var(--success-text); font-variant-numeric: tabular-nums; }
+    .price { margin: 2px 0 0; font-size: 1.0625rem; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 
+    .buy-btn, .login-buy-btn, .stepper { margin-top: auto; }
     .buy-btn, .login-buy-btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
-      width: 100%; min-height: 48px; padding: 0 1rem; border-radius: var(--radius-sm);
-      font: inherit; font-size: 0.9375rem; font-weight: 800; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 100%; min-height: 48px; margin-top: 8px; padding: 0 0.5rem;
+      border: 1.5px solid var(--text-primary); border-radius: 12px; background: transparent;
+      color: var(--text-primary); font: inherit; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
     }
-    .buy-btn { border: none; background: var(--hustle-yellow); color: #13251E; }
-    .login-buy-btn { border: 2px solid var(--border-base); background: var(--bg-surface); color: var(--text-primary); }
-    .buy-btn mat-icon, .login-buy-btn mat-icon { width: 20px; height: 20px; font-size: 20px; }
-    .buy-btn:focus-visible, .login-buy-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+    .login-buy-btn { font-size: 0.875rem; }
+    .stepper { display: flex; align-items: center; margin-top: 8px; border: 1.5px solid var(--text-primary); border-radius: 12px; }
+    .step { width: 48px; min-height: 45px; padding: 0; background: transparent; color: var(--text-primary); font-size: 1.25rem; font-weight: 700; }
+    .qty { flex: 1; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .buy-btn:focus-visible, .login-buy-btn:focus-visible, .step:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }
+
+    .collect {
+      background: var(--bg-surface); border: 1px solid var(--border-base); border-radius: 20px;
+      padding: 16px; display: flex; flex-direction: column; gap: 8px; max-width: 640px;
+    }
+    .collect .eyebrow { color: var(--success-text); }
+    .collect p { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--text-primary); }
   `
 })
 export class BusinessPageComponent implements OnInit {
   private readonly api = inject(ApiService);
   readonly customerAuth = inject(CustomerAuthService);
-  private readonly cart = inject(CartService);
+  readonly cart = inject(CartService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   products = signal<ProductResponse[]>([]);
   businessName = signal<string>('');
   loading = signal(true);
+  filter = signal<string>('ALL');
+
+  // The shop's categories, in the marketplace's order, with how many products each has
+  readonly categories = computed(() => {
+    const counts = new Map<string, number>();
+    for (const p of this.products()) if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+    return CATEGORIES.filter(c => counts.has(c.value)).map(c => ({ value: c.value, key: c.labelKey, count: counts.get(c.value)! }));
+  });
+  readonly visible = computed(() => this.filter() === 'ALL' ? this.products() : this.products().filter(p => p.category === this.filter()));
+  readonly cartQty = computed(() => new Map(this.cart.items().map(i => [i.product.id, i.quantity])));
   readonly canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
   private businessId = '';
 
   readonly categoryIcon = categoryIcon;
   readonly categoryLabelKey = categoryLabelKey;
+  readonly categoryColor = categoryColor;
+  trackById = (_: number, item: { id: string }) => item.id;
 
   ngOnInit(): void {
     const businessId = this.route.snapshot.paramMap.get('businessId');
@@ -162,13 +242,8 @@ export class BusinessPageComponent implements OnInit {
     });
   }
 
-  addToCart(product: ProductResponse): void {
-    this.cart.addItem(product);
-    this.router.navigate(['/checkout']);
-  }
-
   goToLogin(): void {
-    this.router.navigate(['/customer/login']);
+    this.router.navigate(['/login'], { queryParams: { return: this.router.url } });
   }
 
   goBack(): void {

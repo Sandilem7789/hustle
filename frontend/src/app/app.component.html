@@ -173,10 +173,6 @@
 
     <!-- Top Toolbar -->
     <mat-toolbar class="app-toolbar">
-      <button type="button" mat-icon-button (click)="sidenav.toggle()" aria-label="Open menu" class="toolbar-hamburger-btn">
-        <mat-icon>menu</mat-icon>
-      </button>
-
       <a routerLink="/marketplace" class="toolbar-logo-link" aria-label="thenga.com home">
         <span class="wordmark toolbar-logo" role="img" aria-label="thenga.com">
           <span class="wordmark-text" aria-hidden="true">thenga<span class="wordmark-dot">.</span>com</span>
@@ -184,29 +180,44 @@
         </span>
       </a>
 
+      <nav class="toolbar-links" [attr.aria-label]="'nav.shop' | translate">
+        <a routerLink="/marketplace" routerLinkActive="active" class="toolbar-link">{{ 'nav.shop' | translate }}</a>
+        <ng-container *ngIf="unifiedAuth.isLoggedIn()">
+          <a routerLink="/orders" routerLinkActive="active" class="toolbar-link">{{ 'nav.orders' | translate }}</a>
+          <a routerLink="/notifications" routerLinkActive="active" class="toolbar-link">{{ 'nav.updates' | translate }}</a>
+        </ng-container>
+      </nav>
+
       <span class="toolbar-spacer"></span>
 
-      <button
-        *ngIf="unifiedAuth.isLoggedIn()"
-        type="button"
-        mat-icon-button
-        routerLink="/checkout"
-        [attr.aria-label]="'toolbar.cart' | translate"
-        class="toolbar-cart-btn"
-      >
-        <mat-icon>shopping_cart</mat-icon>
-        <span class="toolbar-cart-badge" *ngIf="cart.count() > 0">{{ cart.count() }}</span>
+      <span class="toolbar-community">
+        <mat-icon aria-hidden="true">location_on</mat-icon>
+        {{ community.selected()?.name ?? ('marketplace.allCommunities' | translate) }}
+      </span>
+
+      <button type="button" class="toolbar-menu-btn" (click)="sidenav.toggle()" [attr.aria-label]="(unifiedAuth.isLoggedIn() ? unifiedAuth.user()?.firstName + ' · ' : '') + ('toolbar.openMenu' | translate)">
+        <mat-icon aria-hidden="true">menu</mat-icon>
+        <span class="toolbar-menu-name" *ngIf="unifiedAuth.isLoggedIn()">{{ unifiedAuth.user()?.firstName }}</span>
       </button>
 
-      <button
+      <a
+        *ngIf="unifiedAuth.isLoggedIn()"
+        routerLink="/checkout"
+        class="toolbar-cart-btn"
+        [attr.aria-label]="('toolbar.cart' | translate) + ', ' + cart.count()"
+      >
+        <mat-icon aria-hidden="true">shopping_bag</mat-icon>
+        <span class="toolbar-cart-text">{{ 'toolbar.cart' | translate }} · {{ cart.count() }} · R {{ cart.total() | number:'1.0-2' }}</span>
+        <span class="toolbar-cart-badge" *ngIf="cart.count() > 0">{{ cart.count() }}</span>
+      </a>
+
+      <a
         *ngIf="!unifiedAuth.isLoggedIn()"
-        type="button"
-        mat-button
         routerLink="/login"
         class="toolbar-login-btn"
       >
-        {{ 'toolbar.login' | translate }}
-      </button>
+        {{ 'nav.signIn' | translate }}
+      </a>
     </mat-toolbar>
 
     <!-- Offline Banner -->
@@ -220,35 +231,40 @@
     <!-- ── Adaptive Bottom Nav ──────────────────────────── -->
 
     <!-- Public / not logged in -->
-    <nav class="bottom-nav" *ngIf="!unifiedAuth.isLoggedIn() && !isDriver()">
-      <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
+    <nav class="bottom-nav" *ngIf="!unifiedAuth.isLoggedIn() && !isDriver()" [attr.aria-label]="'nav.shop' | translate">
+      <a routerLink="/marketplace" routerLinkActive="active" [routerLinkActiveOptions]="exactNoQuery" class="bottom-nav-item">
         <span class="bottom-nav-icon"><mat-icon aria-hidden="true">storefront</mat-icon></span>
-        <span>{{ 'nav.market' | translate }}</span>
+        <span>{{ 'nav.shop' | translate }}</span>
+      </a>
+      <a routerLink="/marketplace" [queryParams]="{ search: 1 }" routerLinkActive="active" [routerLinkActiveOptions]="exactWithQuery" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">search</mat-icon></span>
+        <span>{{ 'nav.search' | translate }}</span>
       </a>
       <a routerLink="/login" routerLinkActive="active" class="bottom-nav-item">
         <span class="bottom-nav-icon"><mat-icon aria-hidden="true">person</mat-icon></span>
-        <span>{{ 'nav.login' | translate }}</span>
+        <span>{{ 'nav.signIn' | translate }}</span>
       </a>
     </nav>
 
-    <!-- Customer (no hustle role yet) -->
+    <!-- Shopping (no selling, staff or driving role) -->
     <nav class="bottom-nav"
-         *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.isHustler() && !unifiedAuth.isStaff()">
-      <a routerLink="/marketplace" routerLinkActive="active" class="bottom-nav-item">
+         *ngIf="unifiedAuth.isLoggedIn() && !unifiedAuth.isHustler() && !unifiedAuth.isStaff()"
+         [attr.aria-label]="'nav.shop' | translate">
+      <a routerLink="/marketplace" routerLinkActive="active" [routerLinkActiveOptions]="exactNoQuery" class="bottom-nav-item">
         <span class="bottom-nav-icon"><mat-icon aria-hidden="true">storefront</mat-icon></span>
-        <span>{{ 'nav.market' | translate }}</span>
+        <span>{{ 'nav.shop' | translate }}</span>
+      </a>
+      <a routerLink="/marketplace" [queryParams]="{ search: 1 }" routerLinkActive="active" [routerLinkActiveOptions]="exactWithQuery" class="bottom-nav-item">
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">search</mat-icon></span>
+        <span>{{ 'nav.search' | translate }}</span>
       </a>
       <a routerLink="/orders" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">receipt_long</mat-icon></span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">inventory_2</mat-icon></span>
         <span>{{ 'nav.orders' | translate }}</span>
       </a>
-      <a routerLink="/notifications" routerLinkActive="active" class="bottom-nav-item">
-        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">notifications</mat-icon></span>
-        <span>{{ 'nav.alerts' | translate }}</span>
-      </a>
       <button type="button" class="bottom-nav-item" (click)="sidenav.toggle()">
-        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">menu</mat-icon></span>
-        <span>{{ 'nav.menu' | translate }}</span>
+        <span class="bottom-nav-icon"><mat-icon aria-hidden="true">person</mat-icon></span>
+        <span>{{ 'nav.account' | translate }}</span>
       </button>
     </nav>
 

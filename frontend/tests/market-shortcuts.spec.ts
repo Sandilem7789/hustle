@@ -48,7 +48,7 @@ test.describe('Marketplace sort', () => {
     await page.goto('/marketplace');
     await page.getByLabel('Sort').selectOption('priceAsc');
 
-    await page.getByLabel('Search products and businesses').fill('e');
+    await page.getByLabel('Search products and shops').fill('e');
     await expect(names(page)).toHaveText(['Vetkoek', 'Beaded Bracelet Set', 'Maize Meal 5kg']);
     await page.getByRole('button', { name: 'Clear search' }).first().click();
 
@@ -164,9 +164,9 @@ test.describe('Marketplace recently viewed', () => {
 
     await page.reload();
     await expect(recentNames(page)).toHaveText(['Vetkoek', 'Maize Meal 5kg']);
-    await expect(recent(page)).toContainText('R 5.00');
+    await expect(recent(page)).toContainText('R 5');
 
-    await page.getByLabel('Search products and businesses').fill('maize');
+    await page.getByLabel('Search products and shops').fill('maize');
     await expect(recent(page)).toHaveCount(0);
     await page.getByRole('button', { name: 'Clear search' }).first().click();
     await expect(recentNames(page)).toHaveText(['Vetkoek', 'Maize Meal 5kg']);

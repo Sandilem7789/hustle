@@ -44,7 +44,7 @@ test.describe('Product page', () => {
 
     await expect(page).toHaveURL(/\/product\/p2$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Maize Meal 5kg' })).toBeVisible();
-    await expect(page.getByText('R 65.00')).toBeVisible();
+    await expect(page.getByText('R 65', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Jobe Poultry & Produce' })).toHaveAttribute('href', '/business/b2');
 
     await page.getByRole('button', { name: 'Back' }).click();
@@ -55,7 +55,7 @@ test.describe('Product page', () => {
     await page.goto('/product/p1');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Vetkoek & Mince' })).toBeVisible();
-    await expect(page.getByText('Fast Food')).toBeVisible();
+    await expect(page.locator('.category')).toHaveText('Fast Food');
     await expect(page.getByText('Fresh fat cakes')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Login to buy' })).toBeVisible();
 
@@ -126,9 +126,9 @@ test.describe('Product page', () => {
     await expect(page).toHaveURL(/\/product\/p3$/);
   });
 
-  test('More from this seller lists the seller\'s other items, not the current one', async ({ page }) => {
+  test('More from this shop lists the seller\'s other items, not the current one', async ({ page }) => {
     await page.goto('/product/p1');
-    const more = page.getByRole('region', { name: 'More from this seller' });
+    const more = page.getByRole('region', { name: 'More from this shop' });
     await expect(more.getByRole('link')).toHaveCount(1);
     await expect(more.getByRole('link')).toContainText('Amagwinya Box');
     await expect(more).not.toContainText('Vetkoek & Mince');
@@ -140,10 +140,10 @@ test.describe('Product page', () => {
     await expect(more.getByRole('link')).toContainText('Vetkoek & Mince');
   });
 
-  test('More from this seller is hidden when the seller has nothing else', async ({ page }) => {
+  test('More from this shop is hidden when the seller has nothing else', async ({ page }) => {
     await page.goto('/product/p2');
     await expect(page.getByRole('heading', { level: 1, name: 'Maize Meal 5kg' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'More from this seller' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'More from this shop' })).toHaveCount(0);
   });
 
   test('Add to Cart updates the cart badge', async ({ page }) => {
