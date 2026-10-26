@@ -466,6 +466,25 @@
   font-weight: 400 !important;
 }
 
+/* ─── Section rail (Sell, Drive, Back office on big screens) ─────────────── */
+.side-rail { display: none; }
+
+.rail-mark { display: flex; text-decoration: none; padding: 0 0.5rem 1rem; }
+.rail-mark .wordmark { padding: 0; }
+.rail-group {
+  padding: 1rem 0.75rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nav-fg-muted);
+}
+.side-rail .dash-rail__item { text-decoration: none; }
+.rail-foot { display: flex; flex-direction: column; gap: 2px; }
+.rail-foot strong { color: var(--nav-fg); font-size: 0.875rem; }
+.rail-foot a { color: var(--nav-fg-muted); font-size: 0.8125rem; text-decoration: none; min-height: 32px; display: flex; align-items: center; }
+.rail-foot a:hover { color: var(--nav-fg); }
+
 /* ─── Desktop Overrides ───────────────────────────────────────────────────── */
 @media (min-width: 768px) {
   .app-toolbar {
@@ -493,6 +512,24 @@
 
   .bottom-nav {
     display: none;
+  }
+
+  /* Inside a section the rail replaces the top bar */
+  .in-section { --toolbar-height: 0px; }
+  .in-section .app-toolbar { display: none; }
+  .in-section .page-shell { margin-left: 232px; }
+  .side-rail {
+    display: flex;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 232px;
+    z-index: 60;
+    border-radius: 0;
+    border-width: 0 1px 0 0;
+    padding: 1.5rem 0.875rem;
+    overflow-y: auto;
   }
 
   .page-shell {
