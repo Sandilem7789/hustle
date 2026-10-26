@@ -298,6 +298,10 @@ export class ApiService {
     });
   }
 
+  getApplicant(id: string): Observable<ApplicantResponse> {
+    return this.http.get<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}`, { headers: this.ah() });
+  }
+
   updateApplicantCallStatus(id: string, callStatus: string): Observable<ApplicantResponse> {
     return this.http.patch<ApplicantResponse>(`${this.baseUrl}/api/applicants/${id}/call`, { callStatus }, { headers: this.ah() });
   }

@@ -3,6 +3,8 @@ import { MarketplacePageComponent } from './pages/marketplace/marketplace-page.c
 import { LoginPageComponent } from './pages/login/login-page.component';
 import { HustlerDashboardPageComponent } from './pages/hustler-dashboard/hustler-dashboard-page.component';
 import { FacilitatorPageComponent } from './pages/facilitator/facilitator-page.component';
+import { AgentQueuePageComponent } from './pages/agent-queue/agent-queue-page.component';
+import { AgentVisitPageComponent } from './pages/agent-visit/agent-visit-page.component';
 import { CoordinatorPageComponent } from './pages/coordinator/coordinator-page.component';
 import { OperationsPageComponent } from './pages/operations/operations-page.component';
 import { BusinessPageComponent } from './pages/business/business-page.component';
@@ -38,8 +40,11 @@ export const routes: Routes = [
   { path: 'notifications',  component: NotificationsPageComponent },
   { path: 'surveys/:id',    component: SurveyFormPageComponent },
 
-  // Staff portals
-  { path: 'facilitator', component: FacilitatorPageComponent },
+  // Staff portals. /facilitator is the Community Agent's Verify queue; the
+  // older programme tools (surveys, check-ins, exports) live on beside it.
+  { path: 'facilitator', component: AgentQueuePageComponent },
+  { path: 'facilitator/visit/:id', component: AgentVisitPageComponent },
+  { path: 'facilitator/programme', component: FacilitatorPageComponent },
   { path: 'coordinator', component: CoordinatorPageComponent },
   { path: 'operations',  component: OperationsPageComponent },
 
