@@ -748,92 +748,11 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     </section>
   `,
   styles: `
-    /* ── Mobile compact greeting + summary (replaces hero-banner/fin-grid below 960px) ── */
-    .mobile-greeting-bar {
-      display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
-      border: 1px solid var(--nav-border); border-radius: 1rem;
-      padding: 0.85rem 1.1rem; font-size: 0.95rem;
-    }
-    .mobile-greeting-bar b { font-weight: 800; }
-    .tag-chip {
-      flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: var(--success-text);
-      background: rgba(45,179,68,0.1); border-radius: 999px; padding: 0.2rem 0.6rem; white-space: nowrap;
-    }
-    .hero-banner, .fin-grid { display: none; }
-    @media (min-width: 960px) {
-      .mobile-greeting-bar { display: none; }
-      .hero-banner { display: block; }
-      .fin-grid { display: grid; }
-    }
-
-    /* ── Hero Banner (desktop) ── */
-    .hero-banner {
-      border: 1px solid var(--nav-border);
-      border-radius: 1.5rem;
-      padding: 1.75rem;
-    }
-    .hero-inner { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-    .hero-text { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
-    .hero-greeting { font-size: 1rem; font-weight: 500; color: var(--nav-fg-muted); margin: 0; }
-    .hero-shop { font-size: 1.6rem; font-weight: 800; margin: 0; line-height: 1.15; word-break: break-word; }
-    .biz-type-badge {
-      display: inline-block;
-      background: var(--nav-seg-bg);
-      border: 1px solid var(--nav-border);
-      border-radius: 999px;
-      padding: 0.25rem 0.85rem;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      align-self: flex-start;
-    }
-    .hero-avatar { font-size: 3rem; line-height: 1; flex-shrink: 0; }
-    @media (max-width: 480px) {
-      .hero-banner { padding: 1.25rem; }
-      .hero-shop { font-size: 1.25rem; }
-      .hero-avatar { font-size: 2rem; }
-    }
-
-    /* ── Financial Cards (desktop only — see mobile-compact toggle above) ── */
-    .fin-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-    .fin-card {
-      border-radius: 1.25rem;
-      padding: 1rem 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-    }
-    .fin-income { background: rgba(45,179,68,0.07);  border: 1px solid rgba(45,179,68,0.2); }
-    .fin-expense { background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.18); }
-    .fin-profit  { background: rgba(27,111,212,0.06); border: 1px solid rgba(27,111,212,0.18); }
-    .fin-icon-wrap {
-      font-size: 1.4rem;
-      font-weight: 900;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .fin-income .fin-icon-wrap { background: rgba(45,179,68,0.15);  color: var(--success-text); }
-    .fin-expense .fin-icon-wrap { background: rgba(229,57,53,0.12); color: #C8443A; }
-    .fin-profit  .fin-icon-wrap { background: rgba(27,111,212,0.12); color: #2F6DB5; }
-    .fin-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-    .fin-label  { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #4A524C; margin: 0; }
-    .fin-val    { font-size: 1rem; font-weight: 800; color: #13251E; margin: 0; word-break: break-all; }
-    .fin-val.neg { color: #C8443A; }
-    .fin-period { font-size: 0.66rem; color: #646A63; margin: 0; }
-
-    /* ── Tab Bar ── */
-    .tab-bar > button { font-size: 1rem; }
 
     /* ── Cards ── */
     .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
     @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
-    .card.info { background: rgba(229, 163, 29,0.06); border-color: rgba(229, 163, 29,0.25); }
+    
 
     /* ── Log Form ── */
     .log-tabs { display: flex; border-bottom: 2px solid #E3DACA; margin-bottom: 1.25rem; }
@@ -849,7 +768,7 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     input:focus, textarea:focus, select:focus { border-color: #E5A31D; box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2); }
     select { appearance: none; -webkit-appearance: none; background: #FBF8F2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 16px; padding-right: 2.5rem; cursor: pointer; }
     select:focus { background-color: white; }
-    .file-input { border: none; padding: 0; font-size: 0.9rem; min-height: unset !important; }
+    
     .file-input-hidden { display: none; }
     .image-source-row { display: flex; gap: 0.5rem; }
     .image-source-btn { flex: 1; border: 2px solid #E3DACA; border-radius: 0.75rem; background: white; color: #13251E; font-weight: 700; font-size: 0.85rem; padding: 0.6rem 0.5rem; cursor: pointer; font-family: inherit; min-height: 48px; }
@@ -873,64 +792,6 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     .invoice-btn { border: 2px solid #3F9A4F; color: var(--success-text); font-weight: 800; padding: 0.65rem 1rem; border-radius: 999px; background: white; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: background 0.15s; }
     .invoice-btn:hover:not(:disabled) { background: rgba(45,179,68,0.08); }
     .invoice-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    /* ── Monthly Report Bar ── */
-    .report-bar {
-      background: white;
-      border: 1px solid #E3DACA;
-      border-left: 4px solid #E5A31D;
-      border-radius: 1rem;
-      padding: 1rem 1.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-      box-shadow: 0 2px 10px rgba(19, 37, 30,0.06);
-    }
-    .report-bar-left { display: flex; align-items: center; gap: 0.75rem; }
-    .report-bar-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
-    .report-bar-title { font-size: 0.95rem; font-weight: 800; color: #13251E; margin: 0; }
-    .report-bar-sub { font-size: 0.78rem; color: #4A524C; margin: 0.1rem 0 0; }
-    .report-bar-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
-    .month-input {
-      height: 40px;
-      border: 1.5px solid #E3DACA;
-      border-radius: 0.6rem;
-      padding: 0 0.65rem;
-      font-size: 0.88rem;
-      font-family: inherit;
-      color: #13251E;
-      background: #FBF8F2;
-      outline: none;
-      transition: border-color 0.15s;
-      min-height: unset;
-    }
-    .month-input:focus { border-color: #E5A31D; }
-    .report-dl-btn {
-      height: 40px;
-      min-height: unset;
-      border: none;
-      border-radius: 0.6rem;
-      padding: 0 1rem;
-      font-size: 0.88rem;
-      font-weight: 800;
-      background: #E5A31D;
-      color: #13251E;
-      cursor: pointer;
-      font-family: inherit;
-      box-shadow: 0 3px 10px rgba(229, 163, 29,0.3);
-      transition: box-shadow 0.15s;
-      white-space: nowrap;
-    }
-    .report-dl-btn:hover { box-shadow: 0 5px 16px rgba(229, 163, 29,0.45); }
-    .report-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    @media (max-width: 480px) {
-      .report-bar { flex-direction: column; align-items: flex-start; }
-      .report-bar-right { width: 100%; }
-      .month-input { flex: 1; }
-      .report-dl-btn { flex: 1; }
-    }
 
     /* ── History ── */
     .history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
@@ -977,24 +838,24 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     .lc-label  { font-size: 10px; fill: #646A63; text-anchor: middle; font-family: inherit; }
 
     /* ── Products Tab ── */
-    .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem; }
-    .shop-left { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-    .shop-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-    .shop-name-badge { font-size: 1.1rem; font-weight: 800; color: #13251E; }
-    .approved-badge { background: rgba(45,179,68,0.12); color: var(--success-text); border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.75rem; font-weight: 800; }
-    .add-product-btn { background: #E5A31D; color: #13251E; border: none; border-radius: 999px; padding: 0.55rem 1.2rem; font-size: 0.9rem; font-weight: 800; cursor: pointer; font-family: inherit; min-height: 40px; box-shadow: 0 3px 10px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
-    .add-product-btn:hover { box-shadow: 0 5px 16px rgba(229, 163, 29,0.5); }
-    .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    @media (max-width: 600px) { .product-list { grid-template-columns: 1fr; } }
-    .product-card { border: 1px solid #E3DACA; border-radius: 1rem; overflow: hidden; background: #FBF8F2; position: relative; }
-    .product-img { width: 100%; height: 150px; object-fit: cover; display: block; }
-    .product-body { padding: 0.9rem 0.9rem 0.4rem; }
-    .product-body h3 { margin: 0 0 0.3rem; font-size: 1rem; font-weight: 800; color: #13251E; }
-    .product-cat-badge { display: inline-block; background: rgba(229, 163, 29,0.12); color: #8A5A0B; font-size: 0.68rem; font-weight: 800; padding: 0.1rem 0.5rem; border-radius: 999px; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
-    .price { font-weight: 800; color: var(--success-text); margin-top: 0.4rem; }
-    .card-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.3rem; }
-    .edit-btn   { background: rgba(19, 37, 30,0.75); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; min-height: unset; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .delete-btn { background: rgba(229,57,53,0.85); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; min-height: unset; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     .edit-form { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
     .edit-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .small-btn { padding: 0.5rem 1rem !important; font-size: 0.9rem; width: auto !important; }
@@ -1032,51 +893,33 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     .product-form { display: flex; flex-direction: column; gap: 1rem; }
 
     /* ── Orders ── */
-    .orders-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
-    .order-card { border: 1px solid #E3DACA; border-radius: 1rem; padding: 1rem 1.25rem; background: #FBF8F2; }
-    .order-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
-    .order-id { font-weight: 800; font-size: 0.9rem; color: #13251E; display: block; }
-    .order-customer { display: flex; flex-direction: column; gap: 0.1rem; margin-bottom: 0.5rem; }
-    .order-meta-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
-    .meta-chip { font-size: 0.75rem; background: #EFE8DA; color: #4A524C; padding: 0.15rem 0.5rem; border-radius: 999px; font-weight: 700; }
-    .order-items { margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; }
-    .order-line { display: flex; justify-content: space-between; font-size: 0.88rem; color: #13251E; }
-    .order-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid #E3DACA; margin-bottom: 0.75rem; }
-    .order-actions { display: flex; gap: 0.5rem; }
-    .btn-confirm    { flex: 1; height: 44px; min-height: unset; border: none; border-radius: 999px; background: var(--success-fill); color: white; font-weight: 800; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
-    .btn-cancel-order { flex: 1; height: 44px; min-height: unset; border: none; border-radius: 999px; background: #C8443A; color: white; font-weight: 800; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
-    .btn-confirm:disabled, .btn-cancel-order:disabled { opacity: 0.5; cursor: not-allowed; }
-    .field-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #646A63; }
-    .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     .order-status-pending   { background: #EFE8DA; color: #4A524C; }
     .order-status-confirmed { background: rgba(27,111,212,0.1); color: #2F6DB5; }
     .order-status-cancelled { background: rgba(229,57,53,0.1); color: #C8443A; }
     .order-status-delivered { background: rgba(45,179,68,0.12); color: var(--success-text); }
     .order-status-collected { background: rgba(45,179,68,0.12); color: var(--success-text); }
 
-    /* ── Logout button ── */
-    .logout-btn {
-      display: block;
-      width: 100%;
-      padding: 0.9rem;
-      border: 2px solid #E3DACA;
-      border-radius: 999px;
-      background: white;
-      color: #4A524C;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      min-height: 52px;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .logout-btn:hover { border-color: #C8443A; color: #C8443A; }
-
     /* ── Sell tab ── */
-    .pos-subtabs { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 2px 10px rgba(19, 37, 30,0.06); border: 1px solid #E3DACA; }
-    .pos-subtabs button { flex: 1; padding: 0.7rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #646A63; cursor: pointer; font-family: inherit; min-height: 44px; border-bottom: 2px solid transparent; }
-    .pos-subtab-active { color: #13251E !important; border-bottom: 2px solid #E5A31D !important; background: rgba(229, 163, 29,0.06) !important; }
-    .pos-section-title { margin: 0 0 0.25rem; font-size: 1rem; font-weight: 800; color: #13251E; }
+    
+    
+    
+    
     .unknown-barcode-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; background: rgba(229, 163, 29,0.1); border: 1px solid rgba(229, 163, 29,0.35); border-radius: 0.75rem; padding: 0.7rem 0.9rem; font-size: 0.85rem; color: #13251E; }
     .unknown-barcode-banner button { border: none; border-radius: 999px; background: #E5A31D; color: #13251E; font-weight: 800; font-size: 0.8rem; padding: 0.45rem 0.9rem; cursor: pointer; font-family: inherit; min-height: 36px; }
     .pos-confirm-banner { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; background: #F0FDF4; border: 2px solid #16A34A; border-radius: 0.9rem; padding: 0.9rem 1rem; }
@@ -1087,28 +930,28 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     .pos-confirm-cancel, .pos-confirm-add { flex: 1; border: none; border-radius: 0.75rem; padding: 0.8rem; font-weight: 800; font-size: 0.95rem; cursor: pointer; font-family: inherit; min-height: 48px; }
     .pos-confirm-cancel { background: #F1EADC; color: #3F4741; }
     .pos-confirm-add { background: #16A34A; color: white; }
-    .quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.6rem; margin-top: 0.75rem; }
-    .quick-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; border: 1.5px solid #E3DACA; border-radius: 0.85rem; padding: 0.7rem 0.8rem; background: #FBF8F2; cursor: pointer; font-family: inherit; min-height: 60px; text-align: left; transition: border-color 0.15s, background 0.15s; }
-    .quick-tile:hover, .quick-tile:active { border-color: #E5A31D; background: rgba(229, 163, 29,0.06); }
-    .quick-name { font-size: 0.85rem; font-weight: 700; color: #13251E; }
-    .quick-price { font-size: 0.78rem; font-weight: 700; color: var(--success-text); }
-    .basket-list { display: flex; flex-direction: column; margin-top: 0.75rem; border: 1px solid #E3DACA; border-radius: 0.75rem; overflow: hidden; }
-    .basket-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid #E3DACA; }
-    .basket-row:last-child { border-bottom: none; }
-    .basket-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
-    .basket-name { font-size: 0.88rem; font-weight: 700; color: #13251E; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .basket-unit { font-size: 0.72rem; color: #646A63; }
-    .basket-qty { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
-    .basket-qty button { width: 32px; height: 32px; min-height: unset; border-radius: 50%; border: 1.5px solid #E3DACA; background: white; font-size: 1rem; font-weight: 800; color: #13251E; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
-    .basket-qty span { min-width: 20px; text-align: center; font-weight: 800; font-size: 0.9rem; }
-    .basket-line-total { font-size: 0.9rem; font-weight: 800; color: #13251E; flex-shrink: 0; min-width: 64px; text-align: right; }
-    .basket-remove { background: none; border: none; color: #646A63; font-size: 1rem; cursor: pointer; min-height: unset; width: 28px; height: 28px; flex-shrink: 0; font-family: inherit; }
-    .basket-remove:hover { color: #C8443A; }
-    .pos-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.85rem; border-top: 2px solid #E3DACA; font-size: 1.1rem; font-weight: 800; color: #13251E; }
-    .complete-sale-btn { display: block; width: 100%; margin-top: 1rem; border: none; border-radius: 999px; padding: 1.1rem; font-size: 1.05rem; font-weight: 800; background: var(--success-fill); color: white; cursor: pointer; font-family: inherit; min-height: 56px; box-shadow: 0 4px 14px rgba(45,179,68,0.35); transition: box-shadow 0.15s; }
-    .complete-sale-btn:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(45,179,68,0.5); }
-    .complete-sale-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    .barcode-label { font-size: 0.72rem; color: #646A63; margin: 0.2rem 0 0; }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     .barcode-row { display: flex; gap: 0.5rem; }
     .barcode-row input { flex: 1; }
     .scan-btn { flex-shrink: 0; border: 2px solid #E3DACA; background: white; border-radius: 0.75rem; padding: 0 0.9rem; font-size: 0.85rem; font-weight: 700; color: #13251E; cursor: pointer; font-family: inherit; min-height: 48px; }
@@ -1116,95 +959,31 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     .barcode-modal-sheet { max-width: 420px; }
 
     /* ── POS success confirmation ── */
-    .pos-success-overlay { z-index: 300; align-items: center; }
+    
     .scanner-overlay { z-index: 250; }
-    .pos-success-sheet { background: white; border-radius: 1.5rem; padding: 2.25rem 1.75rem; width: 100%; max-width: 340px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; animation: slideUp 0.25s ease; }
-    .pos-success-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(45,179,68,0.12); color: var(--success-text); font-size: 2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem; }
-    .pos-success-label { font-size: 0.95rem; font-weight: 700; color: #4A524C; margin: 0; }
-    .pos-success-total { font-size: 1.9rem; font-weight: 900; color: #13251E; margin: 0 0 0.75rem; }
-    .pos-success-sheet .primary { width: 100%; }
-
-    /* ── Sales history ── */
-    .sale-history-list { display: flex; flex-direction: column; margin-top: 0.75rem; border: 1px solid #E3DACA; border-radius: 0.75rem; overflow: hidden; }
-    .sale-history-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid #E3DACA; }
-    .sale-history-row:last-child { border-bottom: none; }
-    .sale-history-main { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-    .sale-history-time { font-size: 0.78rem; font-weight: 700; color: #4A524C; }
-    .sale-history-items { font-size: 0.85rem; color: #13251E; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
-    .sale-history-total { font-size: 0.95rem; font-weight: 800; color: var(--success-text); flex-shrink: 0; }
-
-    /* ── Desktop shell: rail nav + main column + quick log panel ── */
-    .dashboard-shell { display: flex; flex-direction: column; gap: 1.25rem; }
-    .rail-nav { display: none; }
-    .main-col { display: flex; flex-direction: column; gap: 1.25rem; flex: 1; min-width: 0; }
-    .quick-log-panel { display: none; }
-    @media (min-width: 960px) {
-      .dashboard-shell { flex-direction: row; align-items: flex-start; gap: 1.5rem; }
-      .rail-nav {
-        display: flex; width: 216px; flex-shrink: 0; position: sticky; top: 1rem;
-      }
-      .tab-bar { display: none; }
-      .quick-log-panel {
-        display: flex; flex-direction: column; gap: 0.65rem; width: 220px; flex-shrink: 0;
-        background: #fffdf5; border: 1.5px dashed #d8cfa8; border-radius: 1.25rem;
-        padding: 1.25rem 1rem; position: sticky; top: 1rem;
-      }
-    }
-    .dash-rail__foot { display: flex; flex-direction: column; gap: 2px; margin-top: 0.5rem; border-top: 1px solid var(--nav-border); }
-    .rail-shop { color: var(--nav-fg); font-size: 0.875rem; }
-
-    /* ── Quick log panel (desktop) ── */
-    .ql-title { margin: 0; font-size: 0.95rem; font-weight: 800; color: #13251E; }
-    .ql-type-row { display: flex; gap: 0.5rem; }
-    .ql-type-btn { flex: 1; border: 2px solid #E3DACA; border-radius: 0.7rem; background: white; padding: 0.55rem 0.3rem; font-size: 0.82rem; font-weight: 800; cursor: pointer; font-family: inherit; min-height: 40px; }
-    .ql-type-in.ql-type-active { border-color: #3F9A4F; background: rgba(45,179,68,0.08); color: #2E6B4A; }
-    .ql-type-out.ql-type-active { border-color: #C8443A; background: rgba(229,57,53,0.08); color: #991b1b; }
-    .ql-amount-input { border-radius: 0.7rem; border: 2px solid #E3DACA; padding: 0.55rem 0.7rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; min-height: 42px; }
-    .ql-save-btn { font-size: 0.85rem; padding: 0.6rem; }
-    .ql-report-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: #4A524C; padding-top: 0.4rem; border-top: 1px dashed #E3DACA; margin-top: 0.2rem; }
-    .chip-btn { border: 1.5px solid #E3DACA; background: white; border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .chip-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* ── Sell tab: one continuous card (search + quick-add + basket) instead of stacked boxes ── */
-    .pos-sell-card { padding: 1.1rem 1.25rem; }
-    .pos-divider { height: 1px; background: #E3DACA; margin: 1.1rem 0 0.9rem; }
-    .search-scan-row { display: flex; align-items: center; gap: 0.6rem; }
-    .search-icon { font-size: 1rem; flex-shrink: 0; }
-    .search-input { flex: 1; border: none; outline: none; font-size: 1rem; font-family: inherit; min-width: 0; background: transparent; }
-    .scan-chip { flex-shrink: 0; border: 1.5px solid #E3DACA; background: #FBF8F2; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.82rem; font-weight: 700; color: #13251E; cursor: pointer; font-family: inherit; min-height: 36px; }
-    .scan-chip:hover { border-color: #E5A31D; }
-    .quick-more .quick-name { color: #4A524C; }
-    .basket-count { font-weight: 700; color: #4A524C; font-size: 0.85rem; }
-    .basket-summary { font-size: 0.8rem; color: #4A524C; margin: 0.2rem 0 0; }
 
     /* ── Money tab: summary card + wizard entry ── */
-    .money-summary-card { display: flex; flex-direction: column; gap: 0.4rem; padding: 1.1rem 1.25rem; }
-    .ms-month { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: #646A63; }
-    .ms-profit { font-size: 1.6rem; font-weight: 900; color: #13251E; }
-    .ms-inout-row { display: flex; gap: 1.5rem; margin-top: 0.3rem; font-size: 0.9rem; font-weight: 700; color: #13251E; }
-    .ms-arrow { font-weight: 900; margin-right: 0.15rem; }
-    .ms-up { color: var(--success-text); }
-    .ms-down { color: #C8443A; }
-    .ms-inout-label { margin-left: 0.3rem; font-weight: 600; }
-    .money-quicklog-row { display: flex; gap: 0.75rem; }
-    .money-quicklog-row button {
-      flex: 1; border: 2px solid #222; border-radius: 1rem; padding: 1rem 0.6rem; text-align: center;
-      font-size: 1.05rem; font-weight: 800; background: white; cursor: pointer; font-family: inherit; min-height: 56px;
-    }
-    .money-in-btn { border-color: #3F9A4F !important; color: #2E6B4A; background: rgba(45,179,68,0.06) !important; }
-    .money-out-btn { border-color: #C8443A !important; color: #991b1b; background: rgba(229,57,53,0.05) !important; }
-    .money-wizard-note { font-size: 0.76rem; text-align: center; margin: -0.4rem 0 0; }
-    .compact-history-list { display: flex; flex-direction: column; margin-top: 0.5rem; }
-    .compact-history-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid #EFE8DA; font-size: 0.85rem; }
-    .compact-history-row:last-child { border-bottom: none; }
-    .ch-date { color: #646A63; font-weight: 700; min-width: 52px; flex-shrink: 0; }
-    .ch-cat { flex: 1; color: #13251E; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ch-amt { font-weight: 800; color: var(--success-text); flex-shrink: 0; }
-    .ch-amt.ch-neg { color: #C8443A; }
-    .more-toggle-btn {
-      align-self: center; background: none; border: none; color: #2F6DB5; font-weight: 700;
-      font-size: 0.85rem; cursor: pointer; font-family: inherit; padding: 0.5rem; min-height: 40px;
-    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     .csv-export-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E3DACA; }
 
     /* ── Money wizard modal ── */
@@ -1227,7 +1006,6 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
     .wizard-cat-icon { font-size: 1.4rem; }
     .wizard-note-toggle { align-self: flex-start; background: none; border: none; color: #2F6DB5; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit; padding: 0.2rem; }
     .wizard-note-input { border-radius: 0.7rem; border: 2px solid #E3DACA; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; width: 100%; box-sizing: border-box; }
-
 
     /* ═══ Sell section, after the My Store canvas ═══ */
     :host { display: block; }
