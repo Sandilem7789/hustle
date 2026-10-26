@@ -53,8 +53,9 @@ docker-compose.yml — PostgreSQL (5432), backend (8080), frontend (4173)
 - `http://localhost:4173` (Docker/Nginx)
 - `http://148.230.79.29:4173`
 - `http://148.230.79.29`
+- `https://hustleconomy.netlify.app`
 
-Note: the production Netlify frontend does **not** need to be in this list — `netlify.toml` proxies `/api/*` to the backend as a same-origin rewrite (status 200), so the browser never makes a cross-origin request.
+Note: the production Netlify frontend **must** stay in this list. `netlify.toml` proxies `/api/*` to the backend, but browsers still send an `Origin` header on POST, PUT, PATCH and DELETE, the proxy passes it on, and the backend rejects any origin not listed (checked 2026-10-26: 200 with the Netlify origin, 403 without). Removing it breaks every write in production while GET pages keep working.
 
 ### Deployment topology
 - **Frontend (production)**: Netlify (`hustleconomy.netlify.app`), auto-deploys from `main` via Netlify's own GitHub integration. `netlify.toml` rewrites `/api/*` → the VPS backend.
