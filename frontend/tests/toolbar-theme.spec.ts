@@ -24,3 +24,19 @@ test('toolbar Login text remains readable in dark mode', async ({ page }) => {
 
   expect(contrast).toBeGreaterThanOrEqual(4.5);
 });
+
+test('light mode is the default, with a light toolbar, even when the phone prefers dark', async ({ browser }) => {
+  const context = await browser.newContext({ colorScheme: 'dark' });
+  const page = await context.newPage();
+  await page.goto('/');
+
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  const colors = await page.locator('.toolbar-login-btn').evaluate(button => ({
+    text: getComputedStyle(button).color,
+    surface: getComputedStyle(button.closest('.app-toolbar')!).backgroundColor
+  }));
+  expect(luminance(colors.surface)).toBeGreaterThan(0.8);
+  const contrast = (luminance(colors.surface) + 0.05) / (luminance(colors.text) + 0.05);
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
+  await context.close();
+});
