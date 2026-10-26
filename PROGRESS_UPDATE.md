@@ -7,6 +7,14 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### The thenga.com look, app-wide (2026-10-26)
+- **New identity from the pitch** (`docs/THENGA_PLATFORM_PLAN.md` D20): ink `#13251E`, gold `#E5A31D`, leaf `#2E6B4A`, cream `#F5EFE3`; Fraunces for page titles (`h1`, `.display`, `.text-display`) and DM Sans for everything else, replacing Nunito and Roboto. Dark mode moves to ink-green surfaces. Angular Material uses a green and gold palette and the same fonts.
+- **Hustle Economy, carried quietly:** the eight logo colours are kept, deepened, as the `--hustle-*` tokens (existing styles follow automatically), as the eight-colour "market thread", and as one colour per marketplace category (`--cat-*`), shown as a dot beside each category name.
+- **Toolbar and menu:** ink-green toolbar with the serif wordmark, a gold full stop and the thread underneath. The old icon, rainbow letters and gradient strip are gone. PWA theme colour is ink.
+- **Every other screen:** 851 hard-coded colours in 22 components moved one for one onto the new palette, so hues change but layout and behaviour do not.
+- Not yet: the home-screen icon (waits on the wordmark choice, O10), and the hustler dashboard's cards stay light in dark mode as before; that screen is rebuilt in R3.
+- Tests: production build passes with the same budget warnings as `development`. Playwright suite 47 passed; the only failure is the old `hustle-onboarding.spec.ts`, as before.
+
 ### Business page and My Orders in dark mode and isiZulu; orders reach "On the way" (2026-10-12)
 - **Business page:** theme colours instead of hardcoded light ones, so the shop name and cards are readable in dark mode. Back button, empty state, category tag, Add to Cart and Login to buy are translated. Emoji replaced with icons. Mobile-first grid (one column, more from 600px) and 48px touch targets.
 - **My Orders:** status badges have dark-mode colours (all at least 4.5:1) and share the timeline's translated labels. Heading, subtitle, empty state, Delivery/Collection, Personal/Business (instead of B2C/B2B), Seller, Total and the pickup QR text are translated. Emoji replaced with icons.

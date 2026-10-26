@@ -37,6 +37,9 @@ thenga.com is now an **e-commerce platform for people who want to sell online**,
 | **D17** | **Two-step approval.** The Community Agent verifies and approves first. The applicant then appears on the Hub Coordinator dashboard under **"Merchants awaiting final approval"**, and the Hub Coordinator gives final approval. Only then does the shop go live. *(Assumption recorded by Sandile.Claude: driver applicants follow the same two steps.)* |
 | **D18** | **Banning merchants.** A merchant who has already joined can be banned from the Hub Coordinator dashboard and from the Community Agent tools. A ban hides the shop and stops selling, and records who banned, when and why. *(Assumptions recorded by Sandile.Claude: an agent can ban only merchants in their own area; only a Hub Coordinator or Platform Admin can lift a ban.)* |
 | **D19** | **Hub Coordinators are assigned the communities they work in.** An area is not a fixed set: staff assign and change a coordinator's communities. For now the platform serves the 5 seeded communities. |
+| **D20** | *(2026-10-26)* **The whole app takes the pitch identity:** ink, gold, leaf and cream, Fraunces for page titles and DM Sans for reading. The Hustle Economy logo lives on quietly: its eight letter colours, deepened, become the "market thread" under the wordmark and one colour per marketplace category. The look is still being refined; the design canvas "My Store redesign" (claude.ai artifact) holds every screen. *(Recorded by Sandile.Claude: wordmark option A, the thread under the name, is in use until Sandile picks, O10.)* |
+| **D21** | *(2026-10-26)* **Sell works as a point of sale, and every product has a stock count**, because how much a merchant has left is important information. This brings stock quantities into scope (SELL-003 listed them as out of scope). A sale lowers stock; "Stock in" raises it and logs the money out in the same step. |
+| **D22** | *(2026-10-26)* **Every screen is designed for a phone and for a big screen.** Phone stays the primary canvas (CLAUDE.md); each phone screen has a counterpart for a counter tablet or laptop. |
 
 ### Open questions for Sandile
 
@@ -53,6 +56,11 @@ These do not block Phase 0 or Phase 1. Each blocks the phase noted.
 | ~~O7~~ | ~~Who approves~~ | Answered by D17 |
 | **O8** | Does the driver receive the whole delivery fee, or does thenga.com keep a share? | Phase 5 |
 | **O9** | Should a merchant be warned before their shop is suspended for inactivity (for example at 2 months and 1 week before)? Recommended, so suspension never comes as a surprise. | Phase 1.7 |
+| **O10** | Wordmark: A (thread under the name, in use), B (colour wheel as the full stop) or A plus icon C (serif "t" on the thread, for the home-screen icon). Sandile.Claude recommends A with C. | R1 icon |
+| **O11** | Three kinds of product for stock: **counted** (bought in, sold one by one), **made fresh daily** (merchant enters how many were made each morning; what is left clears at closing) and **service** (no stock). Does this match how merchants work? | R2 |
+| **O12** | Should a sold-out product disappear from Shop automatically until stock comes in? Assumed yes in the mockups. | R2 |
+| **O13** | "Running low": one fixed level (for example 5 or fewer), or set by the merchant per product? | R2 |
+| **O14** | Live delivery map for Hub Coordinators: proposed rule is that only drivers on an active job in the coordinator's own communities are shown, and positions are not kept after the job ends (driver GPS is personal information). | Phase 6 |
 
 ---
 
@@ -144,6 +152,17 @@ Login, identity and data migration are high risk, so Claude owns all of Phase 1.
 | P1.5 | Merchant and driver applications and agent verification endpoints (apply, offer to the nearest agents per D12, record verification with interview notes, agent approval then Hub Coordinator final approval per D17, reject), banning and lifting bans (D18), 18+ enforced on the server (D11), phone masking in every list view, and each verification linked to the verifying agent's account instead of today's free-text `verifiedBy` (keeps D13 possible later) | M | Tests cover the whole flow, the age rule and role checks; depends on O2 and O7 |
 | P1.6 | Delivery jobs on need to know (D10): open jobs filtered to the driver's area with no buyer details; collection point after accepting; buyer name, phone and drop-off only after collection; nothing after completion; drivers can never read another driver's job | M | Tests prove each reveal happens at the right step and never earlier; replaces audit item #5 |
 | P1.7 | Inactive-shop suspension (D15): a daily job suspends shops with no completed order for 3 months; suspended shops vanish from Shop; staff can reactivate; warnings per O9 | S | Tests: a shop at 89 days stays live, at 90 days is suspended, reactivation restores it |
+
+### Phase R: the thenga.com look and the point of sale (D20 to D22)
+
+Runs alongside Phase 1. R1 and R3 touch only the frontend; R2 waits on O11 to O13.
+
+| ID | Task | Owner | Size | Status |
+|---|---|---|---|---|
+| R1 | App-wide look: tokens, fonts, Material theme, wordmark and thread in the toolbar and menu, old palette moved onto the new one, category colours | C | M | Done 2026-10-26 (`feature/thenga-look`). Home-screen icon waits on O10 |
+| R2 | Stock: product kind and stock count (Flyway migration), sales lower stock, Stock in raises it and logs money out, sold-out handling | C | L | Waits on O11 to O13 |
+| R3 | Sell screens from the canvas: Today, Make a sale and payment, Sale saved, Money, Products and stock, Stock in, Learn (phone and big screen) | C | L | After R2 for the stock parts |
+| R4 | Sign in, Community Agent, Drive and Back office screens from the canvas | C, X | L | After P1.1, P1.5 and P1.6 |
 
 ### Phase 2: frontend restructure
 
