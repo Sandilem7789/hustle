@@ -2,13 +2,15 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { UnifiedAuthService } from '../../services/unified-auth.service';
+import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, MatIconModule, TranslatePipe],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.css',
 })
@@ -16,8 +18,9 @@ export class LoginPageComponent {
   private readonly auth   = inject(UnifiedAuthService);
   private readonly router = inject(Router);
   private readonly route  = inject(ActivatedRoute);
+  readonly i18n = inject(TranslationService);
 
-  activeTab = signal<'login' | 'register'>('login');
+  mode = signal<'login' | 'register'>('login');
 
   // Login form
   loginPhone    = '';
@@ -44,7 +47,7 @@ export class LoginPageComponent {
   async onLogin(): Promise<void> {
     this.loginError = '';
     if (!this.loginPhone || !this.loginPassword) {
-      this.loginError = 'Please enter your phone and password.';
+      this.loginError = this.i18n.t('auth.needPhonePassword');
       return;
     }
     this.loginLoading.set(true);
@@ -52,7 +55,7 @@ export class LoginPageComponent {
       await this.auth.login({ phone: this.loginPhone, password: this.loginPassword });
       this.router.navigateByUrl(this.returnUrl);
     } catch (err: any) {
-      this.loginError = err?.error?.message ?? err?.message ?? 'Login failed. Please try again.';
+      this.loginError = err?.error?.message ?? err?.message ?? this.i18n.t('auth.loginFailed');
     } finally {
       this.loginLoading.set(false);
     }
@@ -61,15 +64,15 @@ export class LoginPageComponent {
   async onRegister(): Promise<void> {
     this.regError = '';
     if (!this.regFirstName || !this.regLastName || !this.regPhone || !this.regPassword) {
-      this.regError = 'Please fill in all required fields.';
+      this.regError = this.i18n.t('auth.fillAll');
       return;
     }
     if (this.regPassword !== this.regConfirm) {
-      this.regError = 'Passwords do not match.';
+      this.regError = this.i18n.t('auth.noMatch');
       return;
     }
     if (this.regPassword.length < 6) {
-      this.regError = 'Password must be at least 6 characters.';
+      this.regError = this.i18n.t('auth.tooShort');
       return;
     }
     this.regLoading.set(true);
@@ -83,7 +86,7 @@ export class LoginPageComponent {
       });
       this.router.navigateByUrl(this.returnUrl);
     } catch (err: any) {
-      this.regError = err?.error?.message ?? err?.message ?? 'Registration failed. Please try again.';
+      this.regError = err?.error?.message ?? err?.message ?? this.i18n.t('auth.registerFailed');
     } finally {
       this.regLoading.set(false);
     }

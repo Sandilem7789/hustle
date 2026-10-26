@@ -1,111 +1,108 @@
-<div class="login-page">
-  <div class="auth-card">
+<div class="auth">
 
-    <div class="auth-tabs">
-      <button type="button" [class.auth-tab-active]="activeTab() === 'login'" (click)="activeTab.set('login')">{{ 'auth.login' | translate }}</button>
-      <button type="button" [class.auth-tab-active]="activeTab() === 'register'" (click)="activeTab.set('register')">{{ 'auth.register' | translate }}</button>
+  <!-- Big screens: the brand panel beside the form -->
+  <aside class="pitch" aria-hidden="true">
+    <span class="wordmark pitch-mark">
+      <span class="wordmark-text">thenga<span class="pitch-dot">.</span>com</span>
+      <span class="wordmark-thread"></span>
+    </span>
+    <span class="pitch-sun"></span>
+    <div class="pitch-body">
+      <p class="pitch-line">{{ 'auth.pitchA' | translate }} <span class="gold">{{ 'auth.pitchPeople' | translate }}</span> {{ 'auth.pitchB' | translate }}</p>
+      <ul class="pitch-list">
+        <li><span class="dot" style="background: var(--gold)"></span><span><strong>{{ 'nav.shop' | translate }}</strong> {{ 'auth.pitchShop' | translate }}</span></li>
+        <li><span class="dot" style="background: var(--hustle-green)"></span><span><strong>{{ 'auth.pitchSellWord' | translate }}</strong> {{ 'auth.pitchSell' | translate }}</span></li>
+        <li><span class="dot" style="background: var(--hustle-blue)"></span><span><strong>{{ 'auth.pitchDriveWord' | translate }}</strong> {{ 'auth.pitchDrive' | translate }}</span></li>
+      </ul>
     </div>
+    <p class="pitch-foot">Ingwenya Digital (Pty) Ltd · KwaNgwenya, KwaZulu-Natal</p>
+  </aside>
 
-    <!-- ── Login ─────────────────────────────── -->
-    <form class="auth-form" *ngIf="activeTab() === 'login'" (ngSubmit)="onLogin()" #loginForm="ngForm">
-      <label>
+  <div class="side">
+    <header class="auth-head dash-head">
+      <div class="lang" role="group" [attr.aria-label]="'lang.label' | translate">
+        <button type="button" [attr.aria-pressed]="i18n.lang() === 'en'" (click)="i18n.setLang('en')">English</button>
+        <button type="button" [attr.aria-pressed]="i18n.lang() === 'zu'" (click)="i18n.setLang('zu')">isiZulu</button>
+      </div>
+      <h1 class="hello">{{ (mode() === 'login' ? 'auth.hello' : 'auth.createAccount') | translate }}</h1>
+      <p class="intro">{{ (mode() === 'login' ? 'auth.intro' : 'auth.registerIntro') | translate }}</p>
+    </header>
+
+    <!-- ── Sign in ─────────────────────────────── -->
+    <form class="auth-form" *ngIf="mode() === 'login'" (ngSubmit)="onLogin()" #loginForm="ngForm">
+      <label class="field">
         <span>{{ 'auth.phone' | translate }}</span>
-        <input
-          type="tel"
-          placeholder="e.g. 0812345678"
-          [(ngModel)]="loginPhone"
-          name="loginPhone"
-          required
-          autocomplete="tel"
-        />
+        <input type="tel" inputmode="tel" placeholder="e.g. 071 234 5678" [(ngModel)]="loginPhone" name="loginPhone" required autocomplete="tel" />
       </label>
 
-      <label>
+      <label class="field">
         <span>{{ 'auth.password' | translate }}</span>
-        <div class="pwd-wrap">
-          <input
-            [type]="hideLoginPwd ? 'password' : 'text'"
-            [(ngModel)]="loginPassword"
-            name="loginPassword"
-            required
-            autocomplete="current-password"
-          />
-          <button type="button" class="pwd-toggle" (click)="hideLoginPwd = !hideLoginPwd" [attr.aria-label]="hideLoginPwd ? 'Show password' : 'Hide password'">
-            {{ hideLoginPwd ? '👁️' : '🙈' }}
+        <span class="pwd-wrap">
+          <input [type]="hideLoginPwd ? 'password' : 'text'" [(ngModel)]="loginPassword" name="loginPassword" required autocomplete="current-password" />
+          <button type="button" class="pwd-toggle" (click)="hideLoginPwd = !hideLoginPwd" [attr.aria-label]="(hideLoginPwd ? 'auth.showPassword' : 'auth.hidePassword') | translate">
+            <mat-icon aria-hidden="true">{{ hideLoginPwd ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
-        </div>
+        </span>
       </label>
 
-      <p *ngIf="loginError" class="auth-error">{{ loginError }}</p>
+      <p *ngIf="loginError" class="auth-error" role="alert">{{ loginError }}</p>
 
-      <button type="submit" class="auth-submit-btn" [disabled]="loginLoading()">
-        {{ loginLoading() ? 'Signing in…' : ('auth.loginButton' | translate) }}
+      <button type="submit" class="gold-btn" [disabled]="loginLoading()">
+        {{ (loginLoading() ? 'auth.signingIn' : 'nav.signIn') | translate }}
       </button>
+
+      <p class="or-line"><span>{{ 'auth.newHere' | translate }}</span></p>
+      <button type="button" class="line-btn" (click)="mode.set('register')">{{ 'auth.createAccount' | translate }}</button>
+
+      <p class="foot">{{ 'auth.sellNote' | translate }}</p>
     </form>
 
-    <!-- ── Create Account ───────────────────────── -->
-    <form class="auth-form" *ngIf="activeTab() === 'register'" (ngSubmit)="onRegister()" #regForm="ngForm">
+    <!-- ── Create an account ───────────────────── -->
+    <form class="auth-form" *ngIf="mode() === 'register'" (ngSubmit)="onRegister()" #regForm="ngForm">
       <div class="name-row">
-        <label class="half-width">
-          <span>First name</span>
+        <label class="field">
+          <span>{{ 'auth.firstName' | translate }}</span>
           <input [(ngModel)]="regFirstName" name="regFirstName" required autocomplete="given-name" />
         </label>
-        <label class="half-width">
-          <span>Last name</span>
+        <label class="field">
+          <span>{{ 'auth.lastName' | translate }}</span>
           <input [(ngModel)]="regLastName" name="regLastName" required autocomplete="family-name" />
         </label>
       </div>
 
-      <label>
+      <label class="field">
         <span>{{ 'auth.phone' | translate }}</span>
-        <input
-          type="tel"
-          placeholder="e.g. 0812345678"
-          [(ngModel)]="regPhone"
-          name="regPhone"
-          required
-          autocomplete="tel"
-        />
+        <input type="tel" inputmode="tel" placeholder="e.g. 071 234 5678" [(ngModel)]="regPhone" name="regPhone" required autocomplete="tel" />
       </label>
 
-      <label>
-        <span>Email (optional)</span>
+      <label class="field">
+        <span>{{ 'auth.emailOptional' | translate }}</span>
         <input type="email" placeholder="e.g. name@gmail.com" [(ngModel)]="regEmail" name="regEmail" autocomplete="email" />
       </label>
 
-      <label>
+      <label class="field">
         <span>{{ 'auth.password' | translate }}</span>
-        <div class="pwd-wrap">
-          <input
-            [type]="hideRegPwd ? 'password' : 'text'"
-            [(ngModel)]="regPassword"
-            name="regPassword"
-            required
-            autocomplete="new-password"
-          />
-          <button type="button" class="pwd-toggle" (click)="hideRegPwd = !hideRegPwd" [attr.aria-label]="hideRegPwd ? 'Show password' : 'Hide password'">
-            {{ hideRegPwd ? '👁️' : '🙈' }}
+        <span class="pwd-wrap">
+          <input [type]="hideRegPwd ? 'password' : 'text'" [(ngModel)]="regPassword" name="regPassword" required autocomplete="new-password" />
+          <button type="button" class="pwd-toggle" (click)="hideRegPwd = !hideRegPwd" [attr.aria-label]="(hideRegPwd ? 'auth.showPassword' : 'auth.hidePassword') | translate">
+            <mat-icon aria-hidden="true">{{ hideRegPwd ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
-        </div>
+        </span>
       </label>
 
-      <label>
-        <span>Confirm password</span>
-        <input
-          [type]="hideRegPwd ? 'password' : 'text'"
-          [(ngModel)]="regConfirm"
-          name="regConfirm"
-          required
-          autocomplete="new-password"
-        />
+      <label class="field">
+        <span>{{ 'auth.confirmPassword' | translate }}</span>
+        <input [type]="hideRegPwd ? 'password' : 'text'" [(ngModel)]="regConfirm" name="regConfirm" required autocomplete="new-password" />
       </label>
 
-      <p *ngIf="regError" class="auth-error">{{ regError }}</p>
+      <p *ngIf="regError" class="auth-error" role="alert">{{ regError }}</p>
 
-      <button type="submit" class="auth-submit-btn" [disabled]="regLoading()">
-        {{ regLoading() ? 'Creating account…' : ('auth.register' | translate) }}
+      <button type="submit" class="gold-btn" [disabled]="regLoading()">
+        {{ (regLoading() ? 'auth.creating' : 'auth.createAccount') | translate }}
       </button>
-    </form>
 
+      <p class="or-line"><span>{{ 'auth.haveAccount' | translate }}</span></p>
+      <button type="button" class="line-btn" (click)="mode.set('login')">{{ 'nav.signIn' | translate }}</button>
+    </form>
   </div>
 </div>
