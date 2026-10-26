@@ -162,7 +162,7 @@ Runs alongside Phase 1. R1 and R3 touch only the frontend; R2 waits on O11 to O1
 | R1 | App-wide look: tokens, fonts, Material theme, wordmark and thread in the toolbar and menu, old palette moved onto the new one, category colours | C | M | Done 2026-10-26 (`feature/thenga-look`). Home-screen icon waits on O10 |
 | R2 | Stock: product kind and stock count (Flyway migration), sales lower stock, Stock in raises it and logs money out, sold-out handling | C | L | Waits on O11 to O13 |
 | R3 | Sell screens from the canvas: Today, Make a sale and payment, Sale saved, Money, Products and stock, Stock in, Learn (phone and big screen) | C | L | After R2 for the stock parts |
-| R4 | Sign in, Community Agent, Drive and Back office screens from the canvas | C, X | L | After P1.1, P1.5 and P1.6 |
+| R4 | Sign in, Community Agent, Drive and Back office screens from the canvas | C, X | L | Community Agent Verify queue and one-visit check done 2026-10-26 on today's applicant endpoints (Sandile chose to build ahead of P1.5; it moves onto merchant applications then). The rest after P1.1, P1.5 and P1.6 |
 
 ### Phase 2: frontend restructure
 
