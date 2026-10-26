@@ -14,7 +14,7 @@ const staffUser = {
 };
 
 const dashboards = [
-  { path: '/facilitator', heading: 'Facilitator', scroller: '.queue-scroll' },
+  { path: '/facilitator/programme', heading: 'Facilitator', scroller: '.queue-scroll' },
   { path: '/coordinator', heading: 'Coordinator', scroller: '.queue-scroll' },
   { path: '/operations', heading: 'Operations', scroller: '.ops-content' }
 ];
