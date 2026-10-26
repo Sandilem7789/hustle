@@ -125,7 +125,7 @@ import { categoryIcon, categoryLabelKey } from '../../utils/product-categories';
       width: 100%; min-height: 48px; padding: 0 1rem; border-radius: var(--radius-sm);
       font: inherit; font-size: 0.9375rem; font-weight: 800; cursor: pointer;
     }
-    .buy-btn { border: none; background: var(--hustle-yellow); color: #1C1917; }
+    .buy-btn { border: none; background: var(--hustle-yellow); color: #13251E; }
     .login-buy-btn { border: 2px solid var(--border-base); background: var(--bg-surface); color: var(--text-primary); }
     .buy-btn mat-icon, .login-buy-btn mat-icon { width: 20px; height: 20px; font-size: 20px; }
     .buy-btn:focus-visible, .login-buy-btn:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 2px; }

@@ -218,8 +218,8 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       background: white;
       border-radius: 1.5rem;
       padding: 2rem;
-      box-shadow: 0 4px 24px rgba(28,25,23,0.08);
-      border: 1px solid #E7E5E4;
+      box-shadow: 0 4px 24px rgba(19, 37, 30,0.08);
+      border: 1px solid #E3DACA;
     }
     .grid {
       display: grid;
@@ -250,22 +250,22 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       gap: 0.375rem;
       font-size: 0.875rem;
       font-weight: 700;
-      color: #1C1917;
+      color: #13251E;
     }
     label.span-2 { grid-column: span 2; }
     @media (max-width: 600px) { label.span-2 { grid-column: span 1; } }
 
     /* Auto-filled locked fields */
     label.prefilled input {
-      background: rgba(245, 184, 0, 0.06);
-      border-color: rgba(245, 184, 0, 0.4);
-      color: #78716C;
+      background: rgba(229, 163, 29, 0.06);
+      border-color: rgba(229, 163, 29, 0.4);
+      color: #4A524C;
       cursor: not-allowed;
     }
 
     input, textarea, select {
       border-radius: 0.75rem;
-      border: 2px solid #E7E5E4;
+      border: 2px solid #E3DACA;
       padding: 0.65rem 0.9rem;
       font-size: 1rem;
       font-family: inherit;
@@ -273,14 +273,14 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       width: 100%;
       box-sizing: border-box;
       background: white;
-      color: #1C1917;
+      color: #13251E;
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
       min-height: 48px;
     }
     input:focus, textarea:focus, select:focus {
-      border-color: #F5B800;
-      box-shadow: 0 0 0 3px rgba(245,184,0,0.2);
+      border-color: #E5A31D;
+      box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2);
     }
     input:disabled { opacity: 0.7; cursor: not-allowed; }
 
@@ -292,14 +292,14 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: #A8A29E;
+      color: #646A63;
       margin-top: 0.5rem;
     }
     .divider::before, .divider::after {
       content: '';
       flex: 1;
       height: 1px;
-      background: #E7E5E4;
+      background: #E3DACA;
     }
 
     .primary {
@@ -308,29 +308,29 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       padding: 0.9rem 1.5rem;
       font-size: 1rem;
       font-weight: 800;
-      background: #F5B800;
-      color: #1C1917;
+      background: #E5A31D;
+      color: #13251E;
       cursor: pointer;
       font-family: inherit;
       min-height: 48px;
-      box-shadow: 0 4px 12px rgba(245,184,0,0.35);
+      box-shadow: 0 4px 12px rgba(229, 163, 29,0.35);
       transition: box-shadow 0.2s;
     }
-    .primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .primary:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
     .primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
     .primary.span-2 { grid-column: span 2; }
     @media (max-width: 600px) { .primary.span-2 { grid-column: span 1; } }
 
-    .err { color: #E53935; font-size: 0.8rem; font-weight: 700; }
-    .status-msg.error { margin-top: 1rem; font-weight: 700; color: #E53935; }
-    small { color: #A8A29E; font-weight: 600; }
+    .err { color: #C8443A; font-size: 0.8rem; font-weight: 700; }
+    .status-msg.error { margin-top: 1rem; font-weight: 700; color: #C8443A; }
+    small { color: #646A63; font-weight: 600; }
 
     /* ── Success Modal ──────────────────────────────────────────── */
     .success-overlay {
       position: fixed;
       inset: 0;
       z-index: 1100;
-      background: rgba(28,25,23,0.65);
+      background: rgba(19, 37, 30,0.65);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -346,7 +346,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       max-width: 360px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 24px 64px rgba(28,25,23,0.25);
+      box-shadow: 0 24px 64px rgba(19, 37, 30,0.25);
       animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
     @keyframes popIn {
@@ -374,12 +374,12 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     .success-title {
       font-size: 1.25rem;
       font-weight: 800;
-      color: #1C1917;
+      color: #13251E;
       margin: 0 0 0.5rem;
     }
     .success-body {
       font-size: 0.9rem;
-      color: #78716C;
+      color: #4A524C;
       line-height: 1.55;
       margin: 0 0 1.25rem;
     }
@@ -425,23 +425,23 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       height: 52px;
       border: none;
       border-radius: 999px;
-      background: #F5B800;
-      color: #1C1917;
+      background: #E5A31D;
+      color: #13251E;
       font-size: 1rem;
       font-weight: 800;
       cursor: pointer;
       font-family: inherit;
-      box-shadow: 0 4px 14px rgba(245,184,0,0.35);
+      box-shadow: 0 4px 14px rgba(229, 163, 29,0.35);
       transition: box-shadow 0.15s;
     }
-    .success-ok-btn:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .success-ok-btn:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
 
     /* ── Terms Overlay ─────────────────────────────────────────── */
     .terms-overlay {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: rgba(28, 25, 23, 0.6);
+      background: rgba(19, 37, 30, 0.6);
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -460,7 +460,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 -8px 40px rgba(28,25,23,0.2);
+      box-shadow: 0 -8px 40px rgba(19, 37, 30,0.2);
     }
     @media (min-width: 600px) {
       .terms-modal { border-radius: 1.5rem; max-height: 88vh; }
@@ -468,11 +468,11 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
 
     .terms-header {
       padding: 1.25rem 1.5rem 0.75rem;
-      border-bottom: 1px solid #E7E5E4;
+      border-bottom: 1px solid #E3DACA;
       flex-shrink: 0;
     }
-    .terms-header h3 { margin: 0 0 0.25rem; font-size: 1.1rem; color: #1C1917; font-weight: 800; }
-    .terms-sub { margin: 0; font-size: 0.8rem; color: #78716C; font-weight: 600; }
+    .terms-header h3 { margin: 0 0 0.25rem; font-size: 1.1rem; color: #13251E; font-weight: 800; }
+    .terms-sub { margin: 0; font-size: 0.8rem; color: #4A524C; font-weight: 600; }
 
     .terms-body {
       flex: 1;
@@ -485,7 +485,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #1C1917;
+      color: #13251E;
       margin: 0 0 1rem;
     }
     .terms-body h5 {
@@ -493,7 +493,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #F5B800;
+      color: #E5A31D;
       margin: 1.25rem 0 0.375rem;
     }
     .terms-body p {
@@ -505,16 +505,16 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     }
     .terms-end-marker {
       text-align: center;
-      color: #A8A29E;
+      color: #646A63;
       font-size: 0.8rem;
       margin-top: 1.5rem;
       padding-top: 1rem;
-      border-top: 1px solid #E7E5E4;
+      border-top: 1px solid #E3DACA;
     }
 
     .terms-footer {
       padding: 1rem 1.5rem 1.25rem;
-      border-top: 1px solid #E7E5E4;
+      border-top: 1px solid #E3DACA;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -523,10 +523,10 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
 
     .scroll-hint {
       font-size: 0.8rem;
-      color: #78716C;
+      color: #4A524C;
       text-align: center;
-      background: rgba(245, 184, 0, 0.08);
-      border: 1px solid rgba(245, 184, 0, 0.3);
+      background: rgba(229, 163, 29, 0.08);
+      border: 1px solid rgba(229, 163, 29, 0.3);
       border-radius: 0.5rem;
       padding: 0.5rem;
       margin: 0;
@@ -535,12 +535,12 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     .sig-label {
       font-size: 0.8rem;
       font-weight: 700;
-      color: #1C1917;
+      color: #13251E;
       display: block;
     }
     .sig-input {
       border-radius: 0.75rem;
-      border: 2px solid #E7E5E4;
+      border: 2px solid #E3DACA;
       padding: 0.65rem 0.9rem;
       font-size: 1rem;
       font-family: inherit;
@@ -548,13 +548,13 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       width: 100%;
       box-sizing: border-box;
       background: white;
-      color: #1C1917;
+      color: #13251E;
       outline: none;
       min-height: 48px;
       transition: border-color 0.15s;
     }
-    .sig-input:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
-    .sig-input:disabled { opacity: 0.4; background: #F5F5F4; }
+    .sig-input:focus { border-color: #E5A31D; box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2); }
+    .sig-input:disabled { opacity: 0.4; background: #F1EADC; }
 
     .agree-row {
       display: flex;
@@ -571,7 +571,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       min-height: unset;
       flex-shrink: 0;
       margin-top: 2px;
-      accent-color: #F5B800;
+      accent-color: #E5A31D;
       cursor: pointer;
     }
     .agree-row span { line-height: 1.4; }
@@ -583,10 +583,10 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
     .btn-cancel {
       flex: 0 0 auto;
       height: 48px;
-      border: 1.5px solid #E7E5E4;
+      border: 1.5px solid #E3DACA;
       border-radius: 999px;
       background: white;
-      color: #78716C;
+      color: #4A524C;
       font-size: 0.9rem;
       font-weight: 700;
       cursor: pointer;
@@ -594,7 +594,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
       font-family: inherit;
       transition: border-color 0.15s;
     }
-    .btn-cancel:hover { border-color: #A8A29E; }
+    .btn-cancel:hover { border-color: #646A63; }
     .terms-actions .primary { flex: 1; }
   `
 })

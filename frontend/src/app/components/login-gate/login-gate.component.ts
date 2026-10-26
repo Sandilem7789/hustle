@@ -51,9 +51,9 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
     }
     .gate-card {
       background: #fff;
-      border: 1px solid #E7E5E4;
+      border: 1px solid #E3DACA;
       border-radius: 1.5rem;
-      box-shadow: 0 4px 24px rgba(28,25,23,0.08);
+      box-shadow: 0 4px 24px rgba(19, 37, 30,0.08);
       padding: 2rem 1.5rem;
       width: 100%;
       max-width: 400px;
@@ -69,21 +69,21 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
     .gate-title {
       font-size: 1.25rem;
       font-weight: 900;
-      color: #1C1917;
+      color: #13251E;
       margin: 0 0 0.35rem;
     }
     .gate-sub {
       font-size: 0.875rem;
-      color: #78716C;
+      color: #4A524C;
       margin: 0 0 1.25rem;
     }
     .gate-notice {
-      background: rgba(245,184,0,0.1);
-      border: 1px solid rgba(245,184,0,0.3);
+      background: rgba(229, 163, 29,0.1);
+      border: 1px solid rgba(229, 163, 29,0.3);
       border-radius: 0.75rem;
       padding: 0.6rem 0.9rem;
       font-size: 0.8125rem;
-      color: #78716C;
+      color: #4A524C;
       margin-bottom: 1rem;
       text-align: left;
     }
@@ -99,10 +99,10 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       gap: 0.3rem;
       font-size: 0.8125rem;
       font-weight: 700;
-      color: #1C1917;
+      color: #13251E;
     }
     input {
-      border: 2px solid #E7E5E4;
+      border: 2px solid #E3DACA;
       border-radius: 0.75rem;
       padding: 0.75rem 1rem;
       font-size: 1rem;
@@ -112,30 +112,30 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       width: 100%;
       box-sizing: border-box;
       background: #fff;
-      color: #1C1917;
+      color: #13251E;
       outline: none;
       transition: border-color 0.15s;
     }
-    input:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
+    input:focus { border-color: #E5A31D; box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2); }
     .gate-btn {
       border: none;
       border-radius: 999px;
       padding: 0.875rem;
       font-size: 1rem;
       font-weight: 800;
-      background: #F5B800;
-      color: #1C1917;
+      background: #E5A31D;
+      color: #13251E;
       cursor: pointer;
       font-family: inherit;
       min-height: 48px;
-      box-shadow: 0 4px 12px rgba(245,184,0,0.35);
+      box-shadow: 0 4px 12px rgba(229, 163, 29,0.35);
       transition: box-shadow 0.15s, opacity 0.15s;
       margin-top: 0.25rem;
     }
-    .gate-btn:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .gate-btn:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
     .gate-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
     .gate-error {
-      color: #E53935;
+      color: #C8443A;
       font-size: 0.8125rem;
       font-weight: 700;
       margin: 0.75rem 0 0;

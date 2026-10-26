@@ -51,7 +51,7 @@ declare const BarcodeDetector: {
       position: relative;
       width: 100%;
       aspect-ratio: 4 / 3;
-      background: #1C1917;
+      background: #13251E;
       border-radius: 1rem;
       overflow: hidden;
     }
@@ -59,7 +59,7 @@ declare const BarcodeDetector: {
     .scan-guide {
       position: absolute;
       inset: 18% 12%;
-      border: 3px solid rgba(245,184,0,0.85);
+      border: 3px solid rgba(229, 163, 29,0.85);
       border-radius: 0.75rem;
       pointer-events: none;
       box-shadow: 0 0 0 999px rgba(0,0,0,0.25);
@@ -76,12 +76,12 @@ declare const BarcodeDetector: {
       margin: 0;
       text-shadow: 0 1px 4px rgba(0,0,0,0.6);
     }
-    .scan-error { color: #E53935; font-weight: 700; font-size: 0.85rem; margin: 0; }
+    .scan-error { color: #C8443A; font-weight: 700; font-size: 0.85rem; margin: 0; }
     .manual-toggle {
       align-self: center;
       background: none;
       border: none;
-      color: #1B6FD4;
+      color: #2F6DB5;
       font-weight: 700;
       font-size: 0.85rem;
       cursor: pointer;
@@ -93,7 +93,7 @@ declare const BarcodeDetector: {
     .manual-form input {
       flex: 1;
       border-radius: 0.75rem;
-      border: 2px solid #E7E5E4;
+      border: 2px solid #E3DACA;
       padding: 0.65rem 0.9rem;
       font-size: 1rem;
       font-family: inherit;
@@ -104,8 +104,8 @@ declare const BarcodeDetector: {
       border: none;
       border-radius: 0.75rem;
       padding: 0 1.1rem;
-      background: #F5B800;
-      color: #1C1917;
+      background: #E5A31D;
+      color: #13251E;
       font-weight: 800;
       font-size: 0.9rem;
       cursor: pointer;

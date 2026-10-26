@@ -160,9 +160,9 @@ import * as L from 'leaflet';
       justify-content: center;
     }
     .signout-btn {
-      border: 1.5px solid #E7E5E4;
+      border: 1.5px solid #E3DACA;
       background: none;
-      color: #A8A29E;
+      color: #646A63;
       border-radius: 999px;
       padding: 0.6rem 2rem;
       font-size: 0.875rem;
@@ -173,7 +173,7 @@ import * as L from 'leaflet';
       transition: border-color 0.15s, color 0.15s;
     }
     @media (hover: hover) and (pointer: fine) {
-      .signout-btn:hover { border-color: #E53935; color: #E53935; }
+      .signout-btn:hover { border-color: #C8443A; color: #C8443A; }
     }
 
     .ops-shell {
@@ -193,19 +193,19 @@ import * as L from 'leaflet';
     .section-title {
       font-size: 1rem;
       font-weight: 800;
-      color: #1C1917;
+      color: #13251E;
       margin: 0 0 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
     .section-desc {
       font-size: 0.875rem;
-      color: #78716C;
+      color: #4A524C;
       margin: 0 0 0.75rem;
     }
 
     .loading-state {
-      color: #A8A29E;
+      color: #646A63;
       font-size: 0.875rem;
       padding: 1rem 0;
     }
@@ -220,19 +220,19 @@ import * as L from 'leaflet';
       gap: 0.6rem;
       margin-bottom: 0.75rem;
       padding-bottom: 0.4rem;
-      border-bottom: 2px solid #F5B800;
+      border-bottom: 2px solid #E5A31D;
     }
     .province-name {
       font-size: 0.9375rem;
       font-weight: 900;
-      color: #1C1917;
+      color: #13251E;
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
     .province-count {
       font-size: 0.75rem;
       font-weight: 700;
-      color: #A8A29E;
+      color: #646A63;
     }
 
     /* ── Community Cards ── */
@@ -243,10 +243,10 @@ import * as L from 'leaflet';
     }
     .community-card {
       background: #fff;
-      border: 1px solid #E7E5E4;
+      border: 1px solid #E3DACA;
       border-radius: 1rem;
       padding: 1rem;
-      box-shadow: 0 2px 8px rgba(28,25,23,0.05);
+      box-shadow: 0 2px 8px rgba(19, 37, 30,0.05);
     }
     .card-header {
       display: flex;
@@ -257,13 +257,13 @@ import * as L from 'leaflet';
     .community-name {
       font-size: 1rem;
       font-weight: 800;
-      color: #1C1917;
+      color: #13251E;
     }
     .region-badge {
       font-size: 0.7rem;
       font-weight: 700;
-      background: #F5F5F4;
-      color: #78716C;
+      background: #F1EADC;
+      color: #4A524C;
       border-radius: 999px;
       padding: 0.2rem 0.6rem;
     }
@@ -274,7 +274,7 @@ import * as L from 'leaflet';
     }
     .stat {
       flex: 1;
-      background: #FAFAF9;
+      background: #FBF8F2;
       border-radius: 0.75rem;
       padding: 0.6rem 0.5rem;
       text-align: center;
@@ -283,15 +283,15 @@ import * as L from 'leaflet';
       display: block;
       font-size: 1.375rem;
       font-weight: 900;
-      color: #1C1917;
+      color: #13251E;
     }
     .stat-val.approved { color: var(--success-text); }
-    .stat-val.active { color: #1B6FD4; }
+    .stat-val.active { color: #2F6DB5; }
     .stat-label {
       display: block;
       font-size: 0.6875rem;
       font-weight: 700;
-      color: #A8A29E;
+      color: #646A63;
       margin-top: 0.1rem;
     }
 
@@ -301,17 +301,17 @@ import * as L from 'leaflet';
       height: 8px;
       border-radius: 999px;
       overflow: hidden;
-      background: #F5F5F4;
+      background: #F1EADC;
       margin-bottom: 0.5rem;
     }
     .pipeline-bar [class*="stage-"] { min-width: 4px; }
-    .stage-captured       { background: #A8A29E; }
-    .stage-calling        { background: #F5B800; }
-    .stage-interview_scheduled { background: #F06820; }
-    .stage-interviewed    { background: #8B2FC9; }
-    .stage-business_verification { background: #00A896; }
-    .stage-approved       { background: #2DB344; }
-    .stage-rejected       { background: #E91E8C; }
+    .stage-captured       { background: #646A63; }
+    .stage-calling        { background: #E5A31D; }
+    .stage-interview_scheduled { background: #D9682A; }
+    .stage-interviewed    { background: #7A4BB0; }
+    .stage-business_verification { background: #14897C; }
+    .stage-approved       { background: #3F9A4F; }
+    .stage-rejected       { background: #C93C7E; }
 
     .stage-legend {
       display: flex;
@@ -324,7 +324,7 @@ import * as L from 'leaflet';
       gap: 0.25rem;
       font-size: 0.625rem;
       font-weight: 700;
-      color: #78716C;
+      color: #4A524C;
     }
     .legend-dot {
       width: 8px;
@@ -338,12 +338,12 @@ import * as L from 'leaflet';
       height: 320px;
       border-radius: 1rem;
       overflow: hidden;
-      border: 1px solid #E7E5E4;
+      border: 1px solid #E3DACA;
       z-index: 1;
     }
     .map-note {
       font-size: 0.75rem;
-      color: #A8A29E;
+      color: #646A63;
       margin: 0.5rem 0 0;
       font-style: italic;
     }
@@ -354,13 +354,13 @@ import * as L from 'leaflet';
       transition: box-shadow 0.15s, transform 0.15s;
     }
     .clickable-card:hover {
-      box-shadow: 0 6px 20px rgba(28,25,23,0.12);
+      box-shadow: 0 6px 20px rgba(19, 37, 30,0.12);
       transform: translateY(-1px);
     }
     .clickable-card:active { transform: translateY(0); }
     .chevron {
       font-size: 1.25rem;
-      color: #A8A29E;
+      color: #646A63;
       line-height: 1;
     }
 
@@ -372,9 +372,9 @@ import * as L from 'leaflet';
       margin-bottom: 1rem;
     }
     .back-btn {
-      border: 1.5px solid #E7E5E4;
+      border: 1.5px solid #E3DACA;
       background: none;
-      color: #78716C;
+      color: #4A524C;
       border-radius: 999px;
       padding: 0.4rem 1rem;
       font-size: 0.8125rem;
@@ -384,11 +384,11 @@ import * as L from 'leaflet';
       min-height: 40px;
       transition: border-color 0.15s, color 0.15s;
     }
-    .back-btn:hover { border-color: #1C1917; color: #1C1917; }
+    .back-btn:hover { border-color: #13251E; color: #13251E; }
     .detail-title {
       font-size: 1.125rem;
       font-weight: 900;
-      color: #1C1917;
+      color: #13251E;
     }
     .detail-stats { margin-bottom: 0.75rem; }
     .detail-pipeline { margin-bottom: 0.5rem; height: 10px; }
@@ -399,7 +399,7 @@ import * as L from 'leaflet';
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #A8A29E;
+      color: #646A63;
       margin-bottom: 0.75rem;
     }
     .hustler-list {
@@ -411,8 +411,8 @@ import * as L from 'leaflet';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #FAFAF9;
-      border: 1px solid #E7E5E4;
+      background: #FBF8F2;
+      border: 1px solid #E3DACA;
       border-radius: 0.75rem;
       padding: 0.75rem 1rem;
       gap: 0.5rem;
@@ -425,16 +425,16 @@ import * as L from 'leaflet';
     .hustler-name {
       font-size: 0.9375rem;
       font-weight: 800;
-      color: #1C1917;
+      color: #13251E;
     }
     .hustler-type {
       font-size: 0.75rem;
-      color: #78716C;
+      color: #4A524C;
       font-weight: 600;
     }
     .hustler-area {
       font-size: 0.75rem;
-      color: #A8A29E;
+      color: #646A63;
       font-weight: 600;
       text-align: right;
     }
@@ -533,7 +533,7 @@ export class OperationsPageComponent implements OnInit, OnDestroy {
     const icon = L.divIcon({
       className: '',
       html: `<div style="
-        background:#F5B800;border:2px solid #1C1917;
+        background:#E5A31D;border:2px solid #13251E;
         width:12px;height:12px;border-radius:50%;
         box-shadow:0 2px 6px rgba(0,0,0,0.3)">
       </div>`,

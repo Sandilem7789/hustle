@@ -248,7 +248,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
     .pill-input:checked + .pill-face {
       background: var(--hustle-yellow);
       border-color: var(--hustle-yellow);
-      color: #1C1917;
+      color: #13251E;
       font-weight: 800;
     }
     .pill-input:focus-visible + .pill-face { outline: 3px solid var(--text-primary); outline-offset: 2px; }
@@ -263,7 +263,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
       font-weight: 800;
     }
     @media (min-width: 768px) { .buy-btn, .login-btn { max-width: 360px; } }
-    .buy-btn { background: var(--hustle-yellow); color: #1C1917; }
+    .buy-btn { background: var(--hustle-yellow); color: #13251E; }
     .login-btn { background: var(--bg-surface); color: var(--text-primary); border: 2px solid var(--border-base); }
     .buy-btn:focus-visible,
     .login-btn:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
@@ -353,7 +353,7 @@ type LoadState = 'loading' | 'ready' | 'error' | 'notfound';
       padding: 0 1.25rem;
       border-radius: var(--radius-sm);
       background: var(--hustle-yellow);
-      color: #1C1917;
+      color: #13251E;
       font-size: 0.9375rem;
       font-weight: 800;
       text-decoration: none;

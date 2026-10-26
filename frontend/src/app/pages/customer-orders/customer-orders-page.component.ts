@@ -197,7 +197,7 @@ interface TimelineStep {
     .order-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--text-primary); padding: 0.4rem 0; border-bottom: 1px solid var(--border-base); }
     .item-detail { color: var(--text-muted); font-size: 0.82rem; }
 
-    .delivery-addr { display: flex; align-items: flex-start; gap: 0.375rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(245,184,0,0.06); border: 1px solid rgba(245,184,0,0.2); border-radius: 0.75rem; }
+    .delivery-addr { display: flex; align-items: flex-start; gap: 0.375rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(229, 163, 29,0.06); border: 1px solid rgba(229, 163, 29,0.2); border-radius: 0.75rem; }
     .delivery-addr mat-icon { flex-shrink: 0; width: 18px; height: 18px; font-size: 18px; }
 
     .pickup-qr-box { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding: 1rem; background: var(--bg-muted); border: 2px dashed var(--border-base); border-radius: 1rem; text-align: center; }
@@ -210,24 +210,24 @@ interface TimelineStep {
 
     /* Status Badges */
     .status-badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
-    .status-pending { background: #F5F0E8; color: #78716C; }
-    .status-confirmed { background: rgba(27,111,212,0.1); color: #1B6FD4; }
-    .status-driver-assigned { background: rgba(139,47,201,0.1); color: #8B2FC9; }
-    .status-en-route { background: rgba(245,184,0,0.15); color: #92620A; }
-    .status-delivered { background: rgba(45,179,68,0.12); color: #166534; }
-    .status-collected { background: rgba(45,179,68,0.12); color: #166534; }
+    .status-pending { background: #EFE8DA; color: #4A524C; }
+    .status-confirmed { background: rgba(27,111,212,0.1); color: #2F6DB5; }
+    .status-driver-assigned { background: rgba(139,47,201,0.1); color: #7A4BB0; }
+    .status-en-route { background: rgba(229, 163, 29,0.15); color: #8A5A0B; }
+    .status-delivered { background: rgba(45,179,68,0.12); color: #2E6B4A; }
+    .status-collected { background: rgba(45,179,68,0.12); color: #2E6B4A; }
     .status-cancelled { background: rgba(229,57,53,0.1); color: #C62828; }
     .meta-chip mat-icon { width: 16px; height: 16px; font-size: 16px; }
     :host-context([data-theme="dark"]) .status-pending { background: var(--bg-muted); color: var(--text-secondary); }
     :host-context([data-theme="dark"]) .status-confirmed { background: rgba(27,111,212,0.22); color: #9CC3F5; }
     :host-context([data-theme="dark"]) .status-driver-assigned { background: rgba(139,47,201,0.24); color: #D3AEF5; }
-    :host-context([data-theme="dark"]) .status-en-route { background: rgba(245,184,0,0.18); color: #F5CB4D; }
+    :host-context([data-theme="dark"]) .status-en-route { background: rgba(229, 163, 29,0.18); color: #F5CB4D; }
     :host-context([data-theme="dark"]) .status-delivered,
     :host-context([data-theme="dark"]) .status-collected { background: rgba(45,179,68,0.2); color: #86E09B; }
     :host-context([data-theme="dark"]) .status-cancelled { background: rgba(229,57,53,0.2); color: #FF9E99; }
 
-    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: var(--hustle-yellow); color: #1C1917; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: var(--hustle-yellow); color: #13251E; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
   `
 })
 export class CustomerOrdersPageComponent implements OnInit {

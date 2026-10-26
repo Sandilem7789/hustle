@@ -35,8 +35,8 @@
 
 .auth-tab-active {
   color: var(--text-primary) !important;
-  border-bottom: 3px solid #F5B800 !important;
-  background: rgba(245, 184, 0, 0.06) !important;
+  border-bottom: 3px solid #E5A31D !important;
+  background: rgba(229, 163, 29, 0.06) !important;
 }
 
 .auth-form {
@@ -81,8 +81,8 @@ input {
 }
 
 input:focus {
-  border-color: #F5B800;
-  box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.2);
+  border-color: #E5A31D;
+  box-shadow: 0 0 0 3px rgba(229, 163, 29, 0.2);
 }
 
 .pwd-wrap {
@@ -108,7 +108,7 @@ input:focus {
 }
 
 .auth-error {
-  color: #E53935;
+  color: #C8443A;
   font-size: 0.85rem;
   font-weight: 700;
   margin: 0;
@@ -120,18 +120,18 @@ input:focus {
   padding: 0.9rem;
   font-size: 1rem;
   font-weight: 800;
-  background: #F5B800;
-  color: #1C1917;
+  background: #E5A31D;
+  color: #13251E;
   cursor: pointer;
   font-family: inherit;
   min-height: 52px;
-  box-shadow: 0 4px 12px rgba(245, 184, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(229, 163, 29, 0.35);
   transition: box-shadow 0.15s, opacity 0.15s;
   margin-top: 0.25rem;
 }
 
 .auth-submit-btn:hover {
-  box-shadow: 0 6px 20px rgba(245, 184, 0, 0.5);
+  box-shadow: 0 6px 20px rgba(229, 163, 29, 0.5);
 }
 
 .auth-submit-btn:disabled {

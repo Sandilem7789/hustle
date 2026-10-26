@@ -92,34 +92,34 @@ import { AppSelectComponent } from '../../components/app-select/app-select.compo
   `,
   styles: `
     .layout { max-width: 520px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
-    .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
+    .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
     @media (max-width: 600px) { .card { padding: 1.5rem 1.25rem; border-radius: 1rem; } }
     .card-header { margin-bottom: 1.5rem; }
-    .card-header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; color: #1C1917; font-weight: 800; }
-    .muted { color: #78716C; font-size: 0.9rem; }
+    .card-header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; color: #13251E; font-weight: 800; }
+    .muted { color: #4A524C; font-size: 0.9rem; }
     .form { display: flex; flex-direction: column; gap: 1rem; }
     .field { display: flex; flex-direction: column; gap: 0.375rem; }
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
-    label { font-size: 0.875rem; font-weight: 700; color: #1C1917; display: block; }
-    input[type="text"], input[type="tel"], input[type="password"], select { height: 48px; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; font-family: inherit; font-weight: 600; background: white; color: #1C1917; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
-    input:focus, select:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
-    select { appearance: none; -webkit-appearance: none; background: #FAFAF9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 16px; padding-right: 2.5rem; cursor: pointer; }
+    label { font-size: 0.875rem; font-weight: 700; color: #13251E; display: block; }
+    input[type="text"], input[type="tel"], input[type="password"], select { height: 48px; border: 2px solid #E3DACA; border-radius: 0.75rem; padding: 0 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; font-family: inherit; font-weight: 600; background: white; color: #13251E; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    input:focus, select:focus { border-color: #E5A31D; box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2); }
+    select { appearance: none; -webkit-appearance: none; background: #FBF8F2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 16px; padding-right: 2.5rem; cursor: pointer; }
     select:focus { background-color: white; }
     .file-input { border: none; padding: 0; font-size: 0.9rem; height: auto; }
     .preview-wrap { margin-top: 0.5rem; }
-    .preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 0.75rem; border: 2px solid #E7E5E4; }
-    small { color: #A8A29E; font-size: 0.8rem; font-weight: 600; }
-    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; font-family: inherit; width: 100%; margin-top: 0.5rem; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 0.75rem; border: 2px solid #E3DACA; }
+    small { color: #646A63; font-size: 0.8rem; font-weight: 600; }
+    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #E5A31D; color: #13251E; cursor: pointer; font-family: inherit; width: 100%; margin-top: 0.5rem; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    .error-msg { color: #E53935; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; margin: 0; }
-    .login-link { text-align: center; margin-top: 1.25rem; font-size: 0.9rem; color: #78716C; }
-    .login-link a { color: #00A896; font-weight: 800; text-decoration: none; }
+    .error-msg { color: #C8443A; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; margin: 0; }
+    .login-link { text-align: center; margin-top: 1.25rem; font-size: 0.9rem; color: #4A524C; }
+    .login-link a { color: #14897C; font-weight: 800; text-decoration: none; }
     .login-link a:hover { text-decoration: underline; }
     .success-card { text-align: center; padding: 2.5rem 2rem; }
     .success-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .success-card h2 { margin: 0 0 0.5rem; color: #1C1917; font-weight: 800; }
+    .success-card h2 { margin: 0 0 0.5rem; color: #13251E; font-weight: 800; }
   `
 })
 export class DriverRegisterPageComponent implements OnInit {

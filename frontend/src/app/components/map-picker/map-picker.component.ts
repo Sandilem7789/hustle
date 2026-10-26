@@ -17,7 +17,7 @@ import * as L from 'leaflet';
       height: 280px;
       width: 100%;
       border-radius: 0.75rem;
-      border: 2px solid #E7E5E4;
+      border: 2px solid #E3DACA;
       position: relative;
       /* tell the browser: touch gestures here belong to Leaflet, not the page */
       touch-action: none;
@@ -30,7 +30,7 @@ import * as L from 'leaflet';
 
     .map-hint {
       font-size: 0.76rem;
-      color: #A8A29E;
+      color: #646A63;
       margin: 0.3rem 0 0;
       text-align: center;
     }

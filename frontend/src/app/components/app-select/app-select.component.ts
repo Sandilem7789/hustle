@@ -68,28 +68,28 @@ let nextId = 0;
       width: 100%; min-height: 48px;
       display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
       padding: 0.65rem 0.9rem;
-      border: 2px solid #E7E5E4; border-radius: 0.75rem;
-      background: #FAFAF9; color: #1C1917;
+      border: 2px solid #E3DACA; border-radius: 0.75rem;
+      background: #FBF8F2; color: #13251E;
       font-family: inherit; font-size: 1rem; font-weight: 600;
       cursor: pointer; text-align: left;
       transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
     }
     .trigger:focus,
     .open .trigger {
-      border-color: #F5B800;
-      box-shadow: 0 0 0 3px rgba(245,184,0,0.2);
+      border-color: #E5A31D;
+      box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2);
       background: white;
       outline: none;
     }
-    .trigger.muted .lbl { color: #A8A29E; }
+    .trigger.muted .lbl { color: #646A63; }
     .lbl  { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-    .chev { flex-shrink: 0; color: #A8A29E; transition: transform 0.2s ease-out; }
+    .chev { flex-shrink: 0; color: #646A63; transition: transform 0.2s ease-out; }
     .chev.up { transform: rotate(180deg); }
 
     .panel {
       position: absolute; top: calc(100% + 5px); left: 0; right: 0; z-index: 300;
-      background: white; border: 1.5px solid #E7E5E4; border-radius: 0.75rem;
-      box-shadow: 0 8px 32px rgba(28,25,23,0.14);
+      background: white; border: 1.5px solid #E3DACA; border-radius: 0.75rem;
+      box-shadow: 0 8px 32px rgba(19, 37, 30,0.14);
       overflow: hidden; overflow-y: auto; max-height: 260px;
       animation: panelIn 0.17s ease-out;
     }
@@ -101,20 +101,20 @@ let nextId = 0;
     .opt {
       width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
       padding: 0.75rem 1rem; border: none; background: none;
-      font-family: inherit; font-size: 0.95rem; font-weight: 600; color: #1C1917;
+      font-family: inherit; font-size: 0.95rem; font-weight: 600; color: #13251E;
       cursor: pointer; text-align: left; min-height: 44px;
       transition: background-color 0.1s;
     }
-    .opt:hover, .opt.active { background: rgba(245,184,0,0.08); }
-    .opt.active { box-shadow: inset 0 0 0 2px rgba(245,184,0,0.35); }
-    .opt.sel   { background: rgba(245,184,0,0.13); color: #92620A; font-weight: 800; }
-    .tick      { color: #F5B800; flex-shrink: 0; }
+    .opt:hover, .opt.active { background: rgba(229, 163, 29,0.08); }
+    .opt.active { box-shadow: inset 0 0 0 2px rgba(229, 163, 29,0.35); }
+    .opt.sel   { background: rgba(229, 163, 29,0.13); color: #8A5A0B; font-weight: 800; }
+    .tick      { color: #E5A31D; flex-shrink: 0; }
 
-    .sep      { height: 1px; background: #E7E5E4; }
+    .sep      { height: 1px; background: #E3DACA; }
     .grp-name {
       margin: 0; padding: 0.5rem 1rem 0.2rem;
       font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.08em; color: #A8A29E;
+      letter-spacing: 0.08em; color: #646A63;
     }
     .off .trigger { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
   `

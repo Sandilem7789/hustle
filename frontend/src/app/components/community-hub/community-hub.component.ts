@@ -272,7 +272,7 @@ type LoadState = 'loading' | 'ready' | 'error';
     .search-input:focus {
       outline: none;
       border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.25);
+      box-shadow: 0 0 0 3px rgba(229, 163, 29, 0.25);
     }
 
     .icon-btn {
@@ -562,7 +562,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       gap: 0.375rem;
       padding: 0 0.75rem;
       background: var(--hustle-yellow);
-      color: #1C1917;
+      color: #13251E;
     }
     .qa-add mat-icon,
     .qa-step mat-icon { width: 22px; height: 22px; font-size: 22px; }
@@ -613,7 +613,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       padding: 0 1.25rem;
       border-radius: var(--radius-sm);
       background: var(--hustle-yellow);
-      color: #1C1917;
+      color: #13251E;
       font-size: 0.9375rem;
       font-weight: 800;
     }

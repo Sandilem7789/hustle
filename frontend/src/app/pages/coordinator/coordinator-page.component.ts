@@ -43,9 +43,9 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       justify-content: center;
     }
     .signout-btn {
-      border: 1.5px solid #E7E5E4;
+      border: 1.5px solid #E3DACA;
       background: none;
-      color: #A8A29E;
+      color: #646A63;
       border-radius: 999px;
       padding: 0.6rem 2rem;
       font-size: 0.875rem;
@@ -56,7 +56,7 @@ import { UnifiedAuthService } from '../../services/unified-auth.service';
       transition: border-color 0.15s, color 0.15s;
     }
     @media (hover: hover) and (pointer: fine) {
-      .signout-btn:hover { border-color: #E53935; color: #E53935; }
+      .signout-btn:hover { border-color: #C8443A; color: #C8443A; }
     }
   `
 })

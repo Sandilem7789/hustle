@@ -57,8 +57,8 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
       background: white;
       border-radius: 1.5rem;
       padding: 2.5rem 1.5rem;
-      box-shadow: 0 4px 24px rgba(28,25,23,0.08);
-      border: 1px solid #E7E5E4;
+      box-shadow: 0 4px 24px rgba(19, 37, 30,0.08);
+      border: 1px solid #E3DACA;
     }
     .empty-state {
       display: flex;
@@ -78,25 +78,25 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
       margin-bottom: 0.5rem;
     }
     .bell-icon { font-size: 2rem; line-height: 1; }
-    h2 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #1C1917; }
-    .muted { color: #78716C; font-size: 0.9rem; line-height: 1.6; max-width: 320px; margin: 0; }
+    h2 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #13251E; }
+    .muted { color: #4A524C; font-size: 0.9rem; line-height: 1.6; max-width: 320px; margin: 0; }
 
     .notif-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
     .notif-item {
       display: flex; align-items: flex-start; gap: 0.6rem;
-      background: white; border: 1px solid #E7E5E4; border-radius: 1rem;
+      background: white; border: 1px solid #E3DACA; border-radius: 1rem;
       padding: 1rem 1.1rem;
       cursor: pointer;
       transition: border-color 0.15s, box-shadow 0.15s;
       min-height: 48px;
     }
-    .notif-item:hover { border-color: #F5B800; box-shadow: 0 2px 10px rgba(28,25,23,0.06); }
-    .notif-item.unread { background: rgba(245,184,0,0.06); border-color: rgba(245,184,0,0.35); }
-    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: #F5B800; margin-top: 0.4rem; flex-shrink: 0; }
+    .notif-item:hover { border-color: #E5A31D; box-shadow: 0 2px 10px rgba(19, 37, 30,0.06); }
+    .notif-item.unread { background: rgba(229, 163, 29,0.06); border-color: rgba(229, 163, 29,0.35); }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: #E5A31D; margin-top: 0.4rem; flex-shrink: 0; }
     .notif-body { flex: 1; min-width: 0; }
-    .notif-title { margin: 0 0 0.2rem; font-size: 0.9375rem; font-weight: 800; color: #1C1917; }
-    .notif-text { margin: 0 0 0.3rem; font-size: 0.85rem; color: #57534E; line-height: 1.5; }
-    .notif-time { margin: 0; font-size: 0.75rem; color: #A8A29E; }
+    .notif-title { margin: 0 0 0.2rem; font-size: 0.9375rem; font-weight: 800; color: #13251E; }
+    .notif-text { margin: 0 0 0.3rem; font-size: 0.85rem; color: #3F4741; line-height: 1.5; }
+    .notif-time { margin: 0; font-size: 0.75rem; color: #646A63; }
   `
 })
 export class NotificationsPageComponent implements OnInit {

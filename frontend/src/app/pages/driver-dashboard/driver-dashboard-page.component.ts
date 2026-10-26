@@ -178,56 +178,56 @@ import { DriverAuthService } from '../../services/driver-auth.service';
   `,
   styles: `
     .layout { max-width: 600px; margin: 0 auto; padding: 1rem 1rem 5rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
+    .card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
     @media (max-width: 600px) { .card { padding: 1.25rem; border-radius: 1rem; } }
-    .muted { color: #78716C; }
+    .muted { color: #4A524C; }
     .small { font-size: 0.82rem; }
 
     /* Header */
-    .dash-header { background: white; border-radius: 1.25rem; padding: 1.25rem 1.5rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    .driver-name { margin: 0 0 0.2rem; font-size: 1.25rem; font-weight: 800; color: #1C1917; }
+    .dash-header { background: white; border-radius: 1.25rem; padding: 1.25rem 1.5rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
+    .driver-name { margin: 0 0 0.2rem; font-size: 1.25rem; font-weight: 800; color: #13251E; }
 
     /* Tabs */
-    .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
-    .tab-bar button { flex: 1; padding: 0.85rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #A8A29E; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; min-height: 48px; font-family: inherit; }
-    .tab-bar button.active { color: #1C1917; border-bottom: 3px solid #F5B800; background: rgba(245,184,0,0.05); }
+    .tab-bar { display: flex; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
+    .tab-bar button { flex: 1; padding: 0.85rem; border: none; background: none; font-size: 0.9rem; font-weight: 700; color: #646A63; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; min-height: 48px; font-family: inherit; }
+    .tab-bar button.active { color: #13251E; border-bottom: 3px solid #E5A31D; background: rgba(229, 163, 29,0.05); }
 
     /* Job cards */
     .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .tab-header h2 { margin: 0; font-size: 1.1rem; }
     .tab-title { margin: 0 0 1.25rem; font-size: 1.1rem; }
     .job-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .job-card { border: 1px solid #E7E5E4; border-radius: 1rem; padding: 1rem; background: #FAFAF9; }
+    .job-card { border: 1px solid #E3DACA; border-radius: 1rem; padding: 1rem; background: #FBF8F2; }
     .job-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.6rem; }
-    .job-seller { margin: 0; font-weight: 800; font-size: 0.95rem; color: #1C1917; }
+    .job-seller { margin: 0; font-weight: 800; font-size: 0.95rem; color: #13251E; }
     .payout { font-size: 1.15rem; font-weight: 800; color: var(--success-text); white-space: nowrap; }
     .job-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-    .meta-chip { font-size: 0.78rem; color: #78716C; background: #F5F0E8; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; }
-    .btn-accept { width: 100%; height: 48px; border: none; border-radius: 999px; font-size: 0.95rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
-    .btn-accept:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .meta-chip { font-size: 0.78rem; color: #4A524C; background: #EFE8DA; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; }
+    .btn-accept { width: 100%; height: 48px; border: none; border-radius: 999px; font-size: 0.95rem; font-weight: 800; background: #E5A31D; color: #13251E; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
+    .btn-accept:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
     .btn-accept:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
     /* Active delivery */
     .active-job { display: flex; flex-direction: column; gap: 1rem; }
-    .customer-info, .delivery-info, .pickup-info { background: #FAFAF9; border-radius: 0.75rem; padding: 0.75rem 1rem; border: 1px solid #E7E5E4; }
-    .info-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #A8A29E; margin: 0 0 0.25rem; }
-    .info-value { font-weight: 700; color: #1C1917; margin: 0 0 0.15rem; font-size: 0.95rem; }
+    .customer-info, .delivery-info, .pickup-info { background: #FBF8F2; border-radius: 0.75rem; padding: 0.75rem 1rem; border: 1px solid #E3DACA; }
+    .info-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #646A63; margin: 0 0 0.25rem; }
+    .info-value { font-weight: 700; color: #13251E; margin: 0 0 0.15rem; font-size: 0.95rem; }
 
     /* Map */
-    .map-container { height: 300px; border-radius: 0.75rem; overflow: hidden; margin: 0.5rem 0; background: #E7E5E4; }
+    .map-container { height: 300px; border-radius: 0.75rem; overflow: hidden; margin: 0.5rem 0; background: #E3DACA; }
     @media (min-width: 768px) { .map-container { height: 400px; } }
-    .no-map { height: 80px; display: flex; align-items: center; justify-content: center; background: #F5F0E8; border-radius: 0.75rem; color: #A8A29E; font-size: 0.9rem; }
+    .no-map { height: 80px; display: flex; align-items: center; justify-content: center; background: #EFE8DA; border-radius: 0.75rem; color: #646A63; font-size: 0.9rem; }
 
     /* Status buttons */
     .status-actions { display: flex; flex-direction: column; gap: 0.5rem; }
     .btn-status { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit; width: 100%; transition: opacity 0.15s; }
     .btn-status:disabled { opacity: 0.5; cursor: not-allowed; }
-    .pickup { background: #F5B800; color: #1C1917; }
-    .enroute { background: #00A896; color: white; }
+    .pickup { background: #E5A31D; color: #13251E; }
+    .enroute { background: #14897C; color: white; }
     .delivered { background: var(--success-fill); color: white; }
 
     .proof-upload { display: flex; flex-direction: column; gap: 0.25rem; }
-    .proof-upload label { font-size: 0.875rem; font-weight: 700; color: #1C1917; }
+    .proof-upload label { font-size: 0.875rem; font-weight: 700; color: #13251E; }
     .file-input { border: none; padding: 0; font-size: 0.9rem; height: auto; }
 
     /* Earnings */
@@ -235,14 +235,14 @@ import { DriverAuthService } from '../../services/driver-auth.service';
     .earnings-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--success-text); }
     .earnings-amount { font-size: 1.5rem; font-weight: 800; color: var(--success-text); }
     .earnings-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .earnings-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #E7E5E4; }
+    .earnings-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #E3DACA; }
 
     /* Misc */
-    .empty-state { text-align: center; padding: 2rem 1rem; color: #A8A29E; }
-    .error-msg { color: #E53935; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; }
+    .empty-state { text-align: center; padding: 2rem 1rem; color: #646A63; }
+    .error-msg { color: #C8443A; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; }
 
-    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #E5A31D; color: #13251E; cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
   `
 })
 export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -389,7 +389,7 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
       // Polyline between seller and customer
       L.polyline(
         [[job.sellerLat, job.sellerLng], [job.deliveryLat, job.deliveryLng]],
-        { color: '#00A896', weight: 3, opacity: 0.7 }
+        { color: '#14897C', weight: 3, opacity: 0.7 }
       ).addTo(this.map);
 
       // Watch driver position
@@ -402,8 +402,8 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
           } else {
             const driverIcon = L.circleMarker([driverLat, driverLng], {
               radius: 8,
-              color: '#00A896',
-              fillColor: '#00A896',
+              color: '#14897C',
+              fillColor: '#14897C',
               fillOpacity: 0.8,
               weight: 2
             });

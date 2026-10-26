@@ -43,22 +43,22 @@ import { DriverAuthService } from '../../services/driver-auth.service';
   `,
   styles: `
     .layout { max-width: 420px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
-    .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(28,25,23,0.08); border: 1px solid #E7E5E4; }
+    .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 4px 24px rgba(19, 37, 30,0.08); border: 1px solid #E3DACA; }
     @media (max-width: 600px) { .card { padding: 1.5rem 1.25rem; border-radius: 1rem; } }
     .card-header { margin-bottom: 1.5rem; }
-    .card-header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; color: #1C1917; font-weight: 800; }
-    .muted { color: #78716C; font-size: 0.9rem; }
+    .card-header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; color: #13251E; font-weight: 800; }
+    .muted { color: #4A524C; font-size: 0.9rem; }
     .form { display: flex; flex-direction: column; gap: 1rem; }
     .field { display: flex; flex-direction: column; gap: 0.375rem; }
-    label { font-size: 0.875rem; font-weight: 700; color: #1C1917; display: block; }
-    input { height: 48px; border: 2px solid #E7E5E4; border-radius: 0.75rem; padding: 0 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; font-family: inherit; font-weight: 600; background: white; color: #1C1917; outline: none; transition: border-color 0.15s; }
-    input:focus { border-color: #F5B800; box-shadow: 0 0 0 3px rgba(245,184,0,0.2); }
-    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #F5B800; color: #1C1917; cursor: pointer; font-family: inherit; width: 100%; margin-top: 0.5rem; box-shadow: 0 4px 12px rgba(245,184,0,0.35); transition: box-shadow 0.15s; }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(245,184,0,0.5); }
+    label { font-size: 0.875rem; font-weight: 700; color: #13251E; display: block; }
+    input { height: 48px; border: 2px solid #E3DACA; border-radius: 0.75rem; padding: 0 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; font-family: inherit; font-weight: 600; background: white; color: #13251E; outline: none; transition: border-color 0.15s; }
+    input:focus { border-color: #E5A31D; box-shadow: 0 0 0 3px rgba(229, 163, 29,0.2); }
+    .btn-primary { height: 48px; border: none; border-radius: 999px; font-size: 1rem; font-weight: 800; background: #E5A31D; color: #13251E; cursor: pointer; font-family: inherit; width: 100%; margin-top: 0.5rem; box-shadow: 0 4px 12px rgba(229, 163, 29,0.35); transition: box-shadow 0.15s; }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(229, 163, 29,0.5); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    .error-msg { color: #E53935; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; margin: 0; }
-    .register-link { text-align: center; margin-top: 1.25rem; font-size: 0.9rem; color: #78716C; }
-    .register-link a { color: #00A896; font-weight: 800; text-decoration: none; }
+    .error-msg { color: #C8443A; font-size: 0.875rem; font-weight: 700; background: rgba(229,57,53,0.06); border: 1px solid rgba(229,57,53,0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; margin: 0; }
+    .register-link { text-align: center; margin-top: 1.25rem; font-size: 0.9rem; color: #4A524C; }
+    .register-link a { color: #14897C; font-weight: 800; text-decoration: none; }
     .register-link a:hover { text-decoration: underline; }
   `
 })
