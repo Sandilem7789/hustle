@@ -39,7 +39,7 @@
   text-decoration: none;
 }
 
-.toolbar-logo .wordmark-text { font-size: 1.25rem; color: var(--toolbar-fg); }
+.toolbar-logo .wordmark-text { font-size: 1.5rem; color: var(--toolbar-fg); }
 
 .app-toolbar .mat-icon { color: var(--toolbar-fg); }
 
@@ -491,8 +491,6 @@
     padding: 0 max(1.5rem, calc((100% - 1120px) / 2));
     gap: 12px;
   }
-
-  .toolbar-logo .wordmark-text { font-size: 1.5rem; }
 
   .toolbar-links { display: flex; gap: 4px; margin-left: 16px; }
   .toolbar-community,
