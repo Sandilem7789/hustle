@@ -27,6 +27,12 @@ public class CustomerController {
         return ResponseEntity.ok(customerAuthService.login(req));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("X-Customer-Token") String token) {
+        customerAuthService.logout(token);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/me")
     public ResponseEntity<CustomerAuthResponse> me(@RequestHeader("X-Customer-Token") String token) {
         Customer customer = customerAuthService.requireAuth(token);

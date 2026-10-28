@@ -25,9 +25,11 @@ public class UnifiedAuthService {
     private final AppUserSessionRepository appUserSessionRepository;
     private final CustomerRepository customerRepository;
     private final CustomerSessionRepository customerSessionRepository;
+    private final HustlerSessionRepository hustlerSessionRepository;
     private final HustlerApplicationRepository hustlerApplicationRepository;
     private final BusinessProfileRepository businessProfileRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final SessionPolicy sessionPolicy;
     private final LoginAttemptService loginAttempts;
 
     @Transactional
@@ -117,10 +119,20 @@ public class UnifiedAuthService {
 
     @Transactional(readOnly = true)
     public AppUser requireAuth(String token) {
-        return appUserSessionRepository.findByToken(token)
+        return appUserSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom())
                 .map(AppUserSession::getUser)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
+    }
+
+    /** Ends the sessions behind these tokens. The X-Auth-Token may be an account or an older shop session. */
+    @Transactional
+    public void logout(String appToken, String customerToken) {
+        if (appToken != null) {
+            appUserSessionRepository.deleteByToken(appToken);
+            hustlerSessionRepository.deleteByToken(appToken);
+        }
+        if (customerToken != null) customerSessionRepository.deleteByToken(customerToken);
     }
 
     // --- private helpers ---

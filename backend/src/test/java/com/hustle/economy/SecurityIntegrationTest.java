@@ -32,9 +32,9 @@ class SecurityIntegrationTest extends AbstractIntegrationTest {
     // The only endpoints reachable without a session. Adding a public endpoint means adding it
     // here and to SecurityConfig; every other endpoint must refuse an anonymous request.
     private static final Set<String> PUBLIC = Set.of(
-            "POST /api/auth/login", "POST /api/auth/register",
-            "POST /api/customers/login", "POST /api/customers/register",
-            "POST /api/drivers/login", "POST /api/drivers/register",
+            "POST /api/auth/login", "POST /api/auth/register", "POST /api/auth/logout",
+            "POST /api/customers/login", "POST /api/customers/register", "POST /api/customers/logout",
+            "POST /api/drivers/login", "POST /api/drivers/register", "POST /api/drivers/logout",
             "POST /api/orders/validate-distance",
             "POST /api/hustlers",
             "GET /api/communities", "GET /api/communities/{id}/hustlers",

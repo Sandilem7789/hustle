@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 import { CustomerAuthService } from './customer-auth.service';
@@ -102,6 +102,15 @@ export class UnifiedAuthService {
   }
 
   logout(): void {
+    const token = this.getToken() ?? this.legacyAuth.getToken();
+    const customerToken = this.getCustomerToken() ?? this.customerAuth.getToken();
+    if (token || customerToken) {
+      let headers = new HttpHeaders();
+      if (token) headers = headers.set('X-Auth-Token', token);
+      if (customerToken) headers = headers.set('X-Customer-Token', customerToken);
+      // Ending the session on the server is best effort, so signing out still works offline
+      this.http.post(`${API}/logout`, null, { headers }).subscribe({ error: () => {} });
+    }
     localStorage.removeItem(STORAGE_KEY);
     this._user.set(null);
     this.legacyAuth.logout();

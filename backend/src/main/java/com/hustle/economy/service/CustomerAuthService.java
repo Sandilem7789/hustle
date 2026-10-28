@@ -24,6 +24,7 @@ public class CustomerAuthService {
     private final CustomerRepository customerRepository;
     private final CustomerSessionRepository customerSessionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final SessionPolicy sessionPolicy;
     private final LoginAttemptService loginAttempts;
 
     @Transactional
@@ -78,14 +79,19 @@ public class CustomerAuthService {
 
     @Transactional(readOnly = true)
     public Customer requireAuth(String token) {
-        CustomerSession session = customerSessionRepository.findByToken(token)
+        CustomerSession session = customerSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
         return session.getCustomer();
     }
 
     @Transactional(readOnly = true)
     public boolean hasSession(String token) {
-        return customerSessionRepository.findByToken(token).isPresent();
+        return customerSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom()).isPresent();
+    }
+
+    @Transactional
+    public void logout(String token) {
+        customerSessionRepository.deleteByToken(token);
     }
 
     private CustomerAuthResponse toResponse(String token, Customer customer) {

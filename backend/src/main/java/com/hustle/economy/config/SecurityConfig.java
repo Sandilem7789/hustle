@@ -61,10 +61,10 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                         .requestMatchers("/error").permitAll()
 
-                        // Public: sign-in, sign-up, browsing and applying
-                        .requestMatchers(POST, "/api/auth/login", "/api/auth/register").permitAll()
-                        .requestMatchers(POST, "/api/customers/login", "/api/customers/register").permitAll()
-                        .requestMatchers(POST, "/api/drivers/login", "/api/drivers/register").permitAll()
+                        // Public: sign-in, sign-up, sign-out (ends only the token sent), browsing and applying
+                        .requestMatchers(POST, "/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
+                        .requestMatchers(POST, "/api/customers/login", "/api/customers/register", "/api/customers/logout").permitAll()
+                        .requestMatchers(POST, "/api/drivers/login", "/api/drivers/register", "/api/drivers/logout").permitAll()
                         .requestMatchers(POST, "/api/orders/validate-distance").permitAll()
                         .requestMatchers(POST, "/api/hustlers").permitAll()
                         .requestMatchers(GET, "/api/communities", "/api/communities/*/hustlers").permitAll()

@@ -30,6 +30,12 @@ public class DriverController {
         return ResponseEntity.ok(driverAuthService.login(req));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("X-Driver-Token") String token) {
+        driverAuthService.logout(token);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/jobs")
     public ResponseEntity<List<DeliveryJobResponse>> openJobs(
             @RequestHeader("X-Driver-Token") String token) {

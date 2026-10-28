@@ -25,4 +25,12 @@ public class AuthController {
     public ResponseEntity<UnifiedAuthResponse> login(@RequestBody @Valid AuthRequest request) {
         return ResponseEntity.ok(unifiedAuthService.login(request));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @RequestHeader(value = "X-Auth-Token", required = false) String token,
+            @RequestHeader(value = "X-Customer-Token", required = false) String customerToken) {
+        unifiedAuthService.logout(token, customerToken);
+        return ResponseEntity.noContent().build();
+    }
 }

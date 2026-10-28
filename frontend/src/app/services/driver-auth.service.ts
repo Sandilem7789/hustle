@@ -1,4 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 export interface DriverAuthState {
   token: string;
@@ -13,6 +15,7 @@ const DRIVER_AUTH_KEY = 'hustle_driver_auth';
 
 @Injectable({ providedIn: 'root' })
 export class DriverAuthService {
+  private readonly http = inject(HttpClient);
   private readonly _state = signal<DriverAuthState | null>(this.load());
 
   readonly isLoggedIn = computed(() => this._state() !== null);
@@ -24,6 +27,12 @@ export class DriverAuthService {
   }
 
   logout(): void {
+    const token = this.getToken();
+    if (token) {
+      // Best effort, so signing out still works offline
+      this.http.post(`${environment.apiBaseUrl}/api/drivers/logout`, null, { headers: { 'X-Driver-Token': token } })
+        .subscribe({ error: () => {} });
+    }
     localStorage.removeItem(DRIVER_AUTH_KEY);
     this._state.set(null);
   }

@@ -30,6 +30,7 @@ public class DriverAuthService {
     private final DriverSessionRepository driverSessionRepository;
     private final CommunityRepository communityRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final SessionPolicy sessionPolicy;
     private final LoginAttemptService loginAttempts;
 
     @Transactional
@@ -90,14 +91,19 @@ public class DriverAuthService {
 
     @Transactional(readOnly = true)
     public Driver requireAuth(String token) {
-        DriverSession session = driverSessionRepository.findByToken(token)
+        DriverSession session = driverSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
         return session.getDriver();
     }
 
     @Transactional(readOnly = true)
     public boolean hasSession(String token) {
-        return driverSessionRepository.findByToken(token).isPresent();
+        return driverSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom()).isPresent();
+    }
+
+    @Transactional
+    public void logout(String token) {
+        driverSessionRepository.deleteByToken(token);
     }
 
     @Transactional(readOnly = true)

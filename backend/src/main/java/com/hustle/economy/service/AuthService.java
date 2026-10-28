@@ -27,11 +27,12 @@ public class AuthService {
     private final AppUserSessionRepository appUserSessionRepository;
     private final AppUserRepository appUserRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final SessionPolicy sessionPolicy;
 
     @Transactional(readOnly = true)
     public BusinessProfile requireAuth(String token) {
         // Check new unified sessions first
-        var appSession = appUserSessionRepository.findByToken(token);
+        var appSession = appUserSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom());
         if (appSession.isPresent()) {
             String phone = appSession.get().getUser().getPhone();
             // Only look for APPROVED applications — a pending test application must not block the coordinator
@@ -42,7 +43,7 @@ public class AuthService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Business profile not found"));
         }
         // Fall back to legacy hustler sessions
-        HustlerSession session = sessionRepository.findByToken(token)
+        HustlerSession session = sessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
         return session.getBusinessProfile();
@@ -51,11 +52,11 @@ public class AuthService {
     /** Role names for a valid X-Auth-Token, or empty if the token is unknown. */
     @Transactional(readOnly = true)
     public Optional<List<String>> sessionRoles(String token) {
-        var appSession = appUserSessionRepository.findByToken(token);
+        var appSession = appUserSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom());
         if (appSession.isPresent()) {
             return Optional.of(appSession.get().getUser().getRoles().stream().map(Enum::name).toList());
         }
-        return sessionRepository.findByToken(token).map(session -> {
+        return sessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom()).map(session -> {
             UserRole role = session.getBusinessProfile().getApplication().getRole();
             return List.of((role != null ? role : UserRole.HUSTLER).name());
         });
@@ -75,7 +76,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public UserRole resolveRole(String token, BusinessProfile profile) {
         // Determine role from AppUser if present, else from HustlerApplication
-        var appSession = appUserSessionRepository.findByToken(token);
+        var appSession = appUserSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom());
         if (appSession.isPresent()) {
             AppUser user = appSession.get().getUser();
             return user.getRoles().stream()
@@ -95,7 +96,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UUID resolveAppUserId(String token) {
-        return appUserSessionRepository.findByToken(token)
+        return appUserSessionRepository.findByTokenAndCreatedAtAfter(token, sessionPolicy.validFrom())
                 .map(session -> session.getUser().getId())
                 .orElse(null);
     }
