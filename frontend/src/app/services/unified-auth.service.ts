@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 import { CustomerAuthService } from './customer-auth.service';
+import { environment } from '../../environments/environment';
 
 export interface UnifiedUser {
   token: string;
@@ -34,7 +35,7 @@ export interface LoginRequest {
 }
 
 const STORAGE_KEY = 'hustle_unified_auth';
-const API = '/api/auth';
+const API = `${environment.apiBaseUrl}/api/auth`;
 
 @Injectable({ providedIn: 'root' })
 export class UnifiedAuthService {
