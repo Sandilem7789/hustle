@@ -7,6 +7,13 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Architecture review: personal data, central security, login lockout, session expiry (2026-10-28)
+- **No personal data seeded from source:** `DataInitializer` no longer carries or seeds the hardcoded applicant list. The data is still in git history (see `CODE_REVIEWS.md` / Sandile's decision on a history purge).
+- **One place decides API access:** `spring-boot-starter-security` with `TokenAuthenticationFilter` (turns `X-Auth-Token`, `X-Customer-Token`, `X-Driver-Token` into token-kind and role authorities) and `SecurityConfig` (every rule in one table, ending in `denyAll`, so a new endpoint is closed until a rule opens it). Controllers still call the auth services, which repeat the check. `SecurityIntegrationTest` sends an anonymous request to every mapped endpoint and fails if anything outside its public list answers with anything but 401.
+- **Login lockout:** five wrong passwords for a phone number within 15 minutes refuse that number for 15 minutes (429) on all three login endpoints. In memory.
+- **Sessions expire and can be ended:** all four session tables are refused after `auth.session-ttl-days` (default 30, env `AUTH_SESSION_TTL_DAYS`). New `POST /api/auth/logout`, `/api/customers/logout`, `/api/drivers/logout`; the app's sign-out calls them, and a 401 on an app-token request signs the person out and opens `/login`.
+- Tests: backend suite 43 passed.
+
 ### Order-flow fixes: drivers on need to know, safe cancelling, shop alerts (2026-10-28)
 - **Open jobs are filtered to the driver's community** (the seller's community must match the driver's community base), and `acceptJob` refuses a job from outside it.
 - **Need to know (D10) enforced on the server:** `DeliveryJobResponse` carries the buyer's name, phone and drop-off only while the job is `PICKED_UP` or `EN_ROUTE`; open, assigned and finished jobs carry none of it. The phone is no longer masked to the driver who is carrying the parcel, so "Call buyer" dials a real number. New `tripKm` field (worked out on the server) keeps the trip distance on the job list without revealing the pin. Drive shows the map from the seller's pin alone and adds the drop-off after collection.
