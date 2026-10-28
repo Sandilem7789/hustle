@@ -27,6 +27,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final BusinessProfileRepository businessProfileRepository;
     private final DispatchService dispatchService;
+    private final NotificationService notificationService;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest req, UUID customerId) {
@@ -119,6 +120,12 @@ public class OrderService {
         savedOrder.getItems().addAll(orderItems);
         savedOrder = orderRepository.save(savedOrder);
 
+        notificationService.create(hustlerProfile, NotificationType.ORDER,
+                "New order #" + shortRef(savedOrder),
+                customer.getFirstName() + " wants " + (savedOrder.getFulfillmentType() == FulfillmentType.DELIVERY
+                        ? "it delivered" : "to collect it") + ". Confirm or cancel it in Orders.",
+                "/dashboard?tab=orders");
+
         return toResponse(savedOrder, true);
     }
 
@@ -146,6 +153,23 @@ public class OrderService {
         if (newStatus == OrderStatus.COLLECTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Scan the customer's pickup QR code to mark an order as collected");
+        }
+
+        OrderStatus current = order.getStatus();
+        boolean allowed = switch (newStatus) {
+            case CONFIRMED -> current == OrderStatus.PENDING;
+            case CANCELLED -> current == OrderStatus.PENDING || current == OrderStatus.CONFIRMED
+                    || current == OrderStatus.DRIVER_ASSIGNED;
+            default -> false;
+        };
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, current == OrderStatus.EN_ROUTE
+                    ? "The driver has already collected this order"
+                    : "This order can no longer be changed");
+        }
+
+        if (newStatus == OrderStatus.CANCELLED) {
+            dispatchService.cancelJobForOrder(order);
         }
 
         order.setStatus(newStatus);
@@ -213,6 +237,11 @@ public class OrderService {
                         ? "Within delivery range (" + String.format("%.1f", distance) + " km)"
                         : "Outside delivery range (" + String.format("%.1f", distance) + " km)")
                 .build();
+    }
+
+    // Matches the "#1A2B3C4D" reference the Sell screen shows
+    static String shortRef(Order order) {
+        return order.getId().toString().substring(0, 8).toUpperCase();
     }
 
     private OrderResponse toResponse(Order order) {

@@ -71,7 +71,7 @@ import { DriverAuthService } from '../../services/driver-auth.service';
           <ng-container *ngIf="activeJob() as job">
             <div class="current-grid">
               <div class="map-box">
-                <ng-container *ngIf="job.sellerLat && job.sellerLng && job.deliveryLat && job.deliveryLng; else noMap">
+                <ng-container *ngIf="job.sellerLat && job.sellerLng; else noMap">
                   <div class="map-container" id="driver-map"></div>
                 </ng-container>
                 <ng-template #noMap>
@@ -249,14 +249,8 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
     return n === 1 ? '1 item' : `${n} items`;
   }
 
-  // Straight-line distance from the shop to the drop-off, when both are pinned
   distanceKm(job: DeliveryJobResponse): number | null {
-    if (!job.sellerLat || !job.sellerLng || !job.deliveryLat || !job.deliveryLng) return null;
-    const rad = (d: number) => d * Math.PI / 180;
-    const dLat = rad(job.deliveryLat - job.sellerLat);
-    const dLng = rad(job.deliveryLng - job.sellerLng);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(job.sellerLat)) * Math.cos(rad(job.deliveryLat)) * Math.sin(dLng / 2) ** 2;
-    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return job.tripKm ?? null;
   }
 
   steps(job: DeliveryJobResponse): { key: string; state: 'done' | 'now' | 'next' }[] {
@@ -368,7 +362,7 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
 
   private async initMapIfNeeded(): Promise<void> {
     const job = this.activeJob();
-    if (!job || !job.sellerLat || !job.sellerLng || !job.deliveryLat || !job.deliveryLng) return;
+    if (!job || !job.sellerLat || !job.sellerLng) return;
     if (this.map) return;
 
     const mapEl = document.getElementById('driver-map');
@@ -377,10 +371,7 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
     try {
       const L = await import('leaflet' as any);
 
-      const midLat = (job.sellerLat + job.deliveryLat) / 2;
-      const midLng = (job.sellerLng + job.deliveryLng) / 2;
-
-      this.map = L.map('driver-map').setView([midLat, midLng], 13);
+      this.map = L.map('driver-map').setView([job.sellerLat, job.sellerLng], 14);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -397,7 +388,8 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
         .bindPopup(`Pickup: ${job.sellerName}`);
 
       // The buyer's drop-off appears only once the parcel is collected (D10)
-      if (job.status !== 'ASSIGNED') {
+      if (job.deliveryLat && job.deliveryLng) {
+        this.map.setView([(job.sellerLat + job.deliveryLat) / 2, (job.sellerLng + job.deliveryLng) / 2], 13);
         const customerIcon = L.divIcon({
           html: '<div style="background:#2E6B4A;width:16px;height:16px;border-radius:50%;border:3px solid #FFFFFF;box-sizing:border-box;"></div>',
           iconSize: [16, 16],
@@ -410,8 +402,6 @@ export class DriverDashboardPageComponent implements OnInit, OnDestroy, AfterVie
           [[job.sellerLat, job.sellerLng], [job.deliveryLat, job.deliveryLng]],
           { color: '#13251E', weight: 4, opacity: 0.85, dashArray: '2 10', lineCap: 'round' }
         ).addTo(this.map);
-      } else {
-        this.map.setView([job.sellerLat, job.sellerLng], 14);
       }
 
       // Watch driver position

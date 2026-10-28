@@ -590,11 +590,13 @@ export interface DeliveryJobResponse {
   sellerAddress: string;
   sellerLat?: number;
   sellerLng?: number;
-  customerName: string;
-  customerPhone: string;
-  deliveryAddress: string;
+  // Buyer and drop-off arrive only while the driver carries the parcel (D10)
+  customerName?: string;
+  customerPhone?: string;
+  deliveryAddress?: string;
   deliveryLat?: number;
   deliveryLng?: number;
+  tripKm?: number;
   items: OrderItemResponse[];
   totalAmount: number;
   payoutAmount: number;
@@ -987,7 +989,7 @@ export interface ReportGenerationResponse {
 
 export interface NotificationResponse {
   id: string;
-  type: 'SURVEY_ASSIGNED' | 'APPLICATION_REVIEWED' | 'OTHER';
+  type: 'SURVEY_ASSIGNED' | 'APPLICATION_REVIEWED' | 'ORDER' | 'OTHER';
   title: string;
   body?: string;
   linkPath?: string;

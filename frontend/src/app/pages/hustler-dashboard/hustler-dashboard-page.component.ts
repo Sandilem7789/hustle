@@ -295,6 +295,7 @@ const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
             <button class="btn gold" *ngIf="order.fulfillmentType === 'COLLECTION' && order.status === 'CONFIRMED'" (click)="openCollectScanModal()">
               <mat-icon aria-hidden="true">qr_code_scanner</mat-icon>Scan their pickup code
             </button>
+            <button class="btn line" *ngIf="order.status === 'CONFIRMED' || order.status === 'DRIVER_ASSIGNED'" (click)="cancelOrder(order.id)" [disabled]="orderActionId() === order.id">Cancel order</button>
             <p *ngIf="orderError() && orderActionId() === order.id" class="error">{{ orderError() }}</p>
           </article>
         </div>

@@ -6,6 +6,7 @@ import com.hustle.economy.entity.*;
 import com.hustle.economy.repository.DeliveryJobRepository;
 import com.hustle.economy.repository.DriverRepository;
 import com.hustle.economy.repository.OrderRepository;
+import com.hustle.economy.util.HaversineUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ public class DispatchService {
     private final DeliveryJobRepository deliveryJobRepository;
     private final DriverRepository driverRepository;
     private final OrderRepository orderRepository;
+    private final NotificationService notificationService;
 
     private static final BigDecimal DRIVER_CUT_RATE = new BigDecimal("0.10");
     private static final BigDecimal MIN_PAYOUT = new BigDecimal("10.00");
@@ -64,6 +66,10 @@ public class DispatchService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Driver account is not active");
         }
 
+        if (!job.getOrder().getHustlerProfile().getCommunity().getId().equals(driver.getCommunityBase().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This job is outside your area");
+        }
+
         boolean hasActiveJob = deliveryJobRepository.findByDriver_IdOrderByCreatedAtDesc(driverId)
                 .stream()
                 .anyMatch(j -> j.getStatus() == JobStatus.ASSIGNED
@@ -78,9 +84,25 @@ public class DispatchService {
         job.setStatus(JobStatus.ASSIGNED);
         job.setAcceptedAt(OffsetDateTime.now());
 
-        setOrderStatus(job.getOrder(), OrderStatus.DRIVER_ASSIGNED);
+        Order order = job.getOrder();
+        setOrderStatus(order, OrderStatus.DRIVER_ASSIGNED);
+        notificationService.create(order.getHustlerProfile(), NotificationType.ORDER,
+                "A driver is coming for order #" + OrderService.shortRef(order),
+                driver.getFirstName() + " will collect it from your shop.",
+                "/dashboard?tab=orders");
 
         return toResponse(deliveryJobRepository.save(job));
+    }
+
+    @Transactional
+    public void cancelJobForOrder(Order order) {
+        deliveryJobRepository.findByOrder_Id(order.getId()).ifPresent(job -> {
+            if (job.getStatus() != JobStatus.OPEN && job.getStatus() != JobStatus.ASSIGNED) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "The driver has already collected this order");
+            }
+            job.setStatus(JobStatus.CANCELLED);
+            deliveryJobRepository.save(job);
+        });
     }
 
     @Transactional
@@ -96,7 +118,7 @@ public class DispatchService {
 
         job.setStatus(newStatus);
 
-        if (newStatus == JobStatus.EN_ROUTE) {
+        if (newStatus == JobStatus.PICKED_UP || newStatus == JobStatus.EN_ROUTE) {
             setOrderStatus(job.getOrder(), OrderStatus.EN_ROUTE);
         }
 
@@ -113,7 +135,7 @@ public class DispatchService {
 
     @Transactional(readOnly = true)
     public List<DeliveryJobResponse> listOpenJobs(UUID driverCommunityId) {
-        return deliveryJobRepository.findByStatusOrderByCreatedAtAsc(JobStatus.OPEN)
+        return deliveryJobRepository.findByStatusAndOrder_HustlerProfile_Community_IdOrderByCreatedAtAsc(JobStatus.OPEN, driverCommunityId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -161,6 +183,13 @@ public class DispatchService {
                         .build())
                 .toList();
 
+        // Need to know (D10): the buyer and drop-off are shown only while the driver is carrying the parcel
+        boolean carrying = job.getStatus() == JobStatus.PICKED_UP || job.getStatus() == JobStatus.EN_ROUTE;
+        Double tripKm = seller.getLatitude() != null && seller.getLongitude() != null
+                && order.getDeliveryLat() != null && order.getDeliveryLng() != null
+                ? HaversineUtil.distanceKm(seller.getLatitude(), seller.getLongitude(), order.getDeliveryLat(), order.getDeliveryLng())
+                : null;
+
         return DeliveryJobResponse.builder()
                 .jobId(job.getId().toString())
                 .orderId(order.getId().toString())
@@ -170,21 +199,17 @@ public class DispatchService {
                 .sellerAddress(seller.getOperatingArea())
                 .sellerLat(seller.getLatitude())
                 .sellerLng(seller.getLongitude())
-                .customerName(customer.getFirstName() + " " + customer.getLastName())
-                .customerPhone(maskPhone(customer.getPhone()))
-                .deliveryAddress(order.getDeliveryAddress())
-                .deliveryLat(order.getDeliveryLat())
-                .deliveryLng(order.getDeliveryLng())
+                .customerName(carrying ? customer.getFirstName() + " " + customer.getLastName() : null)
+                .customerPhone(carrying ? customer.getPhone() : null)
+                .deliveryAddress(carrying ? order.getDeliveryAddress() : null)
+                .deliveryLat(carrying ? order.getDeliveryLat() : null)
+                .deliveryLng(carrying ? order.getDeliveryLng() : null)
+                .tripKm(tripKm)
                 .items(items)
                 .totalAmount(order.getTotalAmount())
                 .payoutAmount(job.getPayoutAmount())
                 .createdAt(job.getCreatedAt().toString())
                 .acceptedAt(job.getAcceptedAt() != null ? job.getAcceptedAt().toString() : null)
                 .build();
-    }
-
-    private String maskPhone(String phone) {
-        if (phone == null || phone.length() <= 4) return phone;
-        return "***" + phone.substring(phone.length() - 4);
     }
 }

@@ -11,6 +11,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 const ICONS: Record<NotificationResponse['type'], string> = {
   APPLICATION_REVIEWED: 'verified',
   SURVEY_ASSIGNED: 'assignment',
+  ORDER: 'receipt_long',
   OTHER: 'notifications',
 };
 

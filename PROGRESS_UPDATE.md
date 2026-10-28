@@ -7,6 +7,15 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Order-flow fixes: drivers on need to know, safe cancelling, shop alerts (2026-10-28)
+- **Open jobs are filtered to the driver's community** (the seller's community must match the driver's community base), and `acceptJob` refuses a job from outside it.
+- **Need to know (D10) enforced on the server:** `DeliveryJobResponse` carries the buyer's name, phone and drop-off only while the job is `PICKED_UP` or `EN_ROUTE`; open, assigned and finished jobs carry none of it. The phone is no longer masked to the driver who is carrying the parcel, so "Call buyer" dials a real number. New `tripKm` field (worked out on the server) keeps the trip distance on the job list without revealing the pin. Drive shows the map from the seller's pin alone and adds the drop-off after collection.
+- **Order shows "On the way" from pickup:** job `PICKED_UP` now moves the order to `EN_ROUTE`.
+- **Shop status changes are limited:** a shop can only confirm a `PENDING` order, or cancel a `PENDING`, `CONFIRMED` or `DRIVER_ASSIGNED` one. Cancelling also cancels the delivery job; once the driver has the parcel, cancelling is refused. Sell now offers **Cancel order** on confirmed and driver-assigned orders.
+- **Shop alerts in Updates:** a new `ORDER` notification for each new order and when a driver accepts the job (Flyway `V4__order_notifications.sql` widens the type check).
+- Tests: `DispatchOrderStatusIntegrationTest` grew from 1 to 7 tests (community filter, outside-area refusal, buyer shown only while carrying, cancel cancels the job, cancel refused after pickup, shop cannot set driver statuses). Backend suite: 30 passed.
+- Not done: drivers and buyers still get no alerts (waits for WhatsApp/push), one shop per order, collection only at the seller's own shop.
+
 ### Community Agent screens: Verify queue and one-visit check (2026-10-26)
 - **`/facilitator` is now the Community Agent's Verify queue** (canvas "Community Agent", D5), phone and big screen. Three lists from today's pipeline stages: **To visit** (captured, calling, interview booked, interviewed; oldest application first), **With the Hub** (verified, waiting for the Hub Coordinator's final approval, D17) and **Done**. Follows the community chosen in the menu. Phones are masked to the last four digits; Call dials the number.
 - **`/facilitator/visit/:id` is the one-visit check:** meet them (in person, ID seen and 18 or older; under-18 applicants cannot be approved, D11), pin the business (GPS "Pin where I'm standing" with accuracy, or tap the map), photos (5 MB checked before upload), what they sell, interview notes, and a decision: **Approve** (records the interview as passed and the verification as verified, which moves the applicant to the Hub), **Visit again** (books a date) or **Reject** (reason required; anything gathered is kept as a failed verification). Verified and finished applications open read-only. English and isiZulu (isiZulu best-effort, needs review).

@@ -10,6 +10,6 @@ import java.util.UUID;
 
 public interface DeliveryJobRepository extends JpaRepository<DeliveryJob, UUID> {
     List<DeliveryJob> findByDriver_IdOrderByCreatedAtDesc(UUID driverId);
-    List<DeliveryJob> findByStatusOrderByCreatedAtAsc(JobStatus status);
+    List<DeliveryJob> findByStatusAndOrder_HustlerProfile_Community_IdOrderByCreatedAtAsc(JobStatus status, UUID communityId);
     Optional<DeliveryJob> findByOrder_Id(UUID orderId);
 }

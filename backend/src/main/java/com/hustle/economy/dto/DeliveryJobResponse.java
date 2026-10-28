@@ -23,6 +23,7 @@ public class DeliveryJobResponse {
     private String deliveryAddress;
     private Double deliveryLat;
     private Double deliveryLng;
+    private Double tripKm;
     private List<OrderItemResponse> items;
     private BigDecimal totalAmount;
     private BigDecimal payoutAmount;
