@@ -13,6 +13,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -44,6 +46,19 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Invalid or expired session. Please log in again."));
         return session.getBusinessProfile();
+    }
+
+    /** Role names for a valid X-Auth-Token, or empty if the token is unknown. */
+    @Transactional(readOnly = true)
+    public Optional<List<String>> sessionRoles(String token) {
+        var appSession = appUserSessionRepository.findByToken(token);
+        if (appSession.isPresent()) {
+            return Optional.of(appSession.get().getUser().getRoles().stream().map(Enum::name).toList());
+        }
+        return sessionRepository.findByToken(token).map(session -> {
+            UserRole role = session.getBusinessProfile().getApplication().getRole();
+            return List.of((role != null ? role : UserRole.HUSTLER).name());
+        });
     }
 
     @Transactional(readOnly = true)

@@ -78,6 +78,11 @@ public class CustomerAuthService {
         return session.getCustomer();
     }
 
+    @Transactional(readOnly = true)
+    public boolean hasSession(String token) {
+        return customerSessionRepository.findByToken(token).isPresent();
+    }
+
     private CustomerAuthResponse toResponse(String token, Customer customer) {
         return CustomerAuthResponse.builder()
                 .token(token)

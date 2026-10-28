@@ -91,6 +91,11 @@ public class DriverAuthService {
     }
 
     @Transactional(readOnly = true)
+    public boolean hasSession(String token) {
+        return driverSessionRepository.findByToken(token).isPresent();
+    }
+
+    @Transactional(readOnly = true)
     public DriverResponse getDriver(UUID driverId) {
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found"));
