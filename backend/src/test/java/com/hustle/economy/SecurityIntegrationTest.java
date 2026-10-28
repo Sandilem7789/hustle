@@ -20,7 +20,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
@@ -62,6 +64,16 @@ class SecurityIntegrationTest extends AbstractIntegrationTest {
         }
         assertThat(open).isEmpty();
         assertThat(checked).isGreaterThan(60);
+    }
+
+    @Test
+    void corsPreflightFromTheProductionSiteIsAllowedWithoutASession() throws Exception {
+        mvc.perform(options("/api/products/my")
+                        .header("Origin", "https://hustleconomy.netlify.app")
+                        .header("Access-Control-Request-Method", "PATCH")
+                        .header("Access-Control-Request-Headers", "X-Auth-Token"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "https://hustleconomy.netlify.app"));
     }
 
     @Test
