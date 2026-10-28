@@ -28,6 +28,7 @@ public class UnifiedAuthService {
     private final HustlerApplicationRepository hustlerApplicationRepository;
     private final BusinessProfileRepository businessProfileRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttempts;
 
     @Transactional
     public UnifiedAuthResponse register(UnifiedRegisterRequest request) {
@@ -86,6 +87,10 @@ public class UnifiedAuthService {
 
     @Transactional
     public UnifiedAuthResponse login(AuthRequest request) {
+        return loginAttempts.guard(request.getPhone(), () -> attemptLogin(request));
+    }
+
+    private UnifiedAuthResponse attemptLogin(AuthRequest request) {
         String phone = PhoneUtils.normalize(request.getPhone());
 
         // 1. Check AppUser (new unified users)

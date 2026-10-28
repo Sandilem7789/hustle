@@ -24,6 +24,7 @@ public class CustomerAuthService {
     private final CustomerRepository customerRepository;
     private final CustomerSessionRepository customerSessionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttempts;
 
     @Transactional
     public CustomerAuthResponse register(CustomerRegisterRequest req) {
@@ -54,6 +55,10 @@ public class CustomerAuthService {
 
     @Transactional
     public CustomerAuthResponse login(CustomerLoginRequest req) {
+        return loginAttempts.guard(req.getPhone(), () -> attemptLogin(req));
+    }
+
+    private CustomerAuthResponse attemptLogin(CustomerLoginRequest req) {
         Customer customer = customerRepository.findByPhone(req.getPhone())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 

@@ -30,6 +30,7 @@ public class DriverAuthService {
     private final DriverSessionRepository driverSessionRepository;
     private final CommunityRepository communityRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttempts;
 
     @Transactional
     public DriverAuthResponse register(DriverRegisterRequest req) {
@@ -66,6 +67,10 @@ public class DriverAuthService {
 
     @Transactional
     public DriverAuthResponse login(DriverLoginRequest req) {
+        return loginAttempts.guard(req.getPhone(), () -> attemptLogin(req));
+    }
+
+    private DriverAuthResponse attemptLogin(DriverLoginRequest req) {
         Driver driver = driverRepository.findByPhone(req.getPhone())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
