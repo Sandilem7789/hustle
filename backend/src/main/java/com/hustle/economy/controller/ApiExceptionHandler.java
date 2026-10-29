@@ -12,6 +12,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
@@ -55,6 +56,13 @@ public class ApiExceptionHandler {
             HttpMessageNotReadableException.class, MissingServletRequestParameterException.class})
     public ResponseEntity<Map<String, String>> badRequest(Exception exception) {
         return ResponseEntity.badRequest().body(error("Invalid request", HttpStatus.BAD_REQUEST));
+    }
+
+    // Raised while the multipart body is parsed, before UploadController runs
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> tooLarge(MaxUploadSizeExceededException exception) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(error("Images must be 5 MB or smaller", HttpStatus.PAYLOAD_TOO_LARGE));
     }
 
     // Anything else: keep Spring's status for its own errors (405, 404, 413...), never the raw message
