@@ -24,6 +24,8 @@ import java.util.UUID;
 @RequestMapping("/api/uploads")
 public class UploadController {
 
+    private static final long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
+
     private final AuthService authService;
 
     @Autowired(required = false)
@@ -45,6 +47,10 @@ public class UploadController {
             @RequestParam("file") MultipartFile file) throws IOException {
 
         authService.requireAuth(token);
+
+        if (file.getSize() > MAX_IMAGE_BYTES) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Images must be 5 MB or smaller"));
+        }
 
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {

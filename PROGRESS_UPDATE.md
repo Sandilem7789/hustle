@@ -7,6 +7,11 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Upload size and CORS configuration aligned with project rules (2026-10-09)
+- Image uploads are capped at 5 MB in multipart configuration and checked again in the upload endpoint before storage. Multipart requests may use up to 6 MB to allow for form overhead around a 5 MB image.
+- The API CORS list now contains only the four origins documented in `CLAUDE.md`. The Netlify frontend uses the existing same-origin API proxy.
+- Backend `mvn test`: 22 passed, including an over-limit upload check.
+
 ### Consistent API error responses (2026-10-09)
 - ResponseStatusException, missing records, invalid request bodies and missing auth headers now return `{message, code}` with their HTTP status. Server-error reasons are not exposed. Three controller integration checks cover 401, 404 and 400; full backend suite: 24 passed.
 
