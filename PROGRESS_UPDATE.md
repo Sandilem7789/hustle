@@ -7,6 +7,10 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Consistent API error responses (2026-10-09)
+- ResponseStatusException, missing records, invalid request bodies and missing auth headers now return `{message, code}` with their HTTP status. Server-error reasons are not exposed. Three controller integration checks cover 401, 404 and 400; full backend suite: 24 passed.
+
+
 ### Income entry ownership check (2026-10-09)
 - Facilitator income edits now verify that the entry belongs to the business named in the URL before applying any changes. Cross-business edits return 403, while the matching business can still update its entry.
 - Integration coverage checks both outcomes and confirms a rejected edit leaves the stored amount unchanged. Backend `mvn test`: 22 passed.

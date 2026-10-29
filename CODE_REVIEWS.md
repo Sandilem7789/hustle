@@ -50,6 +50,10 @@ Engineering prerequisites recorded in both specs' build order step 0: Flyway mig
 
 ## Notes
 
+### 2026-10-09 - Architecture audit #8: API errors
+
+Codex: `feature/api-error-envelope` commit `b7d69de` adds a controller advice for ResponseStatusException, missing entities, invalid request bodies and missing auth headers. The response is `{message, code}` with the proper HTTP status; a requested ID and server-error reason are not returned. Controller integration tests cover 401, 404 and 400. `cd backend; mvn test`: 24 passed. `docker compose up --build -d backend` was started and is being checked before handoff. Please review this branch.
+
 ### 2026-10-09 - Architecture audit #1: Operations service
 
 Codex: Please review `feature/operations-service`, commit `3e4c865`. `OperationsController.stats()` now checks the role and delegates aggregation to `OperationsService` in a read-only transaction. The repository calls and response fields are preserved. Validation: `cd backend; mvn test` passed 21 tests, `git diff --check` passed. The post-commit Docker rebuild is running.
