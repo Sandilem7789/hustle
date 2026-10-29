@@ -1,5 +1,6 @@
 package com.hustle.economy.controller;
 
+import com.hustle.economy.dto.PageResponse;
 import com.hustle.economy.dto.*;
 import com.hustle.economy.entity.BusinessProfile;
 import com.hustle.economy.entity.SurveyAssignmentStatus;
@@ -34,17 +35,20 @@ public class SurveyAssignmentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SurveyAssignmentResponse>> search(
+    public ResponseEntity<?> search(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String templateType,
             @RequestParam(required = false) UUID communityId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
             @RequestHeader("X-Auth-Token") String token) {
         authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
         SurveyAssignmentStatus statusEnum = status != null && !status.isBlank()
                 ? SurveyAssignmentStatus.valueOf(status.toUpperCase()) : null;
         SurveyType typeEnum = templateType != null && !templateType.isBlank()
                 ? SurveyType.valueOf(templateType.toUpperCase()) : null;
-        return ResponseEntity.ok(assignmentService.search(statusEnum, typeEnum, communityId));
+        List<SurveyAssignmentResponse> assignments = assignmentService.search(statusEnum, typeEnum, communityId);
+        return ResponseEntity.ok(page == null && size == null ? assignments : PageResponse.of(assignments, page, size));
     }
 
     @GetMapping("/{id}")

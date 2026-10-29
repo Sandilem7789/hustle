@@ -1,5 +1,6 @@
 package com.hustle.economy.controller;
 
+import com.hustle.economy.dto.PageResponse;
 import com.hustle.economy.dto.ProductRequest;
 import com.hustle.economy.dto.ProductResponse;
 import com.hustle.economy.entity.BusinessProfile;
@@ -68,10 +69,13 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> listProducts(
+    public ResponseEntity<?> listProducts(
             @RequestParam(required = false) String communityId,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String businessId) {
-        return ResponseEntity.ok(productService.listProducts(communityId, category, businessId));
+            @RequestParam(required = false) String businessId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        List<ProductResponse> products = productService.listProducts(communityId, category, businessId);
+        return ResponseEntity.ok(page == null && size == null ? products : PageResponse.of(products, page, size));
     }
 }

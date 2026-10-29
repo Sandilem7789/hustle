@@ -1,5 +1,6 @@
 package com.hustle.economy.controller;
 
+import com.hustle.economy.dto.PageResponse;
 import com.hustle.economy.dto.*;
 import com.hustle.economy.entity.UserRole;
 import com.hustle.economy.service.ApplicantService;
@@ -34,13 +35,16 @@ public class ApplicantController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ApplicantResponse>> list(
+    public ResponseEntity<?> list(
             @RequestParam(required = false) String communityId,
             @RequestParam(required = false) String stage,
             @RequestParam(required = false) String callStatus,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
             @RequestHeader("X-Auth-Token") String token) {
         authService.requireRole(token, UserRole.FACILITATOR, UserRole.COORDINATOR);
-        return ResponseEntity.ok(applicantService.list(communityId, stage, callStatus));
+        List<ApplicantResponse> applicants = applicantService.list(communityId, stage, callStatus);
+        return ResponseEntity.ok(page == null && size == null ? applicants : PageResponse.of(applicants, page, size));
     }
 
     @GetMapping("/{id}")
