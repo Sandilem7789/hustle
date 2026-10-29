@@ -160,9 +160,38 @@ _(none open. Your four questions in the requirements were answered in R5 below.)
 
 ---
 
+## R10 — 2026-10-29 — R9 branches merged into feature/architecture-review-fixes, with the senior's R9 fixes
+**Scope:** merges `1cbb4f8` (community-dtos), `5b41f15` (income-ownership), `8838081` (operations-service), `e7f3bd6` (api-error-envelope), `0b2e2dc` (upload-cors-limits); senior fixes `96a7f05`, `7815638`, `7a2f9fb`, `3c5af41`
+**Status:** Closed (R9 items listed below)
+**Verdict:** All five R9 branches are merged into `feature/architecture-review-fixes` (not `development` or `main` yet). Sandile asked the senior to finish the two branches R9 sent back rather than wait, so the senior applied those R9 fixes on top of your commits; your commits, authorship and trailers are kept as merged.
+
+Why the senior picked these up: the architecture review (2026-10-28) asked for the same five items. The senior first rebuilt the community DTO fix without noticing `feature/community-dtos` already did it; that duplicate was dropped before it was pushed and your branch merged instead. Lesson recorded for the senior: read the open review entries before starting audit work.
+
+### What happened to each R9 item
+- [x] **Blocking** (upload-cors-limits, Netlify origin): restored in `7815638`. `SecurityIntegrationTest.corsPreflightFromTheProductionSiteIsAllowedWithoutASession` now fails if it is removed again.
+- [x] **Should fix** (upload size check never runs): controller check and `UploadControllerTest` removed; `MaxUploadSizeExceededException` → 413 `{message: "Images must be 5 MB or smaller", code}`. New `UploadLimitHttpIntegrationTest` (real HTTP, `RANDOM_PORT`) found a second problem: Tomcat dropped the connection mid-upload, so the phone never saw the 413. Fixed with `server.tomcat.max-swallow-size=25MB` (`7a2f9fb`).
+- [x] **Should fix** (photos over 5 MB fail silently): Sell's add and edit pickers check the size first and show the error; failed uploads show the server message (`3c5af41`).
+- [x] **Should fix** (api-error-envelope catch-all): `IllegalStateException` → 409 with its message, catch-all → 500 generic and logged, Spring's own 4xx keep their status, `server.error.include-message=never` (`96a7f05`).
+- [x] **Should fix** (missing token header 400): any of the three token headers missing → 401; your test now expects 401. The new Spring Security chain also refuses these before the controller and writes the same `{message, code}` envelope.
+- [x] **Should fix** (other 400 cases): non-UUID path ids, malformed JSON and missing query parameters → 400 envelope.
+- [x] **Nit** (upload size error used `{"error": …}`): gone with the controller check. The MIME-type error still uses `{"error": …}`; can wait.
+- [x] **Housekeeping** (rebase onto development): superseded by the merges; conflicts were only in `PROGRESS_UPDATE.md`, `CODE_REVIEWS.md` and `application.properties`.
+- [ ] **Still yours — Should fix** (operations-service characterisation test for `GET /api/operations/stats`).
+- [ ] **Still yours — Should fix** (Docker rebuild outcomes missing from the two handoff notes).
+- [ ] **Still yours — Nits** (income-ownership wording "This income entry does not belong to this business"; MockMvc test for the facilitator income `PUT`). Operations N+1 nit stays noted for Back office reports.
+
+Validation (senior): backend `mvn clean test` 59 passed, 0 failed on `1fccc8d`; frontend `ng build` clean.
+
+### Senior changes since last review
+- `feature/architecture-review-fixes` (pushed, not merged): applicant seed data removed from `DataInitializer`; Spring Security filter chain with `denyAll` default (`SecurityConfig`, `TokenAuthenticationFilter`), so every new endpoint needs a rule; login lockout (5 wrong passwords per phone in 15 minutes → 429); sessions expire after 30 days (`auth.session-ttl-days`) with `POST /api/auth/logout`, `/api/customers/logout`, `/api/drivers/logout`; `ddl-auto=validate` with `V5__products_category_not_null.sql`; optional `page`/`size` on `/api/applicants`, `/api/products`, `/api/survey-assignments`. If you add an endpoint, add its rule to `SecurityConfig` and, if public, to `SecurityIntegrationTest.PUBLIC`.
+- Order-flow fixes (need-to-know driver jobs, safe cancelling, shop `ORDER` notifications, `V4__order_notifications.sql`).
+- Heads-up for both of us: production still runs `main` from 2026-09-11 and has no Flyway history. The first deploy of `development` or this branch baselines it at V1 and runs V2 to V5 on live data, including V3's duplicate-shop merge. The senior simulated it on a schema-only copy of production (baseline, V2 to V5 and `validate` all pass); behaviour on real rows still needs a backup first.
+
+---
+
 ## R9 — 2026-10-26 — feature/api-error-envelope, feature/community-dtos, feature/income-ownership, feature/operations-service, feature/upload-cors-limits — Architecture audit #8, #2, #3, #1, #9
 **Scope:** `b7d69de`, `c2486a6` (api-error-envelope); `79def00`, `793b126` (community-dtos); `544d8a7`, `f6d1c9f` (income-ownership); `3e4c865`, `e7f58eb` (operations-service); `b54a1d9`, `2cf65cb` (upload-cors-limits)
-**Status:** Open
+**Status:** Closed by R10 (2026-10-29); three items remain with Codex
 **Verdict:** Per branch:
 - `feature/community-dtos`: **Merge**
 - `feature/income-ownership`: **Merge** (Nits only)

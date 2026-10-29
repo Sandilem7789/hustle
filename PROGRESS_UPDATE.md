@@ -7,6 +7,15 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Architecture review, part 2: R9 branches merged, schema validation, safe errors, uploads, paging (2026-10-29)
+- **Codex's five R9 branches are merged** into `feature/architecture-review-fixes`: community DTOs, income ownership check, `OperationsService`, the `{message, code}` error envelope and the 5 MB upload limit. The senior applied R9's fixes on top (see `CODE_REVIEWS.md` R10).
+- **No raw exception text reaches a response:** catch-all handler (500, generic message, logged), `IllegalStateException` → 409, missing token header → 401, bad JSON / ids / parameters → 400, `server.error.include-message=never`; security 401/403 use the same envelope.
+- **Uploads:** server refuses images over 5 MB with 413 "Images must be 5 MB or smaller", and Tomcat now drains the rest of the body (`server.tomcat.max-swallow-size=25MB`) so the phone actually receives it. Sell checks the size before uploading and shows the error. The Netlify origin stays in CORS.
+- **Hibernate no longer changes the schema:** `ddl-auto=validate` (emergency switch `JPA_DDL_AUTO=update`). `V5__products_category_not_null.sql` gives databases built by Hibernate the `products.category` NOT NULL and check constraint V1 has. Checked by starting the app against an old Hibernate-built database, a fresh one, and a schema-only copy of production.
+- **Production has no Flyway history yet** (it runs `main` from 2026-09-11): its first deploy will baseline at V1 and run V2 to V5 on live data, including V3's duplicate-shop merge. Take a database backup before that deploy.
+- **Optional paging:** `GET /api/applicants`, `/api/products`, `/api/survey-assignments` accept `page`/`size` (default 20, max 100) and then return `{content, page, size, totalElements, totalPages}`; without them they return the full list as before.
+- Tests: backend suite 59 passed (new `UploadLimitHttpIntegrationTest`, `PaginationIntegrationTest`, `CommunityShopsIntegrationTest`, extra `ApiExceptionHandlerIntegrationTest` cases).
+
 ### Upload size and CORS configuration aligned with project rules (2026-10-09)
 - Image uploads are capped at 5 MB in multipart configuration and checked again in the upload endpoint before storage. Multipart requests may use up to 6 MB to allow for form overhead around a 5 MB image.
 - The API CORS list now contains only the four origins documented in `CLAUDE.md`. The Netlify frontend uses the existing same-origin API proxy.
@@ -118,7 +127,7 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 - **Backend tests run again.** They had been failing on this machine with "no Docker found", which hid three real problems: Docker Engine 29 rejects the old API version Testcontainers asks for, the startup seeder needed `STAFF_PHONE`/`STAFF_PASSWORD` that only Docker's `.env` supplied, and the test database was stopped between test classes while Spring kept using it. All fixed in the test setup. Running them surfaced one real bug, now fixed: approving an app-submitted application that had no community crashed, because a shop must have one. `mvn test`: 12 pass.
 - **Flyway introduced** (`flyway-core`, version managed by Spring Boot). `V1__baseline_schema.sql` is the schema the current entities generate. Fresh databases run it; databases that already existed are only marked as version 1 (`baseline-on-migrate`) and nothing in them changes. Verified on the local dev database with real data: baseline recorded, all 23 products intact.
 - Integration tests now build the schema through Flyway and run Hibernate in `validate` mode, so a migration that disagrees with the entities fails the build.
-- **Still to do for P1.0:** compare the production schema with V1 (needs Sandile's go-ahead to read the production database schema), then switch production from `ddl-auto=update` to `validate`.
+- **P1.0 schema check done 2026-10-29:** production schema compared (schema-only copy); `ddl-auto=validate` is on `feature/architecture-review-fixes` with V5. See the 2026-10-29 entry.
 
 ### Marketplace rebuild + app-wide green contrast fix (2026-09-28)
 - Rebuilt the marketplace (`community-hub.component.ts`) per `docs/MARKETPLACE_DESIGN_PROPOSAL.md` with Sandile's decisions in its §10, using the `impeccable` skill (Operate mode, craft-floor checks, mechanical detector: 0 findings).
@@ -377,7 +386,10 @@ Configurable survey templates so facilitators can edit question sets without a c
 ### Backend API Summary
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/login` | Login by phone + password |
+| POST | `/api/auth/login` | Login by phone + password (5 wrong passwords in 15 min lock the number, 429) |
+| POST | `/api/auth/logout` | End the X-Auth-Token and X-Customer-Token sessions sent |
+| POST | `/api/customers/logout` | End the X-Customer-Token session |
+| POST | `/api/drivers/logout` | End the X-Driver-Token session |
 | POST | `/api/hustlers` | Submit application |
 | GET | `/api/hustlers?status=&communityId=` | List applications (facilitator) |
 | PATCH | `/api/hustlers/{id}/decision` | Approve / Reject |
@@ -441,7 +453,7 @@ Configurable survey templates so facilitators can edit question sets without a c
 | **Barcode / marketplace scanner** | Marketplace channel income (products sold via the platform) will be tracked automatically once a barcode/QR scan flow is built. Currently all income is captured as cash. |
 | **Automated tests & CI** | Backend integration tests + Playwright e2e specs exist in the repo, but they aren’t being run anywhere. Execute them locally, capture the results in `tests/TEST_RESULTS.md`, and add a GitHub Action so every PR runs both suites. |
 | **Role-aware auth** | Coordinator-only actions (interview scheduling, applicant reinstatement, sensitive edits) currently sit behind shared facilitator auth. Introduce coordinator accounts + JWT/session claims and gate the Angular routes/components accordingly. |
-| **Pagination** | All list endpoints return full result sets. Add if dataset grows large. |
+| **Pagination** | Optional `page`/`size` on applicants, products and survey assignments (2026-10-29), applied after filtering in memory; screens still load full lists. Other list endpoints return full result sets. |
 | **VPS deployment** | Currently running on localhost only. Docker Compose is production-ready once pointed at a server. |
 
 ---
