@@ -7,6 +7,10 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Income entry ownership check (2026-10-09)
+- Facilitator income edits now verify that the entry belongs to the business named in the URL before applying any changes. Cross-business edits return 403, while the matching business can still update its entry.
+- Integration coverage checks both outcomes and confirms a rejected edit leaves the stored amount unchanged. Backend `mvn test`: 22 passed.
+
 ### Community API response DTOs (2026-10-09)
 - Community list and create responses, and the approved hustler list for a community, now use explicit public DTOs mapped inside service transactions. This keeps private owner/application/product relations out of the API and prevents detached JPA collections from breaking JSON responses.
 - Reproduced the old `/api/communities/{id}/hustlers` failure with an integration test: HTTP 500 from lazy `BusinessProfile.products` serialization. The same test and the full backend suite pass with the DTO fix (`mvn test`: 22 passed).
