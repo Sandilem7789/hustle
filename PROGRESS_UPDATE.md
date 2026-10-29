@@ -7,6 +7,10 @@ The Hustle Economy web app (Spring Boot + Angular 18, Docker Compose) is fully f
 
 ## ✅ Completed Features (Full History)
 
+### Community API response DTOs (2026-10-09)
+- Community list and create responses, and the approved hustler list for a community, now use explicit public DTOs mapped inside service transactions. This keeps private owner/application/product relations out of the API and prevents detached JPA collections from breaking JSON responses.
+- Reproduced the old `/api/communities/{id}/hustlers` failure with an integration test: HTTP 500 from lazy `BusinessProfile.products` serialization. The same test and the full backend suite pass with the DTO fix (`mvn test`: 22 passed).
+
 ### Architecture review: personal data, central security, login lockout, session expiry (2026-10-28)
 - **No personal data seeded from source:** `DataInitializer` no longer carries or seeds the hardcoded applicant list. The data is still in git history (see `CODE_REVIEWS.md` / Sandile's decision on a history purge).
 - **One place decides API access:** `spring-boot-starter-security` with `TokenAuthenticationFilter` (turns `X-Auth-Token`, `X-Customer-Token`, `X-Driver-Token` into token-kind and role authorities) and `SecurityConfig` (every rule in one table, ending in `denyAll`, so a new endpoint is closed until a rule opens it). Controllers still call the auth services, which repeat the check. `SecurityIntegrationTest` sends an anonymous request to every mapped endpoint and fails if anything outside its public list answers with anything but 401.
