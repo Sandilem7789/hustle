@@ -53,7 +53,7 @@ class ProductDetailIntegrationTest extends AbstractIntegrationTest {
         var missing = UUID.randomUUID();
         mvc.perform(get("/api/products/{id}", missing))
                 .andExpect(status().isNotFound())
-                .andExpect(status().reason("Product not found"))
+                .andExpect(jsonPath("$.message").value("Product not found"))
                 .andExpect(content().string(not(containsString(missing.toString()))));
     }
 }

@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
@@ -89,7 +90,7 @@ class SecurityIntegrationTest extends AbstractIntegrationTest {
         String token = legacySession(UserRole.HUSTLER);
         mvc.perform(get("/api/survey-templates").header("X-Auth-Token", token))
                 .andExpect(status().isForbidden())
-                .andExpect(status().reason("Access denied"));
+                .andExpect(jsonPath("$.message").value("Access denied"));
         mvc.perform(get("/api/products/my").header("X-Auth-Token", token))
                 .andExpect(status().isOk());
     }

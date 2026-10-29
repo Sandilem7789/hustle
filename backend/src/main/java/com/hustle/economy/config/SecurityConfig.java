@@ -5,6 +5,7 @@ import com.hustle.economy.service.CustomerAuthService;
 import com.hustle.economy.service.DriverAuthService;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -53,10 +54,10 @@ public class SecurityConfig {
                 .addFilterBefore(new TokenAuthenticationFilter(authService, customerAuthService, driverAuthService),
                         AnonymousAuthenticationFilter.class)
                 .exceptionHandling(e -> e
-                        .authenticationEntryPoint((req, res, ex) -> res.sendError(
-                                HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired session. Please log in again."))
-                        .accessDeniedHandler((req, res, ex) -> res.sendError(
-                                HttpServletResponse.SC_FORBIDDEN, "Access denied")))
+                        .authenticationEntryPoint((req, res, ex) -> writeError(res, HttpServletResponse.SC_UNAUTHORIZED,
+                                "UNAUTHORIZED", "Invalid or expired session. Please log in again."))
+                        .accessDeniedHandler((req, res, ex) -> writeError(res, HttpServletResponse.SC_FORBIDDEN,
+                                "FORBIDDEN", "Access denied")))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                         .requestMatchers("/error").permitAll()
@@ -96,5 +97,13 @@ public class SecurityConfig {
 
                         .anyRequest().denyAll());
         return http.build();
+    }
+
+    // Same {message, code} envelope as ApiExceptionHandler; the messages are fixed text
+    private static void writeError(HttpServletResponse response, int status, String code, String message)
+            throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"message\":\"" + message + "\",\"code\":\"" + code + "\"}");
     }
 }
