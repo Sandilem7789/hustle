@@ -17,6 +17,8 @@ import { LoadingSkeletonComponent } from '../../components/loading-skeleton/load
 
 type SellTab = 'today' | 'sell' | 'orders' | 'products' | 'money';
 const TABS: SellTab[] = ['today', 'sell', 'orders', 'products', 'money'];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const IMAGE_TOO_LARGE = 'This photo is bigger than 5 MB. Choose a smaller one.';
 
 @Component({
   selector: 'app-hustler-dashboard-page',
@@ -2082,13 +2084,25 @@ export class HustlerDashboardPageComponent implements OnInit {
   onFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
+    this.addError.set('');
+    if (file.size > MAX_IMAGE_BYTES) {
+      this.imagePreview.set(null);
+      this.pendingImageUrl.set(null);
+      this.addError.set(IMAGE_TOO_LARGE);
+      (event.target as HTMLInputElement).value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => this.imagePreview.set(e.target?.result as string);
     reader.readAsDataURL(file);
     this.uploadLoading.set(true);
     this.api.uploadImage(file, this.auth.getToken()!).subscribe({
       next: (res) => { this.pendingImageUrl.set(res.url); this.uploadLoading.set(false); },
-      error: () => this.uploadLoading.set(false)
+      error: (err) => {
+        this.uploadLoading.set(false);
+        this.imagePreview.set(null);
+        this.addError.set(err?.error?.message || 'The photo could not be uploaded. Please try again.');
+      }
     });
   }
 
@@ -2151,10 +2165,19 @@ export class HustlerDashboardPageComponent implements OnInit {
   onEditFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
+    this.saveError.set('');
+    if (file.size > MAX_IMAGE_BYTES) {
+      this.saveError.set(IMAGE_TOO_LARGE);
+      (event.target as HTMLInputElement).value = '';
+      return;
+    }
     this.uploadLoading.set(true);
     this.api.uploadImage(file, this.auth.getToken()!).subscribe({
       next: (res) => { this.editPendingImageUrl = res.url; this.uploadLoading.set(false); },
-      error: () => this.uploadLoading.set(false)
+      error: (err) => {
+        this.uploadLoading.set(false);
+        this.saveError.set(err?.error?.message || 'The photo could not be uploaded. Please try again.');
+      }
     });
   }
 
