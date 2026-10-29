@@ -12,6 +12,8 @@ public class WebConfig implements WebMvcConfigurer {
             "http://localhost:4173",
             "http://148.230.79.29:4173",
             "http://148.230.79.29",
+            // Must stay: browsers send Origin on writes and the Netlify /api proxy passes it on (R9)
+            "https://hustleconomy.netlify.app",
     };
 
     @Override
